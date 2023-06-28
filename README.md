@@ -13,6 +13,7 @@ They comprise the State of the art Agents:
 
 All of the algorithms are programmed for the Contest at the Reinforcement class
 at the *University of Tübingen* in the Sommersemester of 2023.
+(Given by Prof. George Martinus)
 
 Change for all Networks come from the [Rainbow Paper](https://doi.org/10.48550/arXiv.1710.02298).
 
@@ -20,10 +21,11 @@ We hope to achieve good results at a laser-hockey playground.
 Therefore our agent has to qualify by beating the baseline method in a match.
 After that it will play against multiple different other agents from the course.
 
+***
 ### Folderstructure
-Our code is seperated by the **Basic**s folder here multiple functions can be found,
-that were given in the exercises of the course.
-The folders with an **agents name** comprise files for the agent and
-a *main* file to prove that the agent is working we evaluated him on the *LunarLanderEnvironment*.
-Not yet implemented but soon coming, is the folder **Playground**, comprising the environment of the *Laser-hockey*.
+Our code is seperated by the **Basic**s folder here multiple functions can be found,\
+that were given in the exercises of the course, this is no orginial work.\
+The folders with an **agents name** comprise files for the agent.\
+Including *main* file to prove that the agent is working we evaluated him on the *LunarLanderEnvironment*.\
+Not yet implemented but soon coming, is the folder **Playground**, comprising the environment of the *Laser-hockey*.\
 And methods to let two agents combat each other.
