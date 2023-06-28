@@ -1,13 +1,13 @@
 import os
 import torch
 import numpy as np
-from feedforward import Feedforward
+from Basic.feedforward import Feedforward
 from Actor import Actor
-from memory import Memory
+from Basic.memory import Memory
 from gymnasium import spaces
 import gymnasium as gym
 import pickle
-import memory as mem
+import Basic.memory as mem
 
 class UnsupportedSpace(Exception):
     """Exception raised when the Sensor or Action space are not compatible
