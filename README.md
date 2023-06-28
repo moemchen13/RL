@@ -23,9 +23,8 @@ After that it will play against multiple different other agents from the course.
 
 ***
 ### Folderstructure
-Our code is seperated by the **Basic**s folder here multiple functions can be found,\
-that were given in the exercises of the course, this is no orginial work.\
-The folders with an **agents name** comprise files for the agent.\
-Including *main* file to prove that the agent is working we evaluated him on the *LunarLanderEnvironment*.\
+Our code is seperated into the different Reinforcement learning Agents here the implemented algorithms can be found.\
+Including *main* file to prove that the agent is working we evaluated him on the *Pendulum-v1-Environment*.\
+In the folder **Basic** non original files from the course can be found reused for the agents.\
 Not yet implemented but soon coming, is the folder **Playground**, comprising the environment of the *Laser-hockey*.\
 And methods to let two agents combat each other.
