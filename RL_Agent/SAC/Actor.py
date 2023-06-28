@@ -30,14 +30,14 @@ class Actor(NN.Feedforward):
             x = activation_fun(layer(x))
         
         mu = self.mu(x)
-        sigma = self.log_sigma(x)
+        log_sigma = self.log_sigma(x)
         log_sigma = torch.clamp(log_sigma,-20,10)
         sigma = log_sigma.exp()
         return mu, sigma
         
     def sample_normal(self, state, reparameterize=True):
-        mu,sigma = self.forward(state)
-        probabilities = Normal(mu,sigma)
+        mu,log_sigma = self.forward(state)
+        probabilities = Normal(mu,log_sigma)
         if reparameterize:
             #sample with noise
             actions = probabilities.rsample()
