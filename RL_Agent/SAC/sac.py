@@ -1,13 +1,13 @@
 import os
 import torch
 import numpy as np
-from Basic.feedforward import Feedforward
-from Actor import Actor
-from Basic.memory import Memory
 from gymnasium import spaces
 import gymnasium as gym
 import pickle
-import Basic.memory as mem
+from Basic import feedforward as NN
+from Basic import memory as mem
+from Actor import Actor
+
 
 class UnsupportedSpace(Exception):
     """Exception raised when the Sensor or Action space are not compatible
@@ -55,15 +55,15 @@ class SAC_Agent(object):
 
         self.actor = Actor(self._obs_dim,self._n_actions,max_action=high,hidden_sizes=self._config["hidden_size_actor"],
                             learning_rate=self._config["lr_actor"])
-        self.critic_1 = Feedforward(input_dim=self._obs_dim+self._n_actions,hidden_sizes=self._config["hidden_size_critic"]
+        self.critic_1 = NN.Feedforward(input_dim=self._obs_dim+self._n_actions,hidden_sizes=self._config["hidden_size_critic"]
                                     ,output_size=self._n_actions,learning_rate=self._config["lr_critic"],
                                     name='critic_1')
-        self.critic_2 = Feedforward(input_dim=self._obs_dim+self._n_actions,hidden_sizes=self._config["hidden_size_critic"],
+        self.critic_2 = NN.Feedforward(input_dim=self._obs_dim+self._n_actions,hidden_sizes=self._config["hidden_size_critic"],
                                     output_size=self._n_actions,learning_rate=self._config["lr_critic"],
                                     name='critic_2')
-        self.value = Feedforward(input_dim=self._obs_dim,hidden_sizes=self._config["hidden_size_value"],
+        self.value = NN.Feedforward(input_dim=self._obs_dim,hidden_sizes=self._config["hidden_size_value"],
                                  output_size=1,learning_rate=self._config["lr_value"],name='value')
-        self.target_value = Feedforward(input_dim=self._obs_dim,hidden_sizes=self._config["hidden_size_value"],
+        self.target_value = NN.Feedforward(input_dim=self._obs_dim,hidden_sizes=self._config["hidden_size_value"],
                                         output_size=1,learning_rate=self._config["lr_value"],name='target_val')
         
         self.scale = self._config["reward_scale"]

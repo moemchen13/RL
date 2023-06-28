@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.optim as optim
 from torch.distributions.normal import Normal
-from Basic.feedforward import Feedforward
+from Basic import feedforward as NN
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.set_num_threads(1)
@@ -14,7 +14,7 @@ class UnsupportedSpace(Exception):
         self.message = message
         super().__init__(self.message)
 
-class Actor(Feedforward):
+class Actor(NN.Feedforward):
     def __init__(self,input_dim,action_dim,max_action,hidden_sizes=[256,256],learning_rate= 0.0002,reparam_noise = 1e-6,name="actor",activation_fun= torch.nn.ReLU()):
         super(Actor,self).__init__(input_dim,hidden_sizes,output_size=action_dim,learning_rate=learning_rate,name=name)
         self.max_action = max_action
