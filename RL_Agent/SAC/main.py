@@ -36,7 +36,8 @@ def main():
         env = gym.make(env_name, continuous = True)
     else:
         env = gym.make(env_name)
-    render = False
+    #print(env_name)
+    render = True
     log_interval = 20           # print avg reward in the interval
     max_episodes = opts.max_episodes # max training episodes
     max_timesteps = 2000         # max timesteps in one episode
@@ -61,7 +62,7 @@ def main():
     timestep = 0
 
     def save_statistics():
-        with open(f"./results/DDPG_{env_name}-eps{eps}-t{train_iter}-l{lr}-s{random_seed}-stat.pkl", 'wb') as f:
+        with open(f"./results/SAC_{env_name}-eps{eps}-t{train_iter}-l{lr}-s{random_seed}-stat.pkl", 'wb') as f:
             pickle.dump({"rewards" : rewards, "lengths": lengths, "eps": eps, "train": train_iter,
                          "lr": lr, "update_every": opts.update_every, "losses": losses}, f)
 
@@ -88,7 +89,7 @@ def main():
         # save every 500 episodes
         if i_episode % 500 == 0:
             print("########## Saving a checkpoint... ##########")
-            torch.save(agent.state(), f'./results/DDPG_{env_name}_{i_episode}-eps{eps}-t{train_iter}-l{lr}-s{random_seed}.pth')
+            torch.save(agent.state(), f'./results/SAC_{env_name}_{i_episode}-eps{eps}-t{train_iter}-l{lr}-s{random_seed}.pth')
             save_statistics()
 
         # logging

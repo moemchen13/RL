@@ -158,7 +158,9 @@ class SAC_Agent(object):
                 #print("update actor") 
                 critic_value,log_probs= self.evaluate_critic(s_t0,True)
                 actor_loss = log_probs - critic_value
-                actor_loss = torch.mean(actor_loss)
+                actor_loss = torch.mean(actor_loss) #J_pi(sigma)=E[D_KL(pi(.|s_t0)||exp(Q_theta(s_t0,.))/Z_theta(s_t))]
+                #reparametrized E[log pi_theta(f_theta(epsilon,s_t0)|s_t0) - Q_theta(s_t0,f_theta(epsilon,s_t0))]
+                #nabla_theta J_pi(sigma) = nabla_theta log pi_theta(a,s_t)+ (nabla_a log pi_theta(a|s_t0)-nabla_a Q(s_t0,a))* nabla_theta f_theta(epsilon,s_t0)
                 self.actor.optimizer.zero_grad()
                 actor_loss.backward()
                 self.actor.optimizer.step()
@@ -167,14 +169,14 @@ class SAC_Agent(object):
                 #print("update critic")
                 self.critic_1.optimizer.zero_grad()
                 self.critic_2.optimizer.zero_grad()
-                q_hat = self.scale*rew+self.discount*new_value #Bellmann Equation
+                q_hat = self.scale*rew+self.discount*new_value #Q*(s,t) = r + gamma*E[V_target(s_t1)]
                 q1_old_policy = self.critic_1.forward(torch.cat([s_t0,a],dim=1))
                 q2_old_policy = self.critic_2.forward(torch.cat([s_t0,a],dim=1))
-                critic1_loss =0.5*self.critic_1.loss(q1_old_policy,q_hat)
+                critic1_loss =0.5*self.critic_1.loss(q1_old_policy,q_hat) # J_Q(theta) = E_buffer[1/2* (Q_theta(s,a)-Q*(s,t))^2]
                 critic2_loss =0.5*self.critic_2.loss(q2_old_policy,q_hat)
 
                 critic_loss = critic1_loss + critic2_loss
-                critic_loss.backward()
+                critic_loss.backward()  #nabla_theta J_Q(theta)= nabla_theta Q_theta(a,s)(Q_theta(s,a)-r(s,a)-gamma*Value_target(s_t1))
                 self.critic_1.optimizer.step()
                 self.critic_2.optimizer.step()
 
