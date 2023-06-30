@@ -1,3 +1,4 @@
-Gym-DDPG-solution/
-SAC/__pycache__/
 SAC/results/
+SAC/pycache/
+Basic/pycache/
+Gym-DDPG-solution/
