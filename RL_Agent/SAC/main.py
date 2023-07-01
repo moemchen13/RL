@@ -3,7 +3,7 @@ import gymnasium as gym
 import torch
 import numpy as np
 import pickle
-from sac import SAC_Agent
+from RL_Agent.SAC.sac import SAC_Agent
 
 def main():
     optParser = optparse.OptionParser()
@@ -69,7 +69,7 @@ def main():
     # training loop
     for i_episode in range(1, max_episodes+1):
         ob, _info = env.reset()
-        agent.reset()
+        #agent.reset()
         total_reward=0
         for t in range(max_timesteps):
             timestep += 1
@@ -89,7 +89,7 @@ def main():
         # save every 500 episodes
         if i_episode % 500 == 0:
             print("########## Saving a checkpoint... ##########")
-            torch.save(agent.state(), f'./results/SAC_{env_name}_{i_episode}-eps{eps}-t{train_iter}-l{lr}-s{random_seed}.pth')
+            torch.save(agent.get_networks_states(), f'./results/SAC_{env_name}_{i_episode}-eps{eps}-t{train_iter}-l{lr}-s{random_seed}.pth')
             save_statistics()
 
         # logging
