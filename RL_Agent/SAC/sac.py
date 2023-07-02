@@ -27,8 +27,8 @@ class SAC_Agent(agent):
             "discount": 0.99,
             "buffer_size": int(1e7),
             "batch_size": 256,
-            "lr_actor": float(0.0001),
-            "lr_critic": float(0.0001),
+            "lr_actor": float(3e-4),
+            "lr_critic": float(1e-3),
             "lr_value": float(0.0001),
             "hidden_size_critic": [256,256],
             "hidden_size_actor": [256,256],
@@ -41,30 +41,30 @@ class SAC_Agent(agent):
             "update_target_every":1,
             "temperature":0.1,
             "use_smooth_L1":False,
-        }
+            }
         self.memory = mem.Memory(max_size=self._config["buffer_size"])
         self._observation_space = observation_space
         self._obs_dim = self._observation_space.shape[0]
         self._action_space = action_space
-        self._n_actions = action_space.shape[0]
+        self.action_dim = action_space.shape[0]
         self.discount = self._config["discount"]
         self.tau = self._config["tau"]
         self.train_iter=0
         self.eval=False
 
-        self.actor = Actor(self._obs_dim,self._n_actions,action_space=action_space,hidden_sizes=self._config["hidden_size_actor"],
+        self.actor = Actor(self._obs_dim,self.action_dim,action_space=action_space,hidden_sizes=self._config["hidden_size_actor"],
                             learning_rate=self._config["lr_actor"])
-        self.critic_1 = NN.Feedforward(input_dim=self._obs_dim+self._n_actions,hidden_sizes=self._config["hidden_size_critic"]
-                                    ,output_size=self._n_actions,learning_rate=self._config["lr_critic"],
+        self.critic_1 = NN.Feedforward(input_dim=self._obs_dim+self.action_dim,hidden_sizes=self._config["hidden_size_critic"]
+                                    ,output_size=1,learning_rate=self._config["lr_critic"],
                                     name='critic_1')
-        self.critic_2 = NN.Feedforward(input_dim=self._obs_dim+self._n_actions,hidden_sizes=self._config["hidden_size_critic"],
-                                    output_size=self._n_actions,learning_rate=self._config["lr_critic"],
+        self.critic_2 = NN.Feedforward(input_dim=self._obs_dim+self.action_dim,hidden_sizes=self._config["hidden_size_critic"],
+                                    output_size=1,learning_rate=self._config["lr_critic"],
                                     name='critic_2')
-        self.target_critic_1 = NN.Feedforward(input_dim=self._obs_dim+self._n_actions,hidden_sizes=self._config["hidden_size_critic"]
-                                    ,output_size=self._n_actions,learning_rate=self._config["lr_critic"],
+        self.target_critic_1 = NN.Feedforward(input_dim=self._obs_dim+self.action_dim,hidden_sizes=self._config["hidden_size_critic"]
+                                    ,output_size=1,learning_rate=self._config["lr_critic"],
                                     name='target_critic_1')
-        self.target_critic_2 = NN.Feedforward(input_dim=self._obs_dim+self._n_actions,hidden_sizes=self._config["hidden_size_critic"],
-                                    output_size=self._n_actions,learning_rate=self._config["lr_critic"],
+        self.target_critic_2 = NN.Feedforward(input_dim=self._obs_dim+self.action_dim,hidden_sizes=self._config["hidden_size_critic"],
+                                    output_size=1,learning_rate=self._config["lr_critic"],
                                     name='target_critic_2')
         self.update_network_targets(1)
         
@@ -151,27 +151,29 @@ class SAC_Agent(agent):
     
     def update_Q_functions(self,s0,action,done,rew,s1,temperature):
         with torch.no_grad():
-            a_next , log_prob_next = self.actor.get_action_and_log_probs(s1,reparameterize=True)
+            a_next , log_prob_next = self.actor.get_action_and_log_probs(s1,reparameterize=False)
             min_Q_next = self.get_target_Q_value(s1,a_next)
             min_Q_next[done] = 0.0
             #get V estimate
             target_value = min_Q_next - temperature * log_prob_next
+            
             y = (rew + self.discount * (1 - done)*target_value)
             #y = (rew + self.discount * (1 - done)*target_value).detach()
 
         self.critic_1.optimizer.zero_grad()
         self.critic_2.optimizer.zero_grad()
-
+        
         Q_val_1 = self.critic_1.forward(torch.cat([s0,action],dim=1))
         Q_val_2 = self.critic_2.forward(torch.cat([s0,action],dim=1))
         
+        #ToDO: find out if need of squeezing of qloss
         if self._config["use_smooth_L1"]:
             Q_loss_1 = 0.5* torch.nn.functional.smooth_l1_loss(Q_val_1,y,reduction='mean')
             Q_loss_2 = 0.5* torch.nn.functional.smooth_l1_loss(Q_val_2,y,reduction='mean')
         else:
             Q_loss_1 = 0.5* torch.nn.functional.mse_loss(Q_val_1,y)
             Q_loss_2 = 0.5* torch.nn.functional.mse_loss(Q_val_2,y)
-
+        
         Q_loss_1.backward()
         Q_loss_2.backward()
 
@@ -209,7 +211,7 @@ class SAC_Agent(agent):
                 rew = to_torch(np.stack(data[:,2])[:,None])
                 s1 = to_torch(np.stack(data[:,3]))
                 done = to_torch_int(np.stack(data[:,4])[:,None])
-
+                
                 ######Start SAC train loop#######
                 #updateQ
                 if i % self._config["frequency_update_Q"] == 0:
@@ -222,6 +224,7 @@ class SAC_Agent(agent):
                     action, log_prob = self.actor.get_action_and_log_probs(s0,reparameterize=True)
                     actor_Q = self.get_Q_value(s0,action)
                     actor_loss = (temperature * log_prob - actor_Q).mean(axis=0)
+                    #print(actor_loss)
                     actor_loss = self.update_policy(actor_loss)
                     policy_losses.append(actor_loss)
                 ##### Updated Policy ##########

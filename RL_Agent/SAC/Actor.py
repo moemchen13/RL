@@ -28,10 +28,11 @@ class Actor(NN.Feedforward):
         self.min_log_std = -20
         self.max_log_std = 2
         self.reparam_noise = 1e-6
+        self.action_dim = action_dim
 
         if action_space is not None:
-            self.action_scale = torch.FloatTensor((action_space.high[:action_dim] - action_space.low[:action_dim]) / 2)
-            self.action_bias = torch.FloatTensor((action_space.high[:action_dim] + action_space.low[:action_dim]) / 2)
+            self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2)
+            self.action_bias = torch.FloatTensor((action_space.high + action_space.low) / 2)
         else:
             self.action_scale = torch.tensor(1.)
             self.action_bias = torch.tensor(0.)
@@ -43,20 +44,24 @@ class Actor(NN.Feedforward):
         
         mu = self.mu(x)
         log_sigma = self.log_sigma(x)
-        log_sigma = torch.clamp(log_sigma,self.min_log_std,self.max_log_std)
+
         #alternative way to clamping log_sigma
-        #log_sigma = torch.tanh(log_sigma)
-        #log_sigma = self.min_log_std + 0.5 * (self.max_log_std-self.min_log_std)*(log_sigma+1)
+        #log_sigma = torch.clamp(log_sigma,self.min_log_std,self.max_log_std)
+        
+        log_sigma = torch.tanh(log_sigma)
+        log_sigma = self.min_log_std + 0.5 * (self.max_log_std-self.min_log_std)*(log_sigma+1)
         return mu, log_sigma
 
 
     def get_action(self,state):
+        #deterministic
         mu,_ = self.forward(state)
         mu = torch.tanh(mu) * self.action_scale + self.action_bias
         return mu
     
 
     def get_action_and_log_probs(self, state,reparameterize=False):
+        #stochastic
         mu, log_sigma = self.forward(state)
         sigma = log_sigma.exp()
         distribution = Normal(mu,sigma)
@@ -73,7 +78,10 @@ class Actor(NN.Feedforward):
         log_prob = distribution.log_prob(sample)
         log_prob -= torch.log(self.action_scale * (1 - y.pow(2)) + self.reparam_noise)
         #if not only vector
-        if log_prob.dim()>1:
-            log_prob = log_prob.sum(axis=1,keepdim=True)
+        if self.action_dim>1:
+            if log_prob.dim()==1:
+                log_prob = log_prob.unsqueeze(axis=0).sum(axis=1,keepdim=True)
+            else:
+                log_prob = log_prob.sum(axis=1,keepdim=True)
         
         return action, log_prob
