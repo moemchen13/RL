@@ -3,7 +3,7 @@ import gymnasium as gym
 import torch
 import numpy as np
 import pickle
-from RL_Agent.SAC.sac import SAC_Agent
+from sac import SAC_Agent
 
 def main():
     optParser = optparse.OptionParser()
@@ -37,7 +37,7 @@ def main():
     else:
         env = gym.make(env_name)
     #print(env_name)
-    render = True
+    render = False
     log_interval = 20           # print avg reward in the interval
     max_episodes = opts.max_episodes # max training episodes
     max_timesteps = 2000         # max timesteps in one episode
@@ -58,7 +58,8 @@ def main():
     
     rewards = []
     lengths = []
-    losses = []
+    q_losses = []
+    policy_losses = []
     timestep = 0
 
     def save_statistics():
@@ -67,6 +68,7 @@ def main():
                          "lr": lr, "update_every": opts.update_every, "losses": losses}, f)
 
     # training loop
+
     for i_episode in range(1, max_episodes+1):
         ob, _info = env.reset()
         #agent.reset()
@@ -80,9 +82,11 @@ def main():
             agent.store_transition((ob, a, reward, ob_new, done))
             ob=ob_new
             if done or trunc: break
-
-        losses.extend(agent.train(train_iter))
-
+            
+        q_loss,policy_loss = agent.train(train_iter)    
+        q_losses.extend(q_loss)
+        policy_losses.extend(policy_loss)
+        losses = (q_losses,policy_losses)
         rewards.append(total_reward)
         lengths.append(t)
 
