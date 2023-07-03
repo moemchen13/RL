@@ -23,8 +23,50 @@ After that it will play against multiple different other agents from the course.
 
 ***
 ### Folderstructure
-Our code is seperated into the different Reinforcement learning Agents here the implemented algorithms can be found.\
-Including *main* file to prove that the agent is working we evaluated him on the *Pendulum-v1-Environment*.\
-In the folder **Basic** non original files from the course can be found reused for the agents.\
-Not yet implemented but soon coming, is the folder **Playground**, comprising the environment of the *Laser-hockey*.\
-And methods to let two agents combat each other.
+Our code is seperated into the different Reinforcement learning Agents.
+Here the implemented algorithms can be found.\
+Including a *main* file in which the agent is evaluated on a common environment. (default: *Pendulum-v1-Environment*).\
+In the folder **Basic** non original files from the course can be found.
+These files should only comprise files necessary to run the agent.\
+Not yet correctly implemented but soon coming, is the folder **Playground**, comprising the environment of the *Laser-hockey*.\
+And the files to let agents train in the laserhockey environment or play the game against the given bot or an implemented agent.\
+
+***
+### Commit Messages Workflow
+This is a hierarchical guide.
+If the baseline of an Agent is up and works correctly please commit with the message: "DONE: Baseline {agent name} implemented".\
+If extended a common structure of the agent and working, please write "EXTENSION: {Extension_name}".\
+Furthermore update the section **TODO** in the ReadMe file and link the paper of extension and also note the commit code (look at the example in the TODO section).\
+If something new is started please start the commit with "STARTED: {Extension_name}".\
+If simple changes are done nothing works describe the changes.
+
+***
+### TODO
+- [x] Write Example TODO\
+  [Example](https://doi.org/10.1016/j.jml.2015.09.001)\
+  Description:\
+    This is an example on how we should note TODOs.\
+  - [ ] means the task is still open\
+  - [x] means the task has already finished \
+  :eyes: This emoji behind a task notes that it was already started\
+  Dont forget to check the box.\
+  commit: \
+  f5ba072
+- [ ] Implement DQN
+- [ ] Implement DDPG
+- [ ] Implement SAC :eyes:
+- [ ] DQN Extension
+- [ ] DDPG Extension
+- [ ] SAC Extension
+- [ ] Testing DQN with Extensions
+- [ ] Testing DDPG with Extensions
+- [ ] Testing SAC with Extensions
+- [ ] Report August
+- [ ] Report Moritz
+- [ ] Report Torsten
+- [ ] Submitted Agent evaluation
+- [ ] Clean Repository
+- [ ] Create detailed ReadME
+
+### Comments
+Write Extension generic and modular if possible so other people can also use them (e.g. Prioritized ReplayBuffer)
