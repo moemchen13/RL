@@ -52,6 +52,10 @@ class Actor(NN.Feedforward):
         log_sigma = self.min_log_std + 0.5 * (self.max_log_std-self.min_log_std)*(log_sigma+1)
         return mu, log_sigma
 
+    def random_action(self):
+        action = 2 * torch.rand(self.action_dim) - 1
+        action = action * self.action_scale + self.action_bias
+        return action
 
     def get_action(self,state):
         #deterministic

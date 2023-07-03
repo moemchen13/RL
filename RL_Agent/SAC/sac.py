@@ -23,6 +23,7 @@ class SAC_Agent(agent):
         super().__init__(observation_space,action_space,**userconfig)
         
         self._config = {
+            "start_steps":10000,
             "eps": 0.1,
             "discount": 0.99,
             "buffer_size": int(1e7),
@@ -39,6 +40,7 @@ class SAC_Agent(agent):
             "tau": 0.005,
             "reward_scale":2,
             "update_target_every":1,
+            "autotuned_temperature":False,
             "temperature":0.1,
             "use_smooth_L1":False,
             }
@@ -51,6 +53,15 @@ class SAC_Agent(agent):
         self.tau = self._config["tau"]
         self.train_iter=0
         self.eval=False
+        self.start_steps = self._config["start_steps"]
+        if self._config["autotuned_temperature"]:
+            self.target_entropy = -torch.Tensor(self.action_dim)
+            self.log_temperature = torch.zeros(1,requires_grad=True)
+            self.temperature = self.log_temperature.exp().item()
+            self.temperature_optimizer = torch.optim.Adam([self.log_temperature],lr=self._config["lr_critic"])
+        else:
+            self.temperature = self._config["temperature"]
+
 
         self.actor = Actor(self._obs_dim,self.action_dim,action_space=action_space,hidden_sizes=self._config["hidden_size_actor"],
                             learning_rate=self._config["lr_actor"])
@@ -101,10 +112,13 @@ class SAC_Agent(agent):
 
     def act(self,state):
         state = torch.from_numpy(state)
-        if self.eval:
-            action = self.actor.get_action(state)
+        if self.start_steps> self.memory.current_idx:
+            action = self.actor.random_action()
         else:
-            action, _ = self.actor.get_action_and_log_probs(state)
+            if self.eval:
+                action = self.actor.get_action(state)
+            else:
+                action, _ = self.actor.get_action_and_log_probs(state)
         return action.detach().numpy()
 
     
@@ -149,13 +163,13 @@ class SAC_Agent(agent):
         self.target_critic_2.load_state_dict(value_state_dict)
 
     
-    def update_Q_functions(self,s0,action,done,rew,s1,temperature):
+    def update_Q_functions(self,s0,action,done,rew,s1):
         with torch.no_grad():
             a_next , log_prob_next = self.actor.get_action_and_log_probs(s1,reparameterize=False)
             min_Q_next = self.get_target_Q_value(s1,a_next)
             min_Q_next[done] = 0.0
             #get V estimate
-            target_value = min_Q_next - temperature * log_prob_next
+            target_value = min_Q_next - self.temperature * log_prob_next
             
             y = (rew + self.discount * (1 - done)*target_value)
             #y = (rew + self.discount * (1 - done)*target_value).detach()
@@ -188,6 +202,15 @@ class SAC_Agent(agent):
         actor_loss.backward()
         self.actor.optimizer.step()
         return actor_loss.item()
+    
+
+    def update_temperature(self,log_probs):
+        self.temperature_optimizer.zero_grad()
+        temperature_loss  =  -(self.log_temperature * (log_probs+ self.target_entropy).detach()).mean()
+        temperature_loss.backward()
+        self.temperature_optimizer.step()
+        self.temperature = self.log_temperature.exp()
+        return temperature_loss.item()
 
 
     def train(self,iter_fit=32):
@@ -197,8 +220,6 @@ class SAC_Agent(agent):
         policy_losses = []
 
         self.train_iter +=1
-        
-        temperature = self._config["temperature"]
         
         for i in range(iter_fit):
             #print(i)
@@ -215,19 +236,25 @@ class SAC_Agent(agent):
                 ######Start SAC train loop#######
                 #updateQ
                 if i % self._config["frequency_update_Q"] == 0:
-                    q_loss_1,q_loss_2 = self.update_Q_functions(s0,a,done,rew,s1,temperature)
+                    q_loss_1,q_loss_2 = self.update_Q_functions(s0,a,done,rew,s1)
                     q_losses.append(q_loss_1)
                     q_losses.append(q_loss_2)
-                    
+
                 #update policy
                 if i % self._config["frequency_update_actor"] == 0:
                     action, log_prob = self.actor.get_action_and_log_probs(s0,reparameterize=True)
                     actor_Q = self.get_Q_value(s0,action)
-                    actor_loss = (temperature * log_prob - actor_Q).mean(axis=0)
-                    #print(actor_loss)
+                    actor_loss = (self.temperature * log_prob - actor_Q).mean(axis=0)
                     actor_loss = self.update_policy(actor_loss)
                     policy_losses.append(actor_loss)
-                ##### Updated Policy ##########
+
+                #Update temperture
+                if self._config["autotuned_temperature"]:
+                    temperature_loss = self.update_temperature(log_prob)
+                else:
+                    temperature_loss = torch.tensor(0.)
+
+                #Update targets networks
                 if i % self._config["frequency_update_targets"] == 0:
                     self.update_network_targets()
 

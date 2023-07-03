@@ -82,8 +82,9 @@ def main():
             agent.store_transition((ob, a, reward, ob_new, done))
             ob=ob_new
             if done or trunc: break
-            
-        q_loss,policy_loss = agent.train(train_iter)    
+
+        q_loss,policy_loss = agent.train(train_iter)
+        #print(f"training {i_episode}") 
         q_losses.extend(q_loss)
         policy_losses.extend(policy_loss)
         losses = (q_losses,policy_losses)
