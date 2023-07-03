@@ -9,7 +9,7 @@ These are programmed by:
 They comprise the State of the art Agents:
 * SAC [Soft-Actor-Critic](https://doi.org/10.48550/arXiv.1801.01290)
 * TD3 [Twin Delayed DDPG 3](https://doi.org/10.48550/arXiv.1802.09477)
-* DDQN [Double Doueling QNetworks](https://doi.org/10.48550/arXiv.1509.06461)
+* DDQN [Dueling Deep Q Networks](https://doi.org/10.48550/arXiv.1509.06461)
 
 All of the algorithms are programmed for the Contest at the Reinforcement class
 at the *University of Tübingen* in the Sommersemester of 2023.
@@ -45,14 +45,14 @@ If simple changes are done nothing works describe the changes.
 - [x] Write Example TODO\
   [Example](https://doi.org/10.1016/j.jml.2015.09.001)\
   Description:\
-    This is an example on how we should note TODOs.\
-  - [ ] means the task is still open\
+    This is an example on how we should note TODOs.
+  - [ ] means the task is still open
   - [x] means the task has already finished \
   :eyes: This emoji behind a task notes that it was already started\
   Dont forget to check the box.\
   commit: \
   f5ba072
-- [ ] Implement DQN
+- [ ] Implement DDQN
 - [ ] Implement DDPG
 - [ ] Implement SAC :eyes:
 - [ ] DQN Extension
