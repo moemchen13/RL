@@ -239,6 +239,13 @@ class SAC_Agent(agent):
                     q_loss_1,q_loss_2 = self.update_Q_functions(s0,a,done,rew,s1)
                     q_losses.append(q_loss_1)
                     q_losses.append(q_loss_2)
+                    f = open("q_loss.txt", "a")
+                    f.write(str(q_loss_1))
+                    f.write("       ")
+                    f.write(str(q_loss_2))
+                    f.write("\n")
+                    f.close()
+
 
                 #update policy
                 if i % self._config["frequency_update_actor"] == 0:
@@ -247,6 +254,10 @@ class SAC_Agent(agent):
                     actor_loss = (self.temperature * log_prob - actor_Q).mean(axis=0)
                     actor_loss = self.update_policy(actor_loss)
                     policy_losses.append(actor_loss)
+                    f = open("actor_loss.txt", "a")
+                    f.write(str(actor_loss))
+                    f.write("\n")
+                    f.close()
 
                 #Update temperture
                 if self._config["autotuned_temperature"]:

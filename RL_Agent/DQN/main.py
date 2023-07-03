@@ -3,7 +3,7 @@ import gymnasium as gym
 import torch
 import numpy as np
 import pickle
-from sac import SAC_Agent
+from dqn import DQN_Agent
 
 def main():
     optParser = optparse.OptionParser()
@@ -33,7 +33,7 @@ def main():
     env_name = opts.env_name
     # creating environment
     if env_name == "LunarLander-v2":
-        env = gym.make(env_name, continuous = True)
+        env = gym.make(env_name, continuous = False)
     else:
         env = gym.make(env_name)
     #print(env_name)

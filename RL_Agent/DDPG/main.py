@@ -3,7 +3,7 @@ import gymnasium as gym
 import torch
 import numpy as np
 import pickle
-from sac import SAC_Agent
+from ddpg import DDPG_Agent
 
 def main():
     optParser = optparse.OptionParser()
@@ -53,7 +53,7 @@ def main():
         torch.manual_seed(random_seed)
         np.random.seed(random_seed)
     #care with discontinous agents there are discretisation needed to make it work see Ipython file of DQN
-    agent = SAC_Agent(env.observation_space, env.action_space, eps = eps, learning_rate_actor = lr,
+    agent = DDPG_Agent(env.observation_space, env.action_space, eps = eps, learning_rate_actor = lr,
                      update_target_every = opts.update_every)
     
     rewards = []
