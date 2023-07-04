@@ -112,7 +112,7 @@ class SAC_Agent(agent):
 
     def act(self,state):
         state = torch.from_numpy(state)
-        if self.start_steps> self.memory.current_idx:
+        if self.start_steps> self.memory.size:
             action = self.actor.random_action()
         else:
             if self.eval:
@@ -223,7 +223,7 @@ class SAC_Agent(agent):
         
         for i in range(iter_fit):
             #print(i)
-            if self.memory.size < self._config["batch_size"]:
+            if self.memory.size > self._config["batch_size"]:
                 #Sample Batches from the replay Buffer
                 data=self.memory.sample(batch=self._config["batch_size"])
                 #Data Preparation: torchvectors
@@ -251,7 +251,8 @@ class SAC_Agent(agent):
                 if i % self._config["frequency_update_actor"] == 0:
                     action, log_prob = self.actor.get_action_and_log_probs(s0,reparameterize=True)
                     actor_Q = self.get_Q_value(s0,action)
-                    actor_loss = (self.temperature * log_prob - actor_Q).mean(axis=0)
+                    actor_loss = -(actor_Q-self.temperature*log_prob).mean(axis=0)
+                    #actor_loss = (self.temperature * log_prob - actor_Q).mean(axis=0)
                     actor_loss = self.update_policy(actor_loss)
                     policy_losses.append(actor_loss)
                     f = open("actor_loss.txt", "a")
