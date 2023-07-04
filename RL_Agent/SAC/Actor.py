@@ -4,15 +4,8 @@ import torch.optim as optim
 from torch.distributions.normal import Normal
 from Basic import feedforward as NN
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-torch.set_num_threads(1)
-
-class UnsupportedSpace(Exception):
-    """Exception raised when the Sensor or Action space are not compatible
-    """
-    def __init__(self, message="Unsupported Space"):
-        self.message = message
-        super().__init__(self.message)
+#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+#torch.set_num_threads(1)
 
 class Actor(NN.Feedforward):
     def __init__(self,input_dim,action_dim,action_space=None,hidden_sizes=[256,256],
@@ -24,6 +17,7 @@ class Actor(NN.Feedforward):
         self.activations = [activation_fun for l in self.layers]
         self.log_sigma = torch.nn.Linear(layer_sizes[-1],action_dim)
         self.mu = torch.nn.Linear(layer_sizes[-1],action_dim)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         self.action_space = action_space
         self.min_log_std = -20
         self.max_log_std = 2
@@ -46,10 +40,12 @@ class Actor(NN.Feedforward):
         log_sigma = self.log_sigma(x)
 
         #alternative way to clamping log_sigma
-        #log_sigma = torch.clamp(log_sigma,self.min_log_std,self.max_log_std)
+        #log_std = torch.tanh(log_std)
+        #log_std_min, log_std_max = self.log_std_bounds
+        #log_std = log_std_min + 0.5 * (log_std_max - log_std_min) * (log_std +1)
+
+        log_sigma = torch.clamp(log_sigma,self.min_log_std,self.max_log_std)
         
-        log_sigma = torch.tanh(log_sigma)
-        log_sigma = self.min_log_std + 0.5 * (self.max_log_std-self.min_log_std)*(log_sigma+1)
         return mu, log_sigma
 
     def random_action(self):
@@ -80,12 +76,13 @@ class Actor(NN.Feedforward):
         
         action = y * self.action_scale + self.action_bias
         log_prob = distribution.log_prob(sample)
-        log_prob -= torch.log(self.action_scale * (1 - y.pow(2)) + self.reparam_noise)
+        #TODO undo if no effect
+        #log_prob -= torch.log(self.action_scale * (1 - y.pow(2)) + self.reparam_noise)
         #if not only vector
         if self.action_dim>1:
-            if log_prob.dim()==1:
-                log_prob = log_prob.unsqueeze(axis=0).sum(axis=1,keepdim=True)
-            else:
-                log_prob = log_prob.sum(axis=1,keepdim=True)
+            #if log_prob.dim()==1:
+            #    log_prob = log_prob.unsqueeze(axis=0).sum(axis=1,keepdim=True)
+            #else:
+            log_prob = log_prob.sum(axis=1,keepdim=True)
         
         return action, log_prob

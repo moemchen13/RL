@@ -8,6 +8,7 @@ from Basic import feedforward as NN
 from Basic import memory as mem
 from Agent import agent,UnsupportedSpace
 from Actor import Actor
+from Critic import Critic
 
 
 class UnsupportedSpace(Exception):
@@ -23,14 +24,14 @@ class SAC_Agent(agent):
         super().__init__(observation_space,action_space,**userconfig)
         
         self._config = {
-            "start_steps":10000,
+            "start_steps":10,
             "eps": 0.1,
             "discount": 0.99,
             "buffer_size": int(1e7),
             "batch_size": 256,
             "lr_actor": float(3e-4),
             "lr_critic": float(1e-3),
-            "lr_value": float(0.0001),
+            "lr_value": float(1e-3),
             "hidden_size_critic": [256,256],
             "hidden_size_actor": [256,256],
             "hidden_size_value": [256,256],
@@ -52,7 +53,7 @@ class SAC_Agent(agent):
         self.discount = self._config["discount"]
         self.tau = self._config["tau"]
         self.train_iter=0
-        self.eval=False
+        self.eval_mode = False
         self.start_steps = self._config["start_steps"]
         if self._config["autotuned_temperature"]:
             self.target_entropy = -torch.Tensor(self.action_dim)
@@ -65,19 +66,12 @@ class SAC_Agent(agent):
 
         self.actor = Actor(self._obs_dim,self.action_dim,action_space=action_space,hidden_sizes=self._config["hidden_size_actor"],
                             learning_rate=self._config["lr_actor"])
-        self.critic_1 = NN.Feedforward(input_dim=self._obs_dim+self.action_dim,hidden_sizes=self._config["hidden_size_critic"]
-                                    ,output_size=1,learning_rate=self._config["lr_critic"],
-                                    name='critic_1')
-        self.critic_2 = NN.Feedforward(input_dim=self._obs_dim+self.action_dim,hidden_sizes=self._config["hidden_size_critic"],
-                                    output_size=1,learning_rate=self._config["lr_critic"],
-                                    name='critic_2')
-        self.target_critic_1 = NN.Feedforward(input_dim=self._obs_dim+self.action_dim,hidden_sizes=self._config["hidden_size_critic"]
-                                    ,output_size=1,learning_rate=self._config["lr_critic"],
-                                    name='target_critic_1')
-        self.target_critic_2 = NN.Feedforward(input_dim=self._obs_dim+self.action_dim,hidden_sizes=self._config["hidden_size_critic"],
-                                    output_size=1,learning_rate=self._config["lr_critic"],
-                                    name='target_critic_2')
-        self.update_network_targets(1)
+        self.critic = Critic(self._obs_dim,self.action_dim,self._config["lr_critic"],hidden_sizes=self._config["hidden_size_critic"])
+
+        self.target = Critic(self._obs_dim,self.action_dim,self._config["lr_critic"],hidden_sizes=self._config["hidden_size_critic"],
+                             tau=self.tau,target=True)
+        
+        self.target.soft_update(self.critic,tau=1)
         
 
 
@@ -86,28 +80,27 @@ class SAC_Agent(agent):
 
     
     def get_networks_states(self):
-        return (self.actor.state_dict(), self.critic_1.state_dict(),
-                self.critic_2.state_dict(),self.target_critic_1.state_dict()
-                ,self.target_critic_2.state_dict())
+        return (self.actor.state_dict(),self.critic.get_network_states,self.target.get_network_states)
     
 
     def load_network_states(self,state):
         self.actor.load_state_dict(state[0])
-        self.critic_1.load_state_dict(state[1])
-        self.critic_2.load_state_dict(state[2])
-        self.target_critic_1.load_state_dict(state[3])
-        self.target_critic_2.load_state_dict(state[4]) 
+        self.critic.load_network_states(state[1])
+        self.target.load_network_states(state[2])
     
+
     def reset(self):
-        pass
+        raise NotImplementedError("U might wanna reset the policy network for faster learning as in DR3")
 
 
     def eval(self):
-        self.eval = True
+        self.eval_mode = True
+        print("Agent now in evaluation Mode")
     
 
     def train(self):
-        self.eval = False
+        self.eval_mode = False
+        print("Agent now in training mode")
 
 
     def act(self,state):
@@ -115,7 +108,7 @@ class SAC_Agent(agent):
         if self.start_steps> self.memory.size:
             action = self.actor.random_action()
         else:
-            if self.eval:
+            if self.eval_mode:
                 action = self.actor.get_action(state)
             else:
                 action, _ = self.actor.get_action_and_log_probs(state)
@@ -123,44 +116,14 @@ class SAC_Agent(agent):
 
     
     def get_Q_value(self,state,action):
-        q1_value = self.critic_1.forward(torch.cat([state,action],dim=1))
-        q2_value = self.critic_2.forward(torch.cat([state,action],dim=1))
-        Q_val = torch.min(q1_value,q2_value)
+        Q_val = self.critic.get_min_Q_value(state,action)
         return Q_val
     
 
     def get_target_Q_value(self,state,action):
         #same as get_Q_value but from target networks
-        target_q1_value = self.target_critic_1.forward(torch.cat([state,action],dim=1))
-        target_q2_value = self.target_critic_2.forward(torch.cat([state,action],dim=1))
-        target_Q_val = torch.min(target_q1_value,target_q2_value)
+        target_Q_val = self.target.get_min_Q_value(state,action)
         return target_Q_val
-    
-
-    def update_network_targets(self,tau=None):
-        #update the first network
-        if tau is None:
-            tau = self.tau
-        target_value_params = self.target_critic_1.named_parameters()
-        value_params = self.critic_1.named_parameters()
-        target_value_state_dict = dict(target_value_params)
-        value_state_dict = dict(value_params)
-
-        for name in value_state_dict:
-            value_state_dict[name] = tau*value_state_dict[name].clone() 
-            + (1-tau)*target_value_state_dict[name].clone()
-        self.target_critic_1.load_state_dict(value_state_dict)
-
-        #Update the second network
-        target_value_params = self.target_critic_2.named_parameters()
-        value_params = self.critic_2.named_parameters()
-        target_value_state_dict = dict(target_value_params)
-        value_state_dict = dict(value_params)
-
-        for name in value_state_dict:
-            value_state_dict[name] = tau*value_state_dict[name].clone() 
-            + (1-tau)*target_value_state_dict[name].clone()
-        self.target_critic_2.load_state_dict(value_state_dict)
 
     
     def update_Q_functions(self,s0,action,done,rew,s1):
@@ -174,34 +137,18 @@ class SAC_Agent(agent):
             y = (rew + self.discount * (1 - done)*target_value)
             #y = (rew + self.discount * (1 - done)*target_value).detach()
 
-        self.critic_1.optimizer.zero_grad()
-        self.critic_2.optimizer.zero_grad()
-        
-        Q_val_1 = self.critic_1.forward(torch.cat([s0,action],dim=1))
-        Q_val_2 = self.critic_2.forward(torch.cat([s0,action],dim=1))
-        
-        #ToDO: find out if need of squeezing of qloss
-        if self._config["use_smooth_L1"]:
-            Q_loss_1 = 0.5* torch.nn.functional.smooth_l1_loss(Q_val_1,y,reduction='mean')
-            Q_loss_2 = 0.5* torch.nn.functional.smooth_l1_loss(Q_val_2,y,reduction='mean')
-        else:
-            Q_loss_1 = 0.5* torch.nn.functional.mse_loss(Q_val_1,y)
-            Q_loss_2 = 0.5* torch.nn.functional.mse_loss(Q_val_2,y)
-        
-        Q_loss_1.backward()
-        Q_loss_2.backward()
-
-        self.critic_1.optimizer.step()
-        self.critic_2.optimizer.step()
-
-        return Q_loss_1.item(),Q_loss_2.item()        
+        q_loss = self.critic.update_critics(state=s0,action=action,target=y)
+        return q_loss      
 
 
-    def update_policy(self,actor_loss):
+    def update_policy(self,s0):
+        action, log_prob = self.actor.get_action_and_log_probs(s0,reparameterize=True)
+        actor_Q = self.get_Q_value(s0,action)
+        actor_loss = -(actor_Q-self.temperature*log_prob).mean(axis=0)
         self.actor.optimizer.zero_grad()
         actor_loss.backward()
         self.actor.optimizer.step()
-        return actor_loss.item()
+        return actor_loss.item(), log_prob
     
 
     def update_temperature(self,log_probs):
@@ -218,6 +165,7 @@ class SAC_Agent(agent):
         to_torch_int = lambda x: torch.from_numpy(x.astype(np.int_))
         q_losses = []
         policy_losses = []
+        temperature_losses=[]
 
         self.train_iter +=1
         
@@ -236,40 +184,24 @@ class SAC_Agent(agent):
                 ######Start SAC train loop#######
                 #updateQ
                 if i % self._config["frequency_update_Q"] == 0:
-                    q_loss_1,q_loss_2 = self.update_Q_functions(s0,a,done,rew,s1)
-                    q_losses.append(q_loss_1)
-                    q_losses.append(q_loss_2)
-                    f = open("q_loss.txt", "a")
-                    f.write(str(q_loss_1))
-                    f.write("       ")
-                    f.write(str(q_loss_2))
-                    f.write("\n")
-                    f.close()
-
+                    q_loss = self.update_Q_functions(s0,a,done,rew,s1)
+                    q_losses.append(q_loss)
 
                 #update policy
                 if i % self._config["frequency_update_actor"] == 0:
-                    action, log_prob = self.actor.get_action_and_log_probs(s0,reparameterize=True)
-                    actor_Q = self.get_Q_value(s0,action)
-                    actor_loss = -(actor_Q-self.temperature*log_prob).mean(axis=0)
-                    #actor_loss = (self.temperature * log_prob - actor_Q).mean(axis=0)
-                    actor_loss = self.update_policy(actor_loss)
+                    actor_loss,log_prob = self.update_policy(s0)
                     policy_losses.append(actor_loss)
-                    f = open("actor_loss.txt", "a")
-                    f.write(str(actor_loss))
-                    f.write("\n")
-                    f.close()
-
-                #Update temperture
+                    
+                #Update temperature
                 if self._config["autotuned_temperature"]:
                     temperature_loss = self.update_temperature(log_prob)
                 else:
                     temperature_loss = torch.tensor(0.)
+                temperature_losses.append(temperature_loss)
 
                 #Update targets networks
                 if i % self._config["frequency_update_targets"] == 0:
                     self.update_network_targets()
-
-                
-        return q_losses, policy_losses
+        
+        return q_losses,policy_losses,temperature_losses
 
