@@ -17,12 +17,13 @@ class Actor(NN.Feedforward):
         self.activations = [activation_fun for l in self.layers]
         self.log_sigma = torch.nn.Linear(layer_sizes[-1],action_dim)
         self.mu = torch.nn.Linear(layer_sizes[-1],action_dim)
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        self.learning_rate = learning_rate
         self.action_space = action_space
         self.min_log_std = -20
         self.max_log_std = 2
         self.reparam_noise = 1e-6
         self.action_dim = action_dim
+        self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
 
         if action_space is not None:
             self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2)

@@ -8,7 +8,7 @@ from Basic import feedforward as NN
 from Basic import memory as mem
 from Agent import agent,UnsupportedSpace
 from Actor import Actor
-from Critic import Critic
+from Critic import Critic_Q
 
 
 class UnsupportedSpace(Exception):
@@ -66,9 +66,9 @@ class SAC_Agent(agent):
 
         self.actor = Actor(self._obs_dim,self.action_dim,action_space=action_space,hidden_sizes=self._config["hidden_size_actor"],
                             learning_rate=self._config["lr_actor"])
-        self.critic = Critic(self._obs_dim,self.action_dim,self._config["lr_critic"],hidden_sizes=self._config["hidden_size_critic"])
+        self.critic = Critic_Q(self._obs_dim,self.action_dim,self._config["lr_critic"],hidden_sizes=self._config["hidden_size_critic"])
 
-        self.target = Critic(self._obs_dim,self.action_dim,self._config["lr_critic"],hidden_sizes=self._config["hidden_size_critic"],
+        self.target = Critic_Q(self._obs_dim,self.action_dim,self._config["lr_critic"],hidden_sizes=self._config["hidden_size_critic"],
                              tau=self.tau,target=True)
         
         self.target.soft_update(self.critic,tau=1)
@@ -201,7 +201,7 @@ class SAC_Agent(agent):
 
                 #Update targets networks
                 if i % self._config["frequency_update_targets"] == 0:
-                    self.update_network_targets()
+                    self.target.soft_update(self.critic)
         
         return q_losses,policy_losses,temperature_losses
 
