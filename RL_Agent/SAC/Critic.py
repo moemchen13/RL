@@ -46,7 +46,7 @@ class Critic_Q(nn.Module):
 
 
     def get_network_states(self):
-        return [network.state_disc() for network in self.networks]
+        return [network.state_dict() for network in self.networks]
         
 
     def load_network_states(self,states):

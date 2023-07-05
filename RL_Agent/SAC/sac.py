@@ -80,7 +80,7 @@ class SAC_Agent(agent):
 
     
     def get_networks_states(self):
-        return (self.actor.state_dict(),self.critic.get_network_states,self.target.get_network_states)
+        return (self.actor.state_dict(),self.critic.get_network_states(),self.target.get_network_states())
     
 
     def load_network_states(self,state):
