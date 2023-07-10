@@ -14,7 +14,7 @@ class UnsupportedSpace(Exception):
 
 class agent(object):
     def __init__(self,observation_space,action_space, **userconfig):
-        
+        super(agent,self).__init__()
         if not isinstance(observation_space, spaces.box.Box):
             raise UnsupportedSpace('Observation space {} incompatible ' \
                                    'with {}. (Require: Box)'.format(observation_space, self))

@@ -13,7 +13,7 @@ class UnsupportedSpace(Exception):
         super().__init__(self.message)
 
 class agent(object):
-    def __init__(self,observation_space,action_space,device='cpu', **userconfig):
+    def __init__(self,observation_space,action_space, **userconfig):
         
         if not isinstance(observation_space, spaces.box.Box):
             raise UnsupportedSpace('Observation space {} incompatible ' \

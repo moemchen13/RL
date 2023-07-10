@@ -1,14 +1,15 @@
 import os
-import torch
-import numpy as np
-from gymnasium import spaces
-import gymnasium as gym
 import pickle
+
+import gymnasium as gym
+import numpy as np
+import torch
+from Actor import Actor
+from Agent import UnsupportedSpace, agent
 from Basic import feedforward as NN
 from Basic import memory as mem
-from Agent import agent,UnsupportedSpace
-from Actor import Actor
 from Critic import Critic_Q
+from gymnasium import spaces
 
 
 class UnsupportedSpace(Exception):
@@ -28,7 +29,7 @@ class SAC_Agent(agent):
             "eps": 0.1,
             "discount": 0.99,
             "buffer_size": int(1e7),
-            "batch_size": 256,
+            "batch_size": 32,
             "lr_actor": float(3e-4),
             "lr_critic": float(1e-3),
             "lr_value": float(1e-3),
@@ -105,11 +106,12 @@ class SAC_Agent(agent):
 
     def act(self,state):
         state = torch.from_numpy(state)
-        if self.start_steps> self.memory.size:
-            action = self.actor.random_action()
+        
+        if self.eval_mode:
+            action = self.actor.get_action(state)
         else:
-            if self.eval_mode:
-                action = self.actor.get_action(state)
+            if self.start_steps> self.memory.size:
+                action = self.actor.random_action()
             else:
                 action, _ = self.actor.get_action_and_log_probs(state)
         return action.detach().numpy()
@@ -134,8 +136,8 @@ class SAC_Agent(agent):
             #get V estimate
             target_value = min_Q_next - self.temperature * log_prob_next
             
-            y = (rew + self.discount * (1 - done)*target_value)
-            #y = (rew + self.discount * (1 - done)*target_value).detach()
+            #y = (rew + self.discount * (1 - done)*target_value)
+            y = (rew + self.discount * (1 - int(done))*target_value)
 
         q_loss = self.critic.update_critics(state=s0,action=action,target=y)
         return q_loss      
@@ -162,7 +164,8 @@ class SAC_Agent(agent):
 
     def train(self,iter_fit=32):
         to_torch = lambda x: torch.from_numpy(x.astype(np.float32))
-        to_torch_int = lambda x: torch.from_numpy(x.astype(np.int_))
+        #to_torch_int = lambda x: torch.from_numpy(x.astype(np.int_))
+        to_torch_bool = lambda x: torch.from_numpy(x.astype(np.bool_))
         q_losses = []
         policy_losses = []
         temperature_losses=[]
@@ -179,7 +182,8 @@ class SAC_Agent(agent):
                 a = to_torch(np.stack(data[:,1]))
                 rew = to_torch(np.stack(data[:,2])[:,None])
                 s1 = to_torch(np.stack(data[:,3]))
-                done = to_torch_int(np.stack(data[:,4])[:,None])
+                done = to_torch_bool(np.stack(data[:,4])[:,None])
+                #done = to_torch_int(np.stack(data[:,4])[:,None])
                 
                 ######Start SAC train loop#######
                 #updateQ

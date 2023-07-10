@@ -4,8 +4,11 @@ import torch.optim as optim
 import numpy as np
 
 class Feedforward(torch.nn.Module):
-    def __init__(self, input_dim, hidden_sizes, output_size,learning_rate= 0.0002, activation_fun=torch.nn.Tanh(), output_activation=None,name="feedforward",folder="tmp"):
+    def __init__(self, input_dim, hidden_sizes, output_size,learning_rate= 0.0002, 
+                 activation_fun=torch.nn.Tanh(), output_activation=None,
+                 name="feedforward",folder="tmp",device='cpu'):
         super(Feedforward, self).__init__()
+        self.device= device
         self.input_size = input_dim
         self.hidden_sizes  = hidden_sizes
         self.output_size  = output_size
@@ -16,6 +19,8 @@ class Feedforward(torch.nn.Module):
         self.readout = torch.nn.Linear(self.hidden_sizes[-1], self.output_size)
         self.checkpoint_file = os.path.join(folder,name)
         self.optimizer = optim.Adam(self.parameters(),lr=learning_rate,eps=0.000001)
+        if self.device == 'cuda':
+            self.cuda()
 
     def forward(self, x):
         for layer,activation_fun in zip(self.layers, self.activations):

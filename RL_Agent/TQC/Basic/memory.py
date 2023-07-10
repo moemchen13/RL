@@ -28,3 +28,4 @@ class Memory():
 
     def get_all_transitions(self):
         return (torch.FloatTensor(getattr(self,name)[:]).to(self.device) for name in self.transition_names)
+

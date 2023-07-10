@@ -9,8 +9,9 @@ from Basic import feedforward as NN
 #torch.set_num_threads(1)
 
 class Critic_Q(nn.Module):
-    def __init__(self, input_dim, action_dim, learning_rate, hidden_sizes=[256, 256],loss='l2',tau=None,target=False):
+    def __init__(self, input_dim, action_dim, learning_rate, hidden_sizes=[256, 256],loss='l2',tau=None,target=False,device='cpu'):
         super(Critic_Q, self).__init__()
+        self.device=device
         self.tau = tau
         self.network_number = 2
         self.input_dim = input_dim + action_dim
@@ -21,24 +22,34 @@ class Critic_Q(nn.Module):
 
         if target:
             self.networks = [NN.Feedforward(input_dim=self.input_dim,hidden_sizes = hidden_sizes,output_size=1,
-                                        learning_rate=self.learning_rate,name=f'target_critic_{i}') for i in range(self.network_number)]
+                                        learning_rate=self.learning_rate,name=f'target_critic_{i}',device=self.device) for i in range(self.network_number)]
         else:
             self.networks = [NN.Feedforward(input_dim=self.input_dim,hidden_sizes = hidden_sizes,output_size=1,
-                                        learning_rate=self.learning_rate,name=f'critic_{i}')for i in range(self.network_number)]
+                                        learning_rate=self.learning_rate,name=f'critic_{i}',device=self.device)for i in range(self.network_number)]
         if loss == 'l2':
             self.losses = [nn.MSELoss() for i in range(self.network_number)]
         else:
             self.losses = [nn.SmoothL1Loss(reduction='mean') for i in range(self.network_number)]
+        
+        if device =='cuda':
+            self.cuda()
 
+        
+        #parameters = []
+        #for net in self.networks:
+        #    parameters += list(net.parameters())
+        #self.optimizers = torch.optim.Adam(parameters,lr=self.learning_rate)
         self.optimizers = [optim.Adam(self.networks[i].parameters(), lr=self.learning_rate)for i in range(self.network_number)]
 
         
 
     def soft_update(self,CriticNetwork,tau=None):
+        
+        if self.tau is None:
+            raise ValueError("This is a no TargetNetwork tau not specified")
+        
         if tau is None:
             tau = self.tau
-        if tau is None:
-            raise ValueError("This is a no TargetNetwork tau not specified")
         
         for target, critic in zip(self.networks,CriticNetwork.networks):
             for target_param, critic_param in zip(target.parameters(),critic.parameters()):
@@ -68,7 +79,7 @@ class Critic_Q(nn.Module):
             else:
                 Loss += Q_loss.item()
         return Loss
-
+    
 
     def get_min_Q_value(self,state,action):
         min_Q = None
