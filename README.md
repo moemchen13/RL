@@ -54,10 +54,12 @@ If simple changes are done nothing works describe the changes.
   f5ba072
 - [ ] Implement DDQN
 - [ ] Implement DDPG
-- [ ] Implement SAC :eyes:
+- [x] Implement SAC
 - [ ] DQN Extension
 - [ ] DDPG Extension
-- [ ] SAC Extension
+- [ ] SAC Extension :eyes:
+  [SAC](https://doi.org/10.48550/arXiv.1801.01290)
+  Implementation with 4 Critic Networks Entropy autotuning and 1 Actor with exploration based on the entropy
 - [ ] Testing DQN with Extensions
 - [ ] Testing DDPG with Extensions
 - [ ] Testing SAC with Extensions
