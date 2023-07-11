@@ -11,6 +11,8 @@ from Basic import memory as mem
 from Critic import Critic_Q
 from gymnasium import spaces
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print('Using device:', device)
 
 class UnsupportedSpace(Exception):
     """Exception raised when the Sensor or Action space are not compatible
@@ -25,28 +27,27 @@ class SAC_Agent(agent):
         super().__init__(observation_space,action_space,**userconfig)
         
         self._config = {
-            "start_steps":10,
-            "eps": 0.1,
+            "start_steps":10000,
             "discount": 0.99,
             "buffer_size": int(1e7),
-            "batch_size": 32,
+            "batch_size": 256,
             "lr_actor": float(3e-4),
             "lr_critic": float(1e-3),
             "lr_value": float(1e-3),
-            "hidden_size_critic": [256,256],
-            "hidden_size_actor": [256,256],
-            "hidden_size_value": [256,256],
+            "hidden_size_critic": [128,128],
+            "hidden_size_actor": [128,128],
+            "hidden_size_value": [128,128],
             "frequency_update_Q":1,
             "frequency_update_actor":1,
             "frequency_update_targets":1,
             "tau": 0.005,
             "reward_scale":2,
             "update_target_every":1,
-            "autotuned_temperature":False,
+            "autotuned_temperature":True,
             "temperature":0.1,
             "use_smooth_L1":False,
             }
-        self.memory = mem.Memory(max_size=self._config["buffer_size"])
+        self.device = device
         self._observation_space = observation_space
         self._obs_dim = self._observation_space.shape[0]
         self._action_space = action_space
@@ -56,24 +57,34 @@ class SAC_Agent(agent):
         self.train_iter=0
         self.eval_mode = False
         self.start_steps = self._config["start_steps"]
+        self.memory = mem.Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,action_dim=self.action_dim)
+        
         if self._config["autotuned_temperature"]:
-            self.target_entropy = -torch.Tensor(self.action_dim)
-            self.log_temperature = torch.zeros(1,requires_grad=True)
-            self.temperature = self.log_temperature.exp().item()
+            self.target_entropy = -torch.Tensor(self.action_dim,device=self.device)
+            self.log_temperature = torch.zeros(1,requires_grad=True,device=self.device)
             self.temperature_optimizer = torch.optim.Adam([self.log_temperature],lr=self._config["lr_critic"])
         else:
-            self.temperature = self._config["temperature"]
-
+            self.log_temperature = torch.Tensor(self._config["temperature"].log(),device=self.device)
 
         self.actor = Actor(self._obs_dim,self.action_dim,action_space=action_space,hidden_sizes=self._config["hidden_size_actor"],
-                            learning_rate=self._config["lr_actor"])
-        self.critic = Critic_Q(self._obs_dim,self.action_dim,self._config["lr_critic"],hidden_sizes=self._config["hidden_size_critic"])
+                            learning_rate=self._config["lr_actor"],device=self.device)
+        self.critic = Critic_Q(self._obs_dim,self.action_dim,self._config["lr_critic"],
+                               hidden_sizes=self._config["hidden_size_critic"],device=self.device)
 
-        self.target = Critic_Q(self._obs_dim,self.action_dim,self._config["lr_critic"],hidden_sizes=self._config["hidden_size_critic"],
-                             tau=self.tau,target=True)
+        self.target = Critic_Q(self._obs_dim,self.action_dim,self._config["lr_critic"],
+                            hidden_sizes=self._config["hidden_size_critic"],
+                            tau=self.tau,target=True,device=self.device)
         
         self.target.soft_update(self.critic,tau=1)
         
+        
+        if action_space is not None:
+            self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2,device=self.device)
+            self.action_bias = torch.FloatTensor((action_space.high + action_space.low) / 2,device=self.device)
+        else:
+            self.action_scale = torch.tensor(1.,device=self.device)
+            self.action_bias = torch.tensor(0.,device=self.device)
+
 
 
     def store_transition(self,transition):
@@ -104,17 +115,22 @@ class SAC_Agent(agent):
         print("Agent now in training mode")
 
 
+    def rescale_action(self,action):
+        return action[0]*self.action_scale + self.action_bias
+
+
     def act(self,state):
-        state = torch.from_numpy(state)
+        state = torch.FloatTensor(state).to(self.device)[None,:]
         
         if self.eval_mode:
             action = self.actor.get_action(state)
         else:
             if self.start_steps> self.memory.size:
                 action = self.actor.random_action()
-            else:
+            else:    
                 action, _ = self.actor.get_action_and_log_probs(state)
-        return action.detach().numpy()
+        action = self.rescale_action(action)
+        return action.cpu().detach().numpy()
 
     
     def get_Q_value(self,state,action):
@@ -132,12 +148,10 @@ class SAC_Agent(agent):
         with torch.no_grad():
             a_next , log_prob_next = self.actor.get_action_and_log_probs(s1,reparameterize=False)
             min_Q_next = self.get_target_Q_value(s1,a_next)
-            min_Q_next[done] = 0.0
             #get V estimate
-            target_value = min_Q_next - self.temperature * log_prob_next
+            target_value = min_Q_next - self.log_temperature.exp() * log_prob_next
             
-            #y = (rew + self.discount * (1 - done)*target_value)
-            y = (rew + self.discount * (1 - int(done))*target_value)
+            y = (rew + self.discount * (1 - done)*target_value)
 
         q_loss = self.critic.update_critics(state=s0,action=action,target=y)
         return q_loss      
@@ -146,7 +160,7 @@ class SAC_Agent(agent):
     def update_policy(self,s0):
         action, log_prob = self.actor.get_action_and_log_probs(s0,reparameterize=True)
         actor_Q = self.get_Q_value(s0,action)
-        actor_loss = -(actor_Q-self.temperature*log_prob).mean(axis=0)
+        actor_loss = (-actor_Q+self.log_temperature.exp().detach()*log_prob).mean(axis=0)
         self.actor.optimizer.zero_grad()
         actor_loss.backward()
         self.actor.optimizer.step()
@@ -155,17 +169,14 @@ class SAC_Agent(agent):
 
     def update_temperature(self,log_probs):
         self.temperature_optimizer.zero_grad()
-        temperature_loss  =  -(self.log_temperature * (log_probs+ self.target_entropy).detach()).mean()
+        temperature_loss  =  -(self.log_temperature.exp() * 
+                               (log_probs+ self.target_entropy).detach()).mean()
         temperature_loss.backward()
         self.temperature_optimizer.step()
-        self.temperature = self.log_temperature.exp()
         return temperature_loss.item()
 
 
     def train(self,iter_fit=32):
-        to_torch = lambda x: torch.from_numpy(x.astype(np.float32))
-        #to_torch_int = lambda x: torch.from_numpy(x.astype(np.int_))
-        to_torch_bool = lambda x: torch.from_numpy(x.astype(np.bool_))
         q_losses = []
         policy_losses = []
         temperature_losses=[]
@@ -177,13 +188,7 @@ class SAC_Agent(agent):
             if self.memory.size > self._config["batch_size"]:
                 #Sample Batches from the replay Buffer
                 data=self.memory.sample(batch=self._config["batch_size"])
-                #Data Preparation: torchvectors
-                s0 = to_torch(np.stack(data[:,0]))
-                a = to_torch(np.stack(data[:,1]))
-                rew = to_torch(np.stack(data[:,2])[:,None])
-                s1 = to_torch(np.stack(data[:,3]))
-                done = to_torch_bool(np.stack(data[:,4])[:,None])
-                #done = to_torch_int(np.stack(data[:,4])[:,None])
+                s0,a,rew,s1,done=data
                 
                 ######Start SAC train loop#######
                 #updateQ

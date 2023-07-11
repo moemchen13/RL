@@ -1,7 +1,9 @@
 import os
+
+import numpy as np
 import torch
 import torch.optim as optim
-import numpy as np
+
 
 class Feedforward(torch.nn.Module):
     def __init__(self, input_dim, hidden_sizes, output_size,learning_rate= 0.0002, 

@@ -1,8 +1,8 @@
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.optim as optim
 from torch.distributions.normal import Normal
-import torch.nn as nn
 
 #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #torch.set_num_threads(1)
