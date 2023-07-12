@@ -31,15 +31,14 @@ class TQC_Agent(agent):
             "batch_size": 32,
             "lr_actor": float(3e-4),
             "lr_critic": float(3e-4),
-            "hidden_size_critic": [64,64,64],
-            "hidden_size_actor": [64,64],
+            "hidden_size_critic": [128,128,128],
+            "hidden_size_actor": [256,256],
             "frequency_update_Q":1,
             "frequency_update_actor":1,
             "frequency_update_targets":2,
             "tau": 0.01,
             "reward_scale":2, #why did i needed that? clamp of gradient?
             "update_target_every":1,
-            "use_smooth_L1":False,
             "number_critics":2,
             "number_quantiles":3,
             "drop_top_quantiles":1,
@@ -212,20 +211,25 @@ class TQC_Agent(agent):
                 ######Start SAC train loop#######
 
                 #Calculate losses
+                #updateQ
+                if self.train_iter % self._config["frequency_update_Q"] == 0:
+                    q_loss = self.calculate_critic_loss(s0,a,rew,done,s1)
+                    
                 #update policy and Update temperature
                 if self.train_iter % self._config["frequency_update_actor"] == 0:
                     actor_loss,temperature_loss = self.calculate_policy_and_temperature_loss(s0)
+                    
+                #update pi alpha
+                if self.train_iter % self._config["frequency_update_actor"] == 0:
                     actor_loss = self.update_actor_net(actor_loss)
                     policy_losses.append(actor_loss)
                     temperature_loss = self.update_temperature(temperature_loss)
                     temperature_losses.append(temperature_loss)
 
-                #updateQ
+                #update q
                 if self.train_iter % self._config["frequency_update_Q"] == 0:
-                    q_loss = self.calculate_critic_loss(s0,a,rew,done,s1)
                     q_loss = self.update_q_nets(q_loss)
                     q_losses.append(q_loss)
-
 
                 #Update targets
                 if self.train_iter % self._config["frequency_update_targets"] == 0:

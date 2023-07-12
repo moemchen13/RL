@@ -31,6 +31,14 @@ class Feedforward(torch.nn.Module):
             return self.output_activation(self.readout(x))
         else:
             return self.readout(x)
+    
+    def dot_prod_last_layer(self,x,x_prime):
+        for layer,activation_fun in zip(self.layers[:-1],self.activations[:-1]):
+            x = activation_fun(layer(x))
+            x_prime = activation_fun(layer(x_prime))
+            #shape(x) = Batchsize,hidden_sizes[-1]
+            dot_product = (x*x_prime).sum(axis=1)
+        return dot_product
 
     def save_checkpoint(self):
         torch.save(self.state_dict(),self.checkpoint_file)

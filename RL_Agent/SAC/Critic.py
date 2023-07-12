@@ -81,6 +81,25 @@ class Critic_Q(nn.Module):
         return Loss
     
 
+    def update_critics_DR3(self,s0,a,s1,a_prime,target,beta=0.01):
+        Loss = None
+        x = torch.cat([s0,a],dim=1)
+        x_prime = torch.cat([s1,a_prime],dim=1)
+        for optimizer,loss,network in zip(self.optimizers,self.losses,self.networks):
+            optimizer.zero_grad()
+            q_pred = network.forward(x)
+            regularizer = network.dot_prod_last_layer(x,x_prime).sum()
+            Q_loss = (loss(q_pred,target)+regularizer*beta)*1/self.network_number
+            Q_loss.backward()
+            optimizer.step()
+
+            if Loss is None:
+                Loss = Q_loss.item()
+            else:
+                Loss += Q_loss.item()
+        return Loss
+    
+
     def get_min_Q_value(self,state,action):
         min_Q = None
         for network in self.networks:
