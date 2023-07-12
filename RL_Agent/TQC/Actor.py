@@ -2,8 +2,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.distributions import Distribution,Normal
-from torch.nn.functional import relu, logsigmoid
+from torch.distributions import Distribution, Normal
+from torch.nn.functional import logsigmoid, relu
+
 
 class Actor(torch.nn.Module):
     def __init__(self,input_dim,action_dim,action_space=None,hidden_sizes=[256,256],device='cpu',
@@ -22,9 +23,9 @@ class Actor(torch.nn.Module):
 
         self.learning_rate = learning_rate
         self.action_space = action_space
-        self.min_log_std = torch.Tensor(-20,device=self.device)
-        self.max_log_std = torch.Tensor(2,device=self.device)
-        self.reparam_noise = torch.Tensor(1e-6,device=self.device)
+        self.min_log_std = torch.tensor(-20).to(self.device)
+        self.max_log_std = torch.tensor(2).to(self.device)
+        self.reparam_noise = torch.tensor(1e-6).to(self.device)
         self.action_dim = action_dim
 
         if device =='cuda':

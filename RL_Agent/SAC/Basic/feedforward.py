@@ -32,10 +32,6 @@ class Feedforward(torch.nn.Module):
         else:
             return self.readout(x)
 
-    def predict(self, x):
-        with torch.no_grad():
-            return self.forward(torch.from_numpy(x.astype(np.float32))).numpy()
-        
     def save_checkpoint(self):
         torch.save(self.state_dict(),self.checkpoint_file)
 

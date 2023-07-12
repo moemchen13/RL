@@ -3,10 +3,11 @@ import torch
 import torch.nn as nn
 from Basic import feedforward as NN
 
+
 class Critic_Quantiles(nn.Module):
     def __init__(self,input_dim,action_dim,number_quantiles,number_networks,
                  hidden_sizes=[512,512,512],device='cpu',lr=3e-4,tau=None,target=False):
-        super(Critic_Quantiles,self).__init__()
+        super().__init__()
         self.device = device
         self.tau = tau
         self.n_networks = number_networks

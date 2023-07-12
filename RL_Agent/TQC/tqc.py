@@ -1,14 +1,15 @@
 import os
-import torch
-import numpy as np
-from gymnasium import spaces
-import gymnasium as gym
 import pickle
+
+import gymnasium as gym
+import numpy as np
+import torch
+from Actor import Actor
 from Basic import feedforward as NN
 from Basic import memory as mem
-from Basic.Agent import agent,UnsupportedSpace
-from Actor import Actor
+from Basic.Agent import UnsupportedSpace, agent
 from Critic import Critic_Quantiles
+from gymnasium import spaces
 
 
 class UnsupportedSpace(Exception):
@@ -26,22 +27,22 @@ class TQC_Agent(agent):
         self._config = {
             "start_steps":1000,
             "discount": 0.99,
-            "buffer_size": int(1e7),
-            "batch_size": 128,
+            "buffer_size": int(1e6),
+            "batch_size": 32,
             "lr_actor": float(3e-4),
             "lr_critic": float(3e-4),
-            "hidden_size_critic": [512,512,512],
-            "hidden_size_actor": [256,256],
+            "hidden_size_critic": [64,64,64],
+            "hidden_size_actor": [64,64],
             "frequency_update_Q":1,
             "frequency_update_actor":1,
-            "frequency_update_targets":1,
-            "tau": 0.005,
-            "reward_scale":2,
+            "frequency_update_targets":2,
+            "tau": 0.01,
+            "reward_scale":2, #why did i needed that? clamp of gradient?
             "update_target_every":1,
             "use_smooth_L1":False,
             "number_critics":2,
-            "number_quantiles":25,
-            "drop_top_quantiles": 2,
+            "number_quantiles":3,
+            "drop_top_quantiles":1,
             "autotuned_temperature":True,
             "temperature":0.01,
             }
@@ -70,8 +71,8 @@ class TQC_Agent(agent):
                                        self._config["number_critics"],hidden_sizes=self._config["hidden_size_critic"],
                                        device=self.device,lr=self._config["lr_critic"],tau=self.tau,target=True)
         
-        self.target_entropy = -torch.Tensor(self.action_dim,device=self.device)
-        self.log_temperature = torch.Tensor(np.log(self._config["temperature"]),requires_grad=True,device=self.device)
+        self.target_entropy = -torch.tensor(self.action_dim,device=self.device)
+        self.log_temperature = torch.tensor(np.log(self._config["temperature"]),requires_grad=True,device=self.device)
         self.temperature_optimizer = torch.optim.Adam([self.log_temperature],lr=self._config["lr_critic"])
         self.learning_iterations = torch.zeros(1,device=self.device)
         self.target.soft_update(self.critic,tau=1)
@@ -148,21 +149,22 @@ class TQC_Agent(agent):
         return q_loss
 
 
+
     def calculate_policy_and_temperature_loss(self,s0):
         
         action, log_prob = self.actor.get_action_and_log_probs(s0,reparameterize=True)
-        actor_Q = self.critic.forward(s0,action)
+        z = self.critic.forward(s0,action)
 
         #dimensions:  batch,networks,quantiles
-        policy_loss = (self.log_temperature.exp().detach()*
-                       log_prob-actor_Q.mean(axis=2).mean(axis=1,keepdim=True)).mean()
+        actor_loss = ((self.log_temperature.exp().detach()*
+                       log_prob)-z.mean(axis=2).mean(axis=1,keepdim=True)).mean()
         #policy_loss = (self.log_temperature.exp().detach()*log_prob-actor_Q.clone().mean(axis=2).mean(axis=1,keepdim=True)).mean()
         if self._config["autotuned_temperature"]:
             temperature_loss = self.calculate_temperature_loss(log_prob)
         else:
             temperature_loss = torch.tensor.zeros(1,device=self.device)
 
-        return policy_loss, temperature_loss
+        return actor_loss, temperature_loss
     
 
     def calculate_temperature_loss(self,log_probs):
@@ -179,12 +181,12 @@ class TQC_Agent(agent):
         return q_loss.item()
     
 
-    def update_actor_net(self,policy_loss):        
+    def update_actor_net(self,actor_loss):        
         #update policy
         self.actor.optimizer.zero_grad()
-        policy_loss.backward()
+        actor_loss.backward()
         self.actor.optimizer.step()
-        return policy_loss.item()
+        return actor_loss.item()
 
 
     def update_temperature(self,temperature_loss):
@@ -234,17 +236,20 @@ class TQC_Agent(agent):
 
 
 def quantile_huber_loss(quantiles, samples,device="cpu"):
-    # input_dim = batch,nets,quantiles,samples
+    # quantiles(shape): batch,nets,quantiles
+    # samples(shape): batch,nets*k [k=n_quantiles-n_quantiles_to_drop]
     #https://en.wikipedia.org/wiki/Huber_loss
     #https://github.com/chainer/chainerrl/issues/590
+    #           0,  1,  2,         3
+    #shape: batch,nets,n_quantiles,k
     pairwise_delta = samples[:, None, None, :] - quantiles[:, :, :, None]
     abs_pairwise_delta = torch.abs(samples[:, None, None, :] - quantiles[:, :, :, None])
-    kappa = 1
-    huber_loss = torch.where(abs_pairwise_delta <= kappa,
+    #kappa = 1
+    huber_loss = torch.where(abs_pairwise_delta <= 1,
                             pairwise_delta ** 2 * 0.5,
-                            abs_pairwise_delta-0.5*kappa)
+                            abs_pairwise_delta-0.5)
 
     n_quantiles = quantiles.shape[2]
     tau = torch.arange(n_quantiles, device=device).float() / n_quantiles + 1 / 2 / n_quantiles
-    loss = (torch.abs(tau[None, None, :, None] - (pairwise_delta < 0).float()) * huber_loss/kappa).mean()
+    loss = (torch.abs(tau[None, None, :, None] - (pairwise_delta < 0).float()) * huber_loss).mean()
     return loss
