@@ -1,10 +1,12 @@
 import os
+
+import numpy as np
 import torch
 import torch.optim as optim
-import numpy as np
+
 
 class Feedforward(torch.nn.Module):
-    def __init__(self, input_dim, hidden_sizes, output_size, activation_fun=torch.nn.Tanh(),
+    def __init__(self, input_dim, hidden_sizes, output_size, activation_fun=torch.nn.ReLU(),
                  output_activation=None,device ='cpu',name="feedforward",folder="tmp"):
         super(Feedforward, self).__init__()
         self.device =device

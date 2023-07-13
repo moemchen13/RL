@@ -4,23 +4,18 @@ import time
 import gymnasium as gym
 import numpy as np
 import torch
-from DR3 import DR3_Agent
 from gymnasium import spaces
-from sac import SAC_Agent
+from tqc import TQC_Agent
 
 
-def save_statistics(rewards,lengths,q_losses,pi_losses,temperature_loss,env_name,random_seed,episode,regularized=False):
-    version = ""
-    if regularized:
-        version = "DR3"
-    with open(f"./results/SAC_{version}_{env_name}-s{random_seed}-e{episode}-stat.pkl", 'wb') as f:
+def save_statistics(rewards,lengths,q_losses,pi_losses,temperature_loss,env_name,random_seed,episode):
+    with open(f"./results/SAC_{env_name}-s{random_seed}-e{episode}-stat.pkl", 'wb') as f:
         pickle.dump({"rewards" : rewards, "lengths": lengths, "train": train_iter,
                         "pi_losses": pi_losses, "q_losses": q_losses,
                         "temperature_loss":temperature_loss}, f)
 
 
-def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,
-                                 max_timesteps,train_iter,random_seed,regularized=False):
+def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,max_timesteps,train_iter,random_seed):
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
 
@@ -30,21 +25,15 @@ def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episode
         env = gym.make(env_name,continuous=True)
     else:
         env = gym.make(env_name)
-
-    if regularized:
-        agent = DR3_Agent(env.observation_space)
-    else:
-        agent = SAC_Agent(env.observation_space, env.action_space)
-    
+    agent = TQC_Agent(env.observation_space, env.action_space)
     rewards = []
     lengths = []
     q_losses = []
     policy_losses = []
     temperature_losses = []
-    
-    version = ""
-    if regularized:
-        version = "DR3"
+    timeseries = []
+    timestep = 0
+    training_steps = 0
 
     for episode in range(1,max_episodes+1):
         ob, _info = env.reset()
@@ -59,8 +48,12 @@ def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episode
             ob=ob_new
             if done or trunc: break
 
+        #start_time = time.time()
         q_loss,pi_loss,temperature_loss = agent.train(train_iter)
+        training_steps +=1
+        #timeseries.append(time.time() - start_time)
         
+            
         q_losses.extend(q_loss)
         policy_losses.extend(pi_loss)
         temperature_losses.extend(temperature_loss)
@@ -69,7 +62,7 @@ def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episode
 
         if episode % save_interval == 0:
             print("########### Save checkpoint ################")
-            torch.save(agent.get_networks_states(),f'./results/SAC{version}_{env_name}-e{episode}-t{train_iter}-s{random_seed}.pth')
+            torch.save(agent.get_networks_states(),f'./results/SAC_{env_name}-e{episode}-t{train_iter}-s{random_seed}.pth')
             save_statistics(rewards,lengths,q_losses,policy_losses,temperature_losses,env_name,random_seed,episode)
 
         if episode % log_interval == 0:
@@ -77,8 +70,12 @@ def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episode
             avg_length = int(np.mean(lengths[-log_interval:]))
             print('Episode {} \t avg length: {} \t reward: {}'.format(episode, avg_length, avg_reward))
         
+        #if episode % time_plot_intervall == 0 or max_episodes== episode:
+        #    plot_time(timeseries)
     save_statistics(rewards,lengths,q_losses,policy_losses,temperature_losses,env_name,random_seed,episode)
     
+    #print(training_steps)
+    #return timeseries
 
 
 env_name = "Pendulum-v1"
@@ -92,15 +89,13 @@ random_seed = 42
 time_plot_intervall = 1000
 
 run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,max_timesteps,train_iter,random_seed)
-run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,max_timesteps,train_iter,random_seed,regularized=True)
 
 env_name = "HalfCheetah-v4"
 log_interval = 20         # print avg reward in the interval
-max_episodes = 10000 # max training episodes
+max_episodes = 4000 # max training episodes
 max_timesteps = 2000         # max timesteps in one episode
-save_interval = 10000
+save_interval = 1000
 train_iter = 32      # update networks for given batched after every episode
 random_seed = 42
 
 run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,max_timesteps,train_iter,random_seed)
-run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,max_timesteps,train_iter,random_seed,regularized=True)
