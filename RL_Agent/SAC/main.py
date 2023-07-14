@@ -32,7 +32,7 @@ def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episode
         env = gym.make(env_name)
 
     if regularized:
-        agent = DR3_Agent(env.observation_space)
+        agent = DR3_Agent(env.observation_space,env.action_space)
     else:
         agent = SAC_Agent(env.observation_space, env.action_space)
     
@@ -50,7 +50,6 @@ def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episode
         ob, _info = env.reset()
         total_reward=0
         for t in range(max_timesteps):
-            timestep +=1
             done = False
             a = agent.act(ob)
             (ob_new,reward,done,trunc,_info) = env.step(a)
@@ -84,9 +83,9 @@ def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episode
 env_name = "Pendulum-v1"
 #env_name = "LunarLander-v2"
 log_interval = 20         # print avg reward in the interval
-max_episodes = 2000 # max training episodes
+max_episodes = 200 # max training episodes
 max_timesteps = 2000         # max timesteps in one episode
-save_interval = 20
+save_interval = 200
 train_iter = 32      # update networks for given batched after every episode
 random_seed = 42
 time_plot_intervall = 1000
@@ -96,11 +95,12 @@ run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,ma
 
 env_name = "HalfCheetah-v4"
 log_interval = 20         # print avg reward in the interval
-max_episodes = 10000 # max training episodes
+max_episodes = 100 # max training episodes
 max_timesteps = 2000         # max timesteps in one episode
-save_interval = 10000
+save_interval = 100
 train_iter = 32      # update networks for given batched after every episode
 random_seed = 42
 
-run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,max_timesteps,train_iter,random_seed)
-run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,max_timesteps,train_iter,random_seed,regularized=True)
+#run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,max_timesteps,train_iter,random_seed)
+#run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,max_timesteps,train_iter,random_seed,regularized=True)
+print("thx")

@@ -42,7 +42,7 @@ class TQC_Agent(agent):
             "number_quantiles":25,
             "drop_top_quantiles":2,
             "autotuned_temperature":True,
-            "temperature":0.01,
+            "temperature":0.1,
             }
         self.device = device
         self._observation_space = observation_space

@@ -31,15 +31,12 @@ def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episode
     q_losses = []
     policy_losses = []
     temperature_losses = []
-    timeseries = []
-    timestep = 0
-    training_steps = 0
 
     for episode in range(1,max_episodes+1):
         ob, _info = env.reset()
         total_reward=0
         for t in range(max_timesteps):
-            timestep +=1
+            
             done = False
             a = agent.act(ob)
             (ob_new,reward,done,trunc,_info) = env.step(a)
@@ -48,10 +45,7 @@ def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episode
             ob=ob_new
             if done or trunc: break
 
-        #start_time = time.time()
         q_loss,pi_loss,temperature_loss = agent.train(train_iter)
-        training_steps +=1
-        #timeseries.append(time.time() - start_time)
         
             
         q_losses.extend(q_loss)
@@ -70,20 +64,16 @@ def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episode
             avg_length = int(np.mean(lengths[-log_interval:]))
             print('Episode {} \t avg length: {} \t reward: {}'.format(episode, avg_length, avg_reward))
         
-        #if episode % time_plot_intervall == 0 or max_episodes== episode:
-        #    plot_time(timeseries)
     save_statistics(rewards,lengths,q_losses,policy_losses,temperature_losses,env_name,random_seed,episode)
     
-    #print(training_steps)
-    #return timeseries
 
 
 env_name = "Pendulum-v1"
 #env_name = "LunarLander-v2"
 log_interval = 20         # print avg reward in the interval
-max_episodes = 2000 # max training episodes
+max_episodes = 200 # max training episodes
 max_timesteps = 2000         # max timesteps in one episode
-save_interval = 20
+save_interval = 200
 train_iter = 32      # update networks for given batched after every episode
 random_seed = 42
 time_plot_intervall = 1000
@@ -92,9 +82,9 @@ run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,ma
 
 env_name = "HalfCheetah-v4"
 log_interval = 20         # print avg reward in the interval
-max_episodes = 4000 # max training episodes
+max_episodes = 200 # max training episodes
 max_timesteps = 2000         # max timesteps in one episode
-save_interval = 1000
+save_interval = 100
 train_iter = 32      # update networks for given batched after every episode
 random_seed = 42
 
