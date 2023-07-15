@@ -30,10 +30,7 @@ class Memory():
         
         ind=np.random.choice(range(self.size), size=batch, replace=False)
         return (torch.FloatTensor(getattr(self,name)[ind]).to(self.device) for name in self.transition_names)
-
-    def get_all_transitions(self):
-        return (torch.FloatTensor(getattr(self,name)[:]).to(self.device) for name in self.transition_names)
-
+    
 
 class SampleType(Enum):
     FINAL = 0
@@ -42,37 +39,98 @@ class SampleType(Enum):
     RANDOM = 3
 
 class HER_Memory(Memory):
-    def __init__(self,state_dim,action_dim,reward=1,max_size=int(1e6),device='cpu',extra_goals=1,goal_sampling=SampleType.FUTURE):
+    def __init__(self,state_dim,action_dim,reward=1,max_size=int(1e6),device='cpu',n_goals=4,goal_sampling=SampleType.FUTURE):
         super().__init__(state_dim,action_dim,max_size,device)
         self.start_episode = 0
         self.goal_sampling = goal_sampling
-        self.extra_goals = extra_goals
+        #dont choose extra huge amount
+        self.n_goals = n_goals
+        self.reward = reward
 
-    def create_hindsight_experience(self,episode_end):
+    def create_hindsight_experience(self):
         match self.goal_sampling:
             case SampleType.FUTURE:
-                experiences = self.create_future_experience(episode_end)
+                experiences = self.create_future_experience()
             case SampleType.FINAL:
-                experiences = self.create_final_experience(episode_end)
+                experiences = self.create_final_experience()
             case SampleType.EPISODE:
-                experiences = self.create_episode_experience(episode_end)
+                experiences = self.create_episode_experience()
             case SampleType.RANDOM:
-                experiences = self.create_random_experience(episode_end)
+                experiences = self.create_random_experience()
         for experience in experiences:
             self.add_transition(experience)
-        self.start_episode = self.current_idx+1 % self.max_size
+        self.start_episode = self.current_idx
+
     
-    def create_future_experience(self,episode_end):
-        NotImplementedError()
+    def create_future_experience(self):
+        last_episode_entry = self.current_idx-self.n_goals
+        # If we start again to fill replay buffer
+        if self.start_episode > self.current_idx:
+            last_episode_entry = self.size + self.current_idx -self.n_goals
 
-    def create_final_experience(self,epsiode_end):
-        NotImplementedError()
+        sample_index = np.random.randint(self.start_episode,last_episode_entry,1)
+        new_experiences = []
+        indexes = np.random.choice(np.arange(sample_index,last_episode_entry+self.n_goals),self.n_goals,replace=False)
+        indexes = np.mod(indexes,self.max_size)
 
-    def create_episode_experience(self,episode_end):
-        NotImplementedError()
+        for index in indexes:
+            experience = [getattr(self,name)[index] for name in self.transition_names]
+            new_experience = [entry.copy() for entry in experience]
+            new_experience[self.transition_names.index('rew')] = self.reward
+            new_experiences.append(new_experience)
+            
+        return new_experiences
+    
 
-    def create_random_experience(self,episode_end):
-        NotImplementedError()
+    def create_final_experience(self):
+        experience = [getattr(self,name)[self.current_idx-1] for name in self.transition_names]
+        new_experience = [entry.copy() for entry in experience]
+        new_experience[self.transition_names.index('rew')] = self.reward
+
+        return list(new_experience)
+
+
+    def create_episode_experience(self):
+        last_episode_entry = self.current_idx
+        # If we start again to fill replay buffer
+        if self.start_episode > self.current_idx:
+            last_episode_entry = self.size + self.current_idx
+
+        new_experiences = []
+        indexes = np.random.choice(np.arange(self.start_episode,last_episode_entry),self.n_goals,replace=False)
+        indexes = np.mod(indexes,self.max_size)
+
+        for index in indexes:
+            experience = [getattr(self,name)[index] for name in self.transition_names]
+            new_experience = [entry.copy() for entry in experience]
+            new_experience[self.transition_names.index('rew')] = self.reward
+            new_experiences.append(new_experience)
+        return new_experiences
+
+
+    def create_random_experience(self):
+        
+        new_experiences = []
+        indexes = np.random.choice(np.arange(0,self.size),self.n_goals,replace=False)
+
+        for index in indexes:
+            experience = [getattr(self,name)[index] for name in self.transition_names]
+            new_experience = [entry.copy() for entry in experience]
+            new_experience[self.transition_names.index('rew')] = self.reward
+            new_experiences.append(new_experience)
+        return new_experiences
+
+    def add_transition(self, transitions_new):
+        for name,value in zip(self.transition_names,transitions_new):
+            getattr(self,name)[self.current_idx] = value
+            
+        self.current_idx = (self.current_idx +1)%self.max_size #overwrite old entries
+        self.size = min(self.size+1,self.max_size)
+        
+        terminal = bool(transitions_new[4])
+        if terminal:
+            self.create_hindsight_experience()
+
 
 
 
