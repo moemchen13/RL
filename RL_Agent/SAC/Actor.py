@@ -11,8 +11,8 @@ class Actor(nn.Module):
     def __init__(self,input_dim,action_dim,action_space=None,hidden_sizes=[256,256],
                  learning_rate= 0.0001,name="actor",
                  activation_fun= torch.nn.ReLU(),device='cpu'):
-        super(Actor,self).__init__()
-        self.device=device
+        super().__init__()
+        self.device = device
         layer_sizes = [input_dim] + hidden_sizes
         self.layers = torch.nn.ModuleList([ torch.nn.Linear(i, o) for i,o in zip(layer_sizes[:-1], layer_sizes[1:])])
         self.activations = [activation_fun for l in self.layers]
@@ -26,7 +26,7 @@ class Actor(nn.Module):
         self.action_dim = action_dim
         self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
         
-        if device =='cuda':
+        if self.device =='cuda':
             self.cuda()
 
 

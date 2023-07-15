@@ -9,14 +9,14 @@ from torch.distributions.normal import Normal
 #torch.set_num_threads(1)
 
 class Critic_Q(nn.Module):
-    def __init__(self, input_dim, action_dim, learning_rate, hidden_sizes=[256, 256],loss='l2',tau=None,target=False,device='cpu'):
-        super(Critic_Q, self).__init__()
+    def __init__(self, input_dim, action_dim, learning_rate, hidden_sizes=[256, 256],
+                 loss='l2',tau=None,target=False,device='cpu'):
+        super().__init__()
         self.device=device
         self.tau = tau
         self.network_number = 2
         self.input_dim = input_dim + action_dim
         self.learning_rate = learning_rate
-        self.hidden_sizes = [hidden_sizes]
         self.networks = []
         
 
