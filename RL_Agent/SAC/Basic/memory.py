@@ -1,4 +1,5 @@
 import heapq
+from enum import Enum
 
 import numpy as np
 import torch
@@ -33,42 +34,47 @@ class Memory():
     def get_all_transitions(self):
         return (torch.FloatTensor(getattr(self,name)[:]).to(self.device) for name in self.transition_names)
 
-class PrioritizedMemory():
-    def __init__(self,state_dim,action_dim,max_size=int(1e6),device='cpu'):
-        self.device = device
-        self.transition_names = ['s0','action','rew','s1','done']
-        self.input_dims = [state_dim,action_dim,1,state_dim,1,1,]
-        self.size = 0
-        self.current_idx = 0
-        self.max_size = max_size
-        self.heap = []
 
-    def add_transition(self, transitions_new):
-        #get new transition from environment
-        s0,a,rew,s1,done = transitions_new
-        if self.input_dims[0] != 1:
-            s1 = s1[None,:]
-            s0 = s0[None,:]
-        if self.input_dims[1] != 1: 
-            a = a[None,:]
-        td = 0
+class SampleType(Enum):
+    FINAL = 0
+    FUTURE = 1
+    EPISODE = 2
+    RANDOM = 3
 
-        #overwrite old entries but check if earlier maximum
-        self.current_idx = (self.current_idx +1)%self.max_size 
-        self.size = min(self.size+1,self.max_size)
+class HER_Memory(Memory):
+    def __init__(self,state_dim,action_dim,reward=1,max_size=int(1e6),device='cpu',extra_goals=1,goal_sampling=SampleType.FUTURE):
+        super().__init__(state_dim,action_dim,max_size,device)
+        self.start_episode = 0
+        self.goal_sampling = goal_sampling
+        self.extra_goals = extra_goals
 
-    def sample(self, batch=1):
-        if batch > self.size:
-            batch = self.size
-        raise NotImplementedError("sample operation")
+    def create_hindsight_experience(self,episode_end):
+        match self.goal_sampling:
+            case SampleType.FUTURE:
+                experiences = self.create_future_experience(episode_end)
+            case SampleType.FINAL:
+                experiences = self.create_final_experience(episode_end)
+            case SampleType.EPISODE:
+                experiences = self.create_episode_experience(episode_end)
+            case SampleType.RANDOM:
+                experiences = self.create_random_experience(episode_end)
+        for experience in experiences:
+            self.add_transition(experience)
+        self.start_episode = self.current_idx+1 % self.max_size
     
-    def update_heap():
-        raise NotImplementedError("Should update if we delete biggest elemnt update N in Heap or change alpha and beta")
+    def create_future_experience(self,episode_end):
+        NotImplementedError()
 
-    def calculate_weight():
-        raise NotImplementedError("implement")
+    def create_final_experience(self,epsiode_end):
+        NotImplementedError()
+
+    def create_episode_experience(self,episode_end):
+        NotImplementedError()
+
+    def create_random_experience(self,episode_end):
+        NotImplementedError()
 
 
-    def get_all_transitions(self):
-        raise NotImplementedError("get all not necessary")
-    
+
+        
+        
