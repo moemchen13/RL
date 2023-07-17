@@ -41,11 +41,14 @@ class SAC_Agent(agent):
             "frequency_update_actor":1,
             "frequency_update_targets":1,
             "tau": 0.005,
-            "reward_scale":2,
             "update_target_every":1,
             "autotuned_temperature":True,
             "temperature":0.1,
             "use_smooth_L1":False,
+            "use_HER":True,
+            "goal_sampling":mem.SampleType.FUTURE,
+            "n_add_goals":4,
+            "reward_her":0.05,
             }
         self.device = device
         self._observation_space = observation_space
@@ -57,7 +60,13 @@ class SAC_Agent(agent):
         self.train_iter=0
         self.eval_mode = False
         self.start_steps = self._config["start_steps"]
-        self.memory = mem.Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,action_dim=self.action_dim)
+
+        if self._config["use_HER"]:
+            self.memory = mem.HER_Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,
+                                         action_dim=self.action_dim,device=self.device,
+                                         n_goals=self._config["n_add_goals"],goal_sampling=self._config["goal_sampling"],reward=self._config["reward_her"])
+        else:
+            self.memory = mem.Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,action_dim=self.action_dim)
         
         if self._config["autotuned_temperature"]:
             self.target_entropy = -torch.Tensor(self.action_dim,device=self.device)

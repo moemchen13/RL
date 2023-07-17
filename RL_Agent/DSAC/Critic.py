@@ -1,57 +1,102 @@
-import numpy as np
 import torch
 import torch.nn as nn
-from Basic import feedforward as NN
+import torch.optim as optim
+from torch.distributions import Normal
 
 
-class Critic_Quantiles(nn.Module):
-    def __init__(self,input_dim,action_dim,number_quantiles,number_networks,
-                 hidden_sizes=[512,512,512],device='cpu',lr=3e-4,tau=None,target=False):
+class Critic(nn.Module):
+    def __init__(self,input_dim,action_dim,learning_rate,hidden_sizes=256,
+                tau=None,device='cpu'):
         super().__init__()
         self.device = device
         self.tau = tau
-        self.n_networks = number_networks
-        self.n_quantiles = number_quantiles
-        self.learning_rate = lr
-        network_dim = input_dim+action_dim
-        #Ask tutor need for self.add_module() needed for backpropagation?
-        if target:
-            self.networks = [NN.Feedforward(input_dim=network_dim,hidden_sizes=hidden_sizes,
-                                            output_size=self.n_quantiles,device=self.device,
-                                        name=f'target_{i}') for i in range(self.n_networks)]
-        else:
-            self.networks = [NN.Feedforward(input_dim=network_dim,hidden_sizes=hidden_sizes,
-                                            output_size=self.n_quantiles,device=self.device,
-                                        name=f'critic_{i}') for i in range(self.n_networks)]
-            
-        parameters = []
-        for net in self.networks:
-            parameters += list(net.parameters())
-        
-        self.optimizer = torch.optim.Adam(parameters,lr=self.learning_rate)
+        self.input_dim = input_dim + action_dim
+        self.learning_rate =learning_rate
+        self.hidden_sizes = hidden_sizes
+        self.log_std_max = 4 #change
+        self.log_std_min = -0.1 #change
+        self.denominator = max(abs(self.log_std_min),self.log_std_max)
+
+        self.shared_network = nn.Sequential(nn.Linear(self.input_dim,self.hidden_sizes),nn.GELU(),
+                                            nn.Linear(self.hidden_sizes,self.hidden_sizes),nn.GELU(),
+                                            nn.Linear(self.hidden_sizes,hidden_sizes),nn.GELU())
+        self.mean_network = nn.Sequential(nn.Linear(self.hidden_sizes,self.hidden_sizes),nn.GELU(),
+                                          nn.Linear(self.hidden_sizes,self.hidden_sizes),nn.GELU(),
+                                          nn.Linear(self.hidden_sizes,1))
+        self.std_network = nn.Sequential(nn.Linear(self.hidden_sizes,self.hidden_sizes),nn.GELU(),
+                                         nn.Linear(self.hidden_sizes,self.hidden_sizes),nn.GELU(),
+                                         nn.Linear(self.hidden_sizes,1))
+
+        if device =='cuda':
+            self.cuda()
+
+        params = list(self.shared_network.parameters())+ list(self.std_network.parameters())+list(self.mean_network.parameters())
+        self.optimizer = optim.Adam(params, lr=self.learning_rate)
+    
+
+    def get_network_states(self):
+        return self.shared_network.state_dict(),self.mean_network.state_dict(),self.std_network.state_dict()
+
+
+    def load_network_states(self,state):
+        self.shared_network.load_state_dict(state[0])
+        self.mean_network.load_state_dict(state[1])
+        self.std_network.load_state_dict(state[2])
+
 
     def forward(self,state,action):
-        # batch,nets,quantiles
         input = torch.cat([state,action],dim=1)
-        quantiles = torch.stack(tuple(net.forward(input) for net in self.networks),dim=1)
-        return quantiles
+        input = self.shared_network(input)
+        mean = self.mean_network(input)
+        log_std = self.std_network(input)
+        log_std = torch.clamp_min(self.log_std_max*torch.tanh(log_std/self.denominator),0) + \
+                  torch.clamp_max(-self.log_std_min * torch.tanh(log_std / self.denominator), 0)
+        return mean,log_std
 
+
+    def evaluate(self,state,action,min=False):
+        mean,log_std = self.forward(state,action)
+        std = log_std.exp()
+        normal = Normal(torch.zeros(mean.shape),torch.ones(std.shape))
+
+        if min:
+            z = normal.sample().to(self.device)
+            z = torch.clamp(z,-2,2)
+        else:
+            z = -torch.abs(normal.sample()).to(self.device)
+        
+        q_val = mean + torch.mul(z,std)
+        return mean,std,q_val
+
+    def update(self,loss):
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+
+    def evaluate(self,state,action,min=False):
+        mean, log_q_std = self.forward(state,action)
+        std = log_q_std.exp()
+        distribution  = Normal(mean,std)
+        if min:
+            sample = -torch.abs(distribution.sample()).to(self.device)
+        else:
+            sample = distribution.sample().to(self.device)
+            sample = torch.clamp(sample,mean-2,mean+2)
+
+        return mean,std,sample
     
-    def soft_update(self,CriticNetwork,tau=None):
+    def soft_update(self, critic,tau=None):
         if self.tau is None:
             raise ValueError("This is a no TargetNetwork tau not specified")
         if tau is None:
             tau=self.tau
         
-        for target, critic in zip(self.networks,CriticNetwork.networks):
-            for target_param, critic_param in zip(target.parameters(),critic.parameters()):
-                target_param.data.copy_((1.0-tau)*target_param.data+tau*critic_param.data)
+        for target_param, critic_param in zip(self.shared_network.parameters(),critic.shared_network.parameters()):
+            target_param.data.copy_((1.0-tau)*target_param.data+tau*critic_param.data)
 
-
-    def get_network_states(self):
-        return [network.state_dict() for network in self.networks]
+        for target_param, critic_param in zip(self.mean_network.parameters(),critic.mean_network.parameters()):
+            target_param.data.copy_((1.0-tau)*target_param.data+tau*critic_param.data)
         
-
-    def load_network_states(self,states):
-        for network,state in zip(self.networks,states):
-            network.load_state_dict(state)
+        for target_param, critic_param in zip(self.std_network.parameters(),critic.std_network.parameters()):
+            target_param.data.copy_((1.0-tau)*target_param.data+tau*critic_param.data)

@@ -1,79 +1,102 @@
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.distributions import Distribution, Normal
-from torch.nn.functional import logsigmoid, relu
+from torch.distributions import Normal
 
 
-class Actor(torch.nn.Module):
-    def __init__(self,input_dim,action_dim,action_space=None,hidden_sizes=[256,256],device='cpu',
-                 learning_rate= 0.0001,name="actor",
-                 activation_fun= torch.nn.ReLU()):
-        super(Actor,self).__init__()
-        #NN
-        self.device=device
-        self.input_size = input_dim
-        self.hidden_sizes = hidden_sizes
-        layer_sizes = [self.input_size] + self.hidden_sizes + [2*action_dim]
-        self.layers = torch.nn.ModuleList([ torch.nn.Linear(i, o) for i,o in zip(layer_sizes[:-1], layer_sizes[1:])])
-        self.activations = [ activation_fun for l in  self.layers ]
-        self.log_sigma = torch.nn.Linear(layer_sizes[-1],action_dim)
-        self.mu = torch.nn.Linear(layer_sizes[-1],action_dim)
-
+class Actor(nn.Module):
+    def __init__(self,input_dim,action_dim,action_space=None,hidden_sizes=256,
+                 learning_rate= 1e-4,name="actor",act_fun = torch.nn.GELU(),
+                 device='cpu'):
+        super().__init__()
+        self.device = device
+        self.hidden_sizes=hidden_sizes
+        self.input_dim = input_dim
         self.learning_rate = learning_rate
         self.action_space = action_space
-        self.min_log_std = torch.tensor(-20).to(self.device)
-        self.max_log_std = torch.tensor(2).to(self.device)
-        self.reparam_noise = torch.tensor(1e-6).to(self.device)
         self.action_dim = action_dim
+        self.log_std_max = 1
+        self.log_std_min = -5
+        self.denominator = max(abs(self.log_std_min), self.log_std_max)
+        self.reparam_noise = 1e-4
+        self.action_range = torch.tensor(2) #might wanna check
 
-        if device =='cuda':
+        self.shared_network = nn.Sequential(nn.Linear(self.input_dim,self.hidden_sizes),act_fun,
+                                            nn.Linear(self.hidden_sizes,self.hidden_sizes),act_fun,
+                                            nn.Linear(self.hidden_sizes,hidden_sizes),act_fun)
+        self.mean_network = nn.Sequential(nn.Linear(self.hidden_sizes,self.hidden_sizes),act_fun,
+                                          nn.Linear(self.hidden_sizes,self.hidden_sizes),act_fun,
+                                          nn.Linear(self.hidden_sizes,self.action_dim))
+        self.std_network = nn.Sequential(nn.Linear(self.hidden_sizes,self.hidden_sizes),act_fun,
+                                         nn.Linear(self.hidden_sizes,self.hidden_sizes),act_fun,
+                                         nn.Linear(self.hidden_sizes,self.action_dim))
+
+        if self.device == 'cuda':
             self.cuda()
+        params = list(self.shared_network.parameters())+ list(self.std_network.parameters())+list(self.mean_network.parameters())
+        self.optimizer = optim.Adam(params, lr=self.learning_rate)
 
-        self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
+
+    def get_network_states(self):
+        return self.shared_network.state_dict(),self.mean_network.state_dict(),self.std_network.state_dict()
+
+
+    def load_network_states(self,state):
+        self.shared_network.load_state_dict(state[0])
+        self.mean_network.load_state_dict(state[1])
+        self.std_network.load_state_dict(state[2])
 
 
     def forward(self,state):
-        
-        for layer,activation_fun in zip(self.layers, self.activations):
-            state = activation_fun(layer(state))
-        
-        mu,log_sigma = state.split([self.action_dim,self.action_dim],dim=1)
-        log_sigma = torch.clamp(log_sigma,self.min_log_std,self.max_log_std)
+        state = self.shared_network(state)
+        mean = self.mean_network(state)
+        log_std = self.std_network(state)
+        log_std = torch.clamp_min(self.log_std_max*torch.tanh(log_std/self.denominator),0) + \
+                  torch.clamp_max(-self.log_std_min * torch.tanh(log_std / self.denominator), 0)
+        return mean,log_std
 
-        return mu,log_sigma
+
+    def update(self,loss):
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+    def evaluate(self,state):
+        mean,log_std = self.forward(state)
+        distribution = Normal(torch.zeros(mean.shape),torch.ones(log_std.shape))
+        z = distribution.sample()
+        z = torch.clamp(z,-3,3)
+        std = log_std.exp()
+        action_0 = mean + torch.mul(z,std)
+        action_norm = torch.tanh(action_0)
+        action = torch.mul(self.action_range.to(self.device), action_norm)
+        log_prob = Normal(mean, std).log_prob(action_0) \
+                    -torch.log(1. - action_norm.pow(2) +self.reparam_noise) \
+                    - torch.log(self.action_range.to(self.device))
+        log_prob = log_prob.sum(dim=-1, keepdim=True)
+        return action, log_prob , std.detach()
+         
     
+    def get_action_and_log_probs(self,state,deterministic=False):
+        mean,log_std = self.forward(state)
+        
+        std = log_std.exp()
+        distribution = Normal(torch.zeros(mean.shape),torch.ones(std.shape))
+        z = distribution.sample()
+
+        std = log_std.exp()
+        action_0 = mean + torch.mul(z, std)
+        action_norm = torch.tanh(action_0)
+        action = torch.mul(self.action_range, action_norm)
+        log_prob = Normal(mean, std).log_prob(action_0)-torch.log(torch.ones(action_norm.shape) - action_norm.pow(2) + self.reparam_noise) - torch.log(self.action_range)
+        log_prob = log_prob.sum(dim=-1, keepdim=True)
+        
+        action_mean = torch.mul(self.action_range, torch.tanh(mean))
+        action = action_mean.detach() if deterministic else action.detach()
+        return action, log_prob.detach(), std.detach()
+
 
     def random_action(self):
-        #gives random action for early exploration
         action = 2 * torch.rand(self.action_dim,device=self.device) - 1
         return action[None,:]
-
-
-    def get_action(self,state):
-        #deterministic gives best action
-        mu,_ = self.forward(state)
-        mu = torch.tanh(mu)
-        return mu
-    
-
-    def get_action_and_log_probs(self, state,reparameterize=False):
-        #stochastic best action for exploration near best action
-        mu, log_sigma = self.forward(state)
-        sigma = torch.exp(log_sigma)
-        distribution = Normal(mu,sigma)
-        if reparameterize:
-            #Makes it differentiable (reparameterization trick)
-            sample = distribution.rsample()
-        else:
-            sample = distribution.sample()
-
-        action = torch.tanh(sample)
-        log_prob = distribution.log_prob(sample)
-        log_prob -= torch.log((1 - action.pow(2)) + self.reparam_noise)
-        log_prob = log_prob.sum(axis=1,keepdim=True)
-        
-        return action, log_prob
-
 

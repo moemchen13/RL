@@ -2,12 +2,11 @@ import os
 import pickle
 
 import gymnasium as gym
+import memory as mem
 import numpy as np
 import torch
 from Actor import Actor
-from Basic import feedforward as NN
-from Basic import memory as mem
-from Basic.Agent import UnsupportedSpace, agent
+from Agent import UnsupportedSpace, agent
 from Critic import Critic_Quantiles
 from gymnasium import spaces
 
@@ -25,24 +24,23 @@ class TQC_Agent(agent):
         super().__init__(observation_space,action_space,**userconfig)
         
         self._config = {
-            "start_steps":1000,
+            "start_steps":10000,
             "discount": 0.99,
             "buffer_size": int(1e6),
-            "batch_size": 32,
+            "batch_size": 256,
             "lr_actor": float(3e-4),
             "lr_critic": float(3e-4),
             "hidden_size_critic": [512,512,512],
             "hidden_size_actor": [256,256],
             "frequency_update_Q":1,
             "frequency_update_actor":1,
-            "frequency_update_targets":2,
+            "frequency_update_targets":1,
             "tau": 0.005,
-            "update_target_every":1,
             "number_critics":5,
             "number_quantiles":25,
             "drop_top_quantiles":2,
             "autotuned_temperature":True,
-            "temperature":0.1,
+            "temperature":1,
             }
         self.device = device
         self._observation_space = observation_space
@@ -74,6 +72,7 @@ class TQC_Agent(agent):
         self.temperature_optimizer = torch.optim.Adam([self.log_temperature],lr=self._config["lr_critic"])
         self.learning_iterations = torch.zeros(1,device=self.device)
         self.target.soft_update(self.critic,tau=1)
+        print(f"uses device: {device}")
 
         
         if action_space is not None:
@@ -166,8 +165,7 @@ class TQC_Agent(agent):
     
 
     def calculate_temperature_loss(self,log_probs):
-        #temperature_loss  =  (-self.log_temperature * (log_probs+ self.target_entropy).detach()).mean()
-        temperature_loss  =  -(self.log_temperature * (log_probs+ self.target_entropy).detach()).mean()
+        temperature_loss  =  -self.log_temperature * (log_probs+ self.target_entropy).detach().mean()
         return temperature_loss
 
 
@@ -209,11 +207,6 @@ class TQC_Agent(agent):
 
                 ######Start SAC train loop#######
 
-                #Calculate losses
-                #updateQ
-                if self.train_iter % self._config["frequency_update_Q"] == 0:
-                    q_loss = self.calculate_critic_loss(s0,a,rew,done,s1)
-                    
                 #update policy and Update temperature
                 if self.train_iter % self._config["frequency_update_actor"] == 0:
                     actor_loss,temperature_loss = self.calculate_policy_and_temperature_loss(s0)
@@ -225,11 +218,16 @@ class TQC_Agent(agent):
                     temperature_loss = self.update_temperature(temperature_loss)
                     temperature_losses.append(temperature_loss)
 
+                #Calculate losses
+                #updateQ
+                if self.train_iter % self._config["frequency_update_Q"] == 0:
+                    q_loss = self.calculate_critic_loss(s0,a,rew,done,s1)
+
                 #update q
                 if self.train_iter % self._config["frequency_update_Q"] == 0:
                     q_loss = self.update_q_nets(q_loss)
                     q_losses.append(q_loss)
-
+                    
                 #Update targets
                 if self.train_iter % self._config["frequency_update_targets"] == 0:
                     self.target.soft_update(self.critic)

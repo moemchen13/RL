@@ -37,7 +37,8 @@ class Feedforward(torch.nn.Module):
             x = activation_fun(layer(x))
             x_prime = activation_fun(layer(x_prime))
             #shape(x) = Batchsize,hidden_sizes[-1]
-            dot_product = (x*x_prime).sum(axis=1)
+        #dot_product = (x*x_prime).sum(axis=1)
+        dot_product = x.T @ x_prime
         return dot_product
 
     def save_checkpoint(self):

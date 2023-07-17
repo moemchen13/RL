@@ -1,8 +1,8 @@
-import torch
-import numpy as np
-from gymnasium import spaces
-from Basic import memory as mem
 from abc import ABC, abstractmethod
+
+import numpy as np
+import torch
+from gymnasium import spaces
 
 
 class UnsupportedSpace(Exception):
@@ -14,7 +14,7 @@ class UnsupportedSpace(Exception):
 
 class agent(object):
     def __init__(self,observation_space,action_space, **userconfig):
-        
+        super(agent,self).__init__()
         if not isinstance(observation_space, spaces.box.Box):
             raise UnsupportedSpace('Observation space {} incompatible ' \
                                    'with {}. (Require: Box)'.format(observation_space, self))
