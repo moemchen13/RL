@@ -34,9 +34,9 @@ class SAC_Agent(agent):
             "lr_actor": float(3e-4),
             "lr_critic": float(1e-3),
             "lr_value": float(1e-3),
-            "hidden_size_critic": [128,128],
-            "hidden_size_actor": [128,128],
-            "hidden_size_value": [128,128],
+            "hidden_size_critic": [256,256],
+            "hidden_size_actor": [256,256],
+            "hidden_size_value": [256,256],
             "frequency_update_Q":1,
             "frequency_update_actor":1,
             "frequency_update_targets":1,
@@ -69,11 +69,11 @@ class SAC_Agent(agent):
             self.memory = mem.Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,action_dim=self.action_dim)
         
         if self._config["autotuned_temperature"]:
-            self.target_entropy = -torch.Tensor(self.action_dim,device=self.device)
-            self.log_temperature = torch.zeros(1,requires_grad=True,device=self.device)
+            self.target_entropy = -torch.Tensor(self.action_dim).to(self.device)
+            self.log_temperature = torch.zeros(1,requires_grad=True,).to(self.device)
             self.temperature_optimizer = torch.optim.Adam([self.log_temperature],lr=self._config["lr_critic"])
         else:
-            self.log_temperature = torch.Tensor(self._config["temperature"].log(),device=self.device)
+            self.log_temperature = torch.Tensor(self._config["temperature"].log()).to(self.device)
 
         self.actor = Actor(self._obs_dim,self.action_dim,action_space=action_space,hidden_sizes=self._config["hidden_size_actor"],
                             learning_rate=self._config["lr_actor"],device=self.device)
@@ -88,11 +88,11 @@ class SAC_Agent(agent):
         
         
         if action_space is not None:
-            self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2,device=self.device)
-            self.action_bias = torch.FloatTensor((action_space.high + action_space.low) / 2,device=self.device)
+            self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2).to(self.device)
+            self.action_bias = torch.FloatTensor((action_space.high + action_space.low) / 2).to(self.device)
         else:
-            self.action_scale = torch.tensor(1.,device=self.device)
-            self.action_bias = torch.tensor(0.,device=self.device)
+            self.action_scale = torch.tensor(1.).to(self.device)
+            self.action_bias = torch.tensor(0.).to(self.device)
 
 
 

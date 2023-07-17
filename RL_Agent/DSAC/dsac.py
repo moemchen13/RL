@@ -11,7 +11,8 @@ from Critic import Critic
 from gymnasium import spaces
 from torch.distributions import Normal
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cpu')
 print('Using device:', device)
 
 class UnsupportedSpace(Exception):
@@ -78,11 +79,11 @@ class DSAC_Agent(agent):
         self.target.soft_update(self.critic,tau=1)
         
         if action_space is not None:
-            self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2,device=self.device)
-            self.action_bias = torch.FloatTensor((action_space.high + action_space.low) / 2,device=self.device)
+            self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2).to(self.device)
+            self.action_bias = torch.FloatTensor((action_space.high + action_space.low) / 2).to(self.device)
         else:
-            self.action_scale = torch.tensor(1.,device=self.device)
-            self.action_bias = torch.tensor(0.,device=self.device)
+            self.action_scale = torch.tensor(1.).to(self.device)
+            self.action_bias = torch.tensor(0.).to(self.device)
 
 
     def store_transition(self, transition):
