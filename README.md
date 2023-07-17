@@ -57,12 +57,18 @@ If simple changes are done nothing works describe the changes.
 - [x] Implement SAC
 - [ ] DQN Extension
 - [ ] DDPG Extension
-- [ ] SAC Extension :eyes:
+- [X] SAC Extension
   [SAC](https://doi.org/10.48550/arXiv.1801.01290)
   Implementation with 4 Critic Networks Entropy autotuning and 1 Actor with exploration based on the entropy
+  [DSAC](https://arxiv.org/abs/2001.02811)
+  Implementation of an distributional representation of SAC Q_value function to mitigate the overestimation bias
+  [HER](https://arxiv.org/abs/1707.01495)
+  Implementation for more sample efficiency in a sparse reward environment (might extend with reward shaping)
+  [DR3 regularization](https://arxiv.org/abs/2112.04716)
+  Implemented regularization in the Q value function to mitigate effect of growing dot product for consecutive state action pairs
 - [ ] Testing DQN with Extensions
 - [ ] Testing DDPG with Extensions
-- [ ] Testing SAC with Extensions
+- [ ] Testing SAC with Extensions :eyes
 - [ ] Report August
 - [ ] Report Moritz
 - [ ] Report Torsten
