@@ -48,14 +48,13 @@ class HER_Memory(Memory):
         self.reward = reward
 
     def create_hindsight_experience(self):
-        match self.goal_sampling:
-            case SampleType.FUTURE:
-                experiences = self.create_future_experience()
-            case SampleType.FINAL:
-                experiences = self.create_final_experience()
-            case SampleType.EPISODE:
-                experiences = self.create_episode_experience()
-            case SampleType.RANDOM:
+        if self.goal_sampling == SampleType.FUTURE:
+            experiences = self.create_future_experience()
+        if self.goal_sampling == SampleType.FINAL:
+            experiences = self.create_final_experience()
+        if self.goal_sampling == SampleType.EPISODE:
+            experiences = self.create_episode_experience()
+        if self.goal_sampling == SampleType.RANDOM:
                 experiences = self.create_random_experience()
         for experience in experiences:
             self.add_transition(experience)

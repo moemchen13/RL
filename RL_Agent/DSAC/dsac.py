@@ -62,11 +62,11 @@ class DSAC_Agent(agent):
         self.memory = mem.Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,action_dim=self.action_dim)
 
         if self._config["autotuned_temperature"]:
-            self.target_entropy = -torch.Tensor(self.action_dim,device=self.device)
-            self.log_temperature = torch.zeros(1,requires_grad=True,device=self.device)
+            self.target_entropy = -torch.Tensor(self.action_dim).to(self.device)
+            self.log_temperature = torch.zeros(1,requires_grad=True).to(self.device)
             self.temperature_optimizer = torch.optim.Adam([self.log_temperature],lr=self._config["lr_critic"])
         else:
-            self.log_temperature = torch.Tensor(self._config["temperature"].log(),device=self.device)
+            self.log_temperature = torch.Tensor(self._config["temperature"].log()).to(self.device)
 
         self.actor = Actor(self._obs_dim,self.action_dim,action_space=action_space,
                             learning_rate=self._config["lr_actor"],device=self.device)
