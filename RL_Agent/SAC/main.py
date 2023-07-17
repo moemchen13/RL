@@ -174,7 +174,7 @@ run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,ma
 filename = f".SAC_{env_name}-s{random_seed}-e{max_episodes}-stat.pkl"
 plot("SAC",filename)
 filename_model = f"./SAC_{env_name}-e{int(max_episodes/save_interval)*save_interval}-t{train_iter}-s{random_seed}.pth"
-filename_plot = "SAC_Q_Function.jpg"
+filename_plot = "./SAC_Q_Function.jpg"
 plot_Q(filename_model,filename_plot,regularized=False)
 print(f"Finished running normal SAC on {env_name}")
 
@@ -182,7 +182,7 @@ run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,ma
 filename = f"./SAC_DR3_{env_name}-s{random_seed}-e{max_episodes}-stat.pkl"
 plot("DR3",filename)
 filename_model = f"./SAC_DR3_{env_name}-e{int(max_episodes/save_interval)*save_interval}-t{train_iter}-s{random_seed}.pth"
-filename_plot = "DR3_Q_Function.jpg"
+filename_plot = "./DR3_Q_Function.jpg"
 plot_Q(filename_model,filename_plot,regularized=False)
 print(f"Finished running DR3 regularized SAC on {env_name}")
 
