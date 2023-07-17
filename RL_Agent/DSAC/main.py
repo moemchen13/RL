@@ -100,9 +100,9 @@ def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episode
 env_name = "Pendulum-v1"
 #env_name = "LunarLander-v2"
 log_interval = 20         # print avg reward in the interval
-max_episodes = 20 # max training episodes
+max_episodes = 500 # max training episodes
 max_timesteps = 2000         # max timesteps in one episode
-save_interval = 20
+save_interval = 500
 train_iter = 32      # update networks for given batched after every episode
 random_seed = 42
 time_plot_intervall = 100
