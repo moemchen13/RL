@@ -39,6 +39,7 @@ class Critic_Q(nn.Module):
         #for net in self.networks:
         #    parameters += list(net.parameters())
         #self.optimizers = torch.optim.Adam(parameters,lr=self.learning_rate)
+        
         self.optimizers = [optim.Adam(self.networks[i].parameters(), lr=self.learning_rate)for i in range(self.network_number)]
 
         

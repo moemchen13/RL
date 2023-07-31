@@ -24,10 +24,12 @@ class Actor(nn.Module):
         self.max_log_std = torch.tensor(2).to(self.device)
         self.reparam_noise = torch.tensor(1e-6).to(self.device)
         self.action_dim = action_dim
-        self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
-        
         if self.device =='cuda':
             self.cuda()
+            
+        self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
+        
+        
 
 
     

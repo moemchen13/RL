@@ -76,8 +76,9 @@ class SAC_Agent(agent):
                             hidden_sizes=self._config["hidden_size_critic"],
                             tau=self.tau,target=True,device=self.device)
         
+        print("Finished construction")
         self.target.soft_update(self.critic,tau=1)
-        
+        print("Finished softupdate")
         
         if action_space is not None:
             self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2).to(self.device)
@@ -195,23 +196,23 @@ class SAC_Agent(agent):
                 #updateQ
                 if i % self._config["frequency_update_Q"] == 0:
                     q_loss = self.update_Q_functions(s0,a,done,rew,s1)
-                    q_losses.append(q_loss)
+                    q_losses.append(q_loss.cpu())
 
                 #update policy
                 if i % self._config["frequency_update_actor"] == 0:
                     actor_loss,log_prob = self.update_policy(s0)
-                    policy_losses.append(actor_loss)
+                    policy_losses.append(actor_loss.cpu())
                     
                 #Update temperature
                 if self._config["autotuned_temperature"]:
                     temperature_loss = self.update_temperature(log_prob)
                 else:
                     temperature_loss = torch.tensor(0.)
-                temperature_losses.append(temperature_loss)
+                temperature_losses.append(temperature_loss.cpu())
 
                 #Update targets networks
                 if i % self._config["frequency_update_targets"] == 0:
-                    self.target.soft_update(self.critic)
+                    self.target.soft_update(self.critic.cpu())
         
         return q_losses,policy_losses,temperature_losses
 

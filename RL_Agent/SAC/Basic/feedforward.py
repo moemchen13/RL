@@ -22,7 +22,6 @@ class Feedforward(torch.nn.Module):
         self.checkpoint_file = os.path.join(folder,name)
         if self.device == 'cuda':
             self.cuda()
-        self.optimizer = optim.Adam(self.parameters(),lr=learning_rate,eps=0.000001)
         
 
     def forward(self, x):
