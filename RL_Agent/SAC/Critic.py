@@ -22,10 +22,10 @@ class Critic_Q(nn.Module):
 
         if target:
             self.networks = [NN.Feedforward(input_dim=self.input_dim,hidden_sizes = hidden_sizes,output_size=1,
-                                        learning_rate=self.learning_rate,name=f'target_critic_{i}',device=self.device) for i in range(self.network_number)]
+                                        name=f'target_critic_{i}',device=self.device) for i in range(self.network_number)]
         else:
             self.networks = [NN.Feedforward(input_dim=self.input_dim,hidden_sizes = hidden_sizes,output_size=1,
-                                        learning_rate=self.learning_rate,name=f'critic_{i}',device=self.device)for i in range(self.network_number)]
+                                        name=f'critic_{i}',device=self.device)for i in range(self.network_number)]
         if loss == 'l2':
             self.losses = [nn.MSELoss() for i in range(self.network_number)]
         else:
