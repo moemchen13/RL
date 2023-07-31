@@ -2,3 +2,6 @@ SAC/results/
 SAC/pycache/
 Basic/pycache/
 Gym-DDPG-solution/
+DQN/__pycache__
+DQN/Basic/__pycache__
+DQN/Basic/*.pdf
