@@ -10,7 +10,7 @@ from torch.distributions.normal import Normal
 
 class Critic_Q(nn.Module):
     def __init__(self, input_dim, action_dim, learning_rate, hidden_sizes=[256, 256],
-                 loss='l2',tau=None,target=False,device='cpu'):
+                 loss='l2',tau=0,target=False,device='cpu'):
         super().__init__()
         self.device=device
         self.tau = torch.tensor(tau).to(self.device)
@@ -46,10 +46,10 @@ class Critic_Q(nn.Module):
 
     def soft_update(self,CriticNetwork,tau=None):
         
-        if self.tau is None:
+        if self.tau == 0:
             raise ValueError("This is a no TargetNetwork tau not specified")
         
-        if tau is None:
+        if tau == None:
             tau = self.tau
         
         for target, critic in zip(self.networks,CriticNetwork.networks):
