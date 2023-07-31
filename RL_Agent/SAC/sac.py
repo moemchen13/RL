@@ -12,7 +12,7 @@ from Critic import Critic_Q
 from gymnasium import spaces
 
 device = torch.device('cpu')
-#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('Using device:', device)
 
 class UnsupportedSpace(Exception):
@@ -46,10 +46,6 @@ class SAC_Agent(agent):
             "autotuned_temperature":True,
             "temperature":0.1,
             "use_smooth_L1":False,
-            "use_HER":True,
-            "goal_sampling":mem.SampleType.FUTURE,
-            "n_add_goals":4,
-            "reward_her":0.05,
             }
         self.device = device
         self._observation_space = observation_space
@@ -58,20 +54,15 @@ class SAC_Agent(agent):
         self.action_dim = action_space.shape[0]
         self.discount = self._config["discount"]
         self.tau = self._config["tau"]
-        self.train_iter=0
+        self.train_iter = 0
         self.eval_mode = False
         self.start_steps = self._config["start_steps"]
 
-        if self._config["use_HER"]:
-            self.memory = mem.HER_Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,
-                                         action_dim=self.action_dim,device=self.device,
-                                         n_goals=self._config["n_add_goals"],goal_sampling=self._config["goal_sampling"],reward=self._config["reward_her"])
-        else:
-            self.memory = mem.Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,action_dim=self.action_dim)
+        self.memory = mem.Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,action_dim=self.action_dim,device=self.device)
         
         if self._config["autotuned_temperature"]:
             self.target_entropy = -torch.Tensor(self.action_dim).to(self.device)
-            self.log_temperature = torch.zeros(1,requires_grad=True,).to(self.device)
+            self.log_temperature = torch.ones(1,requires_grad=True,device=self.device)
             self.temperature_optimizer = torch.optim.Adam([self.log_temperature],lr=self._config["lr_critic"])
         else:
             self.log_temperature = torch.Tensor(self._config["temperature"].log()).to(self.device)

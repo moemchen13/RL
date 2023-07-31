@@ -20,9 +20,10 @@ class Feedforward(torch.nn.Module):
         self.activations = [ activation_fun for l in  self.layers ]
         self.readout = torch.nn.Linear(self.hidden_sizes[-1], self.output_size)
         self.checkpoint_file = os.path.join(folder,name)
-        self.optimizer = optim.Adam(self.parameters(),lr=learning_rate,eps=0.000001)
         if self.device == 'cuda':
             self.cuda()
+        self.optimizer = optim.Adam(self.parameters(),lr=learning_rate,eps=0.000001)
+        
 
     def forward(self, x):
         for layer,activation_fun in zip(self.layers, self.activations):

@@ -6,10 +6,11 @@ import gymnasium as gym
 import numpy as np
 import pylab as plt
 import torch
-from dsac import DSAC_Agent
 from gymnasium import spaces
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
+
+from dsac import DSAC_Agent
 
 
 def save_statistics(rewards,lengths,q_losses,pi_losses,temperature_loss,env_name,random_seed,episode,name="DSAC"):

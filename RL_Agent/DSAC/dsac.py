@@ -11,7 +11,7 @@ from Critic import Critic
 from gymnasium import spaces
 from torch.distributions import Normal
 
-#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 device = torch.device('cpu')
 print('Using device:', device)
 
@@ -60,11 +60,11 @@ class DSAC_Agent(agent):
         self.train_iter=0
         self.eval_mode = False
         self.start_steps = self._config["start_steps"]
-        self.memory = mem.Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,action_dim=self.action_dim)
+        self.memory = mem.Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,action_dim=self.action_dim,device=self.device)
 
         if self._config["autotuned_temperature"]:
             self.target_entropy = -torch.Tensor(self.action_dim).to(self.device)
-            self.log_temperature = torch.zeros(1,requires_grad=True).to(self.device)
+            self.log_temperature = torch.ones(1,requires_grad=True,device=self.device)
             self.temperature_optimizer = torch.optim.Adam([self.log_temperature],lr=self._config["lr_critic"])
         else:
             self.log_temperature = torch.Tensor(self._config["temperature"].log()).to(self.device)
