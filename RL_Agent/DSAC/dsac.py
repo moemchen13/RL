@@ -12,7 +12,7 @@ from gymnasium import spaces
 from torch.distributions import Normal
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = torch.device('cpu')
+#device = torch.device('cpu')
 print('Using device:', device)
 
 class UnsupportedSpace(Exception):

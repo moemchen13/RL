@@ -11,7 +11,7 @@ from Basic import memory as mem
 from Critic import Critic_Q
 from gymnasium import spaces
 
-device = torch.device('cpu')
+#device = torch.device('cpu')
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('Using device:', device)
 
