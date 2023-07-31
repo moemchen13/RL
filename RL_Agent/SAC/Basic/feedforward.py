@@ -6,7 +6,7 @@ import torch.optim as optim
 
 
 class Feedforward(torch.nn.Module):
-    def __init__(self, input_dim, hidden_sizes, output_size,learning_rate= 0.0002, 
+    def __init__(self, input_dim, hidden_sizes, output_size, 
                  activation_fun=torch.nn.Tanh(), output_activation=None,
                  name="feedforward",folder="tmp",device='cpu'):
         super(Feedforward, self).__init__()

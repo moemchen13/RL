@@ -12,6 +12,9 @@ from Critic import Critic_Q
 from gymnasium import spaces
 
 #device = torch.device('cpu')
+#https://cloud.cs.uni-tuebingen.de/index.php/s/pm49B2xRpcNirry
+#https://arxiv.org/pdf/2010.09163.pdf
+#https://github.com/BY571/Soft-Actor-Critic-and-Extensions
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('Using device:', device)
 

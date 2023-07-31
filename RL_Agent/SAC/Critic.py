@@ -13,7 +13,7 @@ class Critic_Q(nn.Module):
                  loss='l2',tau=None,target=False,device='cpu'):
         super().__init__()
         self.device=device
-        self.tau = tau
+        self.tau = torch.tensor(tau).to(self.device)
         self.network_number = 2
         self.input_dim = input_dim + action_dim
         self.learning_rate = learning_rate
@@ -39,7 +39,7 @@ class Critic_Q(nn.Module):
         #for net in self.networks:
         #    parameters += list(net.parameters())
         #self.optimizers = torch.optim.Adam(parameters,lr=self.learning_rate)
-        
+
         self.optimizers = [optim.Adam(self.networks[i].parameters(), lr=self.learning_rate)for i in range(self.network_number)]
 
         
