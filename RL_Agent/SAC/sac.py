@@ -76,9 +76,7 @@ class SAC_Agent(agent):
                             hidden_sizes=self._config["hidden_size_critic"],
                             tau=self.tau,target=True,device=self.device)
         
-        print("Finished construction")
         self.target.soft_update(self.critic,tau=1)
-        print("Finished softupdate")
         
         if action_space is not None:
             self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2).to(self.device)
@@ -147,6 +145,7 @@ class SAC_Agent(agent):
 
     
     def update_Q_functions(self,s0,action,done,rew,s1):
+        print("update Q")
         with torch.no_grad():
             a_next , log_prob_next = self.actor.get_action_and_log_probs(s1,reparameterize=False)
             min_Q_next = self.get_target_Q_value(s1,a_next)
@@ -156,25 +155,30 @@ class SAC_Agent(agent):
             y = (rew + self.discount * (1 - done)*target_value)
 
         q_loss = self.critic.update_critics(state=s0,action=action,target=y)
+        print("update Q finished")
         return q_loss      
 
 
     def update_policy(self,s0):
+        print("update policy")
         action, log_prob = self.actor.get_action_and_log_probs(s0,reparameterize=True)
         actor_Q = self.get_Q_value(s0,action)
         actor_loss = (-actor_Q+self.log_temperature.exp().detach()*log_prob).mean(axis=0)
         self.actor.optimizer.zero_grad()
         actor_loss.backward()
         self.actor.optimizer.step()
+        print("update policy finished")
         return actor_loss.item(), log_prob
     
 
     def update_temperature(self,log_probs):
+        print("update temp")
         self.temperature_optimizer.zero_grad()
         temperature_loss  =  -(self.log_temperature.exp() * 
                                (log_probs+ self.target_entropy).detach()).mean()
         temperature_loss.backward()
         self.temperature_optimizer.step()
+        print("update temp finished")
         return temperature_loss.item()
 
 
