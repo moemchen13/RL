@@ -18,7 +18,7 @@ class Actor(nn.Module):
         self.activations = [activation_fun for l in self.layers]
         self.log_sigma = torch.nn.Linear(layer_sizes[-1],action_dim).to(device=self.device)
         self.mu = torch.nn.Linear(layer_sizes[-1],action_dim).to(device=self.device)
-        self.learning_rate = torch.tensor(learning_rate).to(self.device)
+        self.learning_rate = learning_rate
         self.min_log_std = torch.tensor(-20).to(self.device)
         self.max_log_std = torch.tensor(2).to(self.device)
         self.reparam_noise = torch.tensor(1e-6).to(self.device)
