@@ -13,7 +13,7 @@ class Critic_Q(nn.Module):
                  loss='l2',tau=0,target=False,device='cpu'):
         super().__init__()
         self.device=device
-        self.tau = torch.tensor(tau).to(self.device)
+        self.tau = tau
         self.network_number = 2
         self.input_dim = input_dim + action_dim
         self.learning_rate = learning_rate
