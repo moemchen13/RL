@@ -24,10 +24,9 @@ def running_mean(x, N):
     return (cumsum[N:] - cumsum[:-N]) / float(N)  
 
 
-def plot(name,file,stepsize=50):
+def plot_losses(name,file,stepsize=50):
     with open(file, 'rb') as f:
         data = pickle.load(f)
-        rewards = np.asarray(data["rewards"])
         q_losses =  np.asarray(data["q_losses"])
         pi_losses  = np.asarray(data["pi_losses"])
         temperature_losses = np.asarray(data["temperature_loss"])
@@ -38,9 +37,14 @@ def plot(name,file,stepsize=50):
     plt.legend()
     plt.savefig(f"./{name}_loss_env_{env_name}_episode_{max_episodes}.jpg")
 
+def plot(name,file,stepsize=50):
+    with open(file, 'rb') as f:
+        data = pickle.load(f)
+        rewards = np.asarray(data["rewards"])
     plt.plot(running_mean(rewards,10),label=f"rewards")
     plt.legend()
     plt.savefig(f"./{name}_rewards_env_{env_name}_episode_{max_episodes}.jpg")
+
 
 
 def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,
@@ -111,6 +115,7 @@ name="DSAC"
 print(f"Start training on {env_name}")
 run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,max_timesteps,train_iter,random_seed)
 filename = f"./{name}_{env_name}-s{random_seed}-e{max_episodes}-stat.pkl"
+plot_losses(name,filename)
 plot(name,filename)
 filename_model = f"./{name}_{env_name}-e{int(max_episodes/save_interval)*save_interval}-t{train_iter}-s{random_seed}.pth"
 print(f"Finished running {name} on {env_name}")
