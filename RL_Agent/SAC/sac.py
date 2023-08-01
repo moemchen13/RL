@@ -123,7 +123,7 @@ class SAC_Agent(agent):
 
     def act(self,state):
         state = torch.FloatTensor(state).to(self.device)[None,:]
-        print(f"is cuda {state.is_cuda()}")
+        print(f"state cuda {state.is_cuda}")
         if self.eval_mode:
             action = self.actor.get_action(state)
         else:
