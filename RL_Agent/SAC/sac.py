@@ -130,8 +130,10 @@ class SAC_Agent(agent):
             action = self.actor.get_action(state)
         else:
             if self.start_steps> self.memory.size:
+                print("random action")
                 action = self.actor.random_action()
             else:    
+                print("action")
                 action, _ = self.actor.get_action_and_log_probs(state)
         action = self.rescale_action(action)
         return action.cpu().detach().numpy()
