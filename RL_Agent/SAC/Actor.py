@@ -14,10 +14,10 @@ class Actor(nn.Module):
         super().__init__()
         self.device = device
         layer_sizes = [input_dim] + hidden_sizes
-        self.layers = torch.nn.ModuleList([ torch.nn.Linear(i, o) for i,o in zip(layer_sizes[:-1], layer_sizes[1:])])
+        self.layers = torch.nn.ModuleList([ torch.nn.Linear(i, o) for i,o in zip(layer_sizes[:-1], layer_sizes[1:])]).to(device=self.device)
         self.activations = [activation_fun for l in self.layers]
-        self.log_sigma = torch.nn.Linear(layer_sizes[-1],action_dim)
-        self.mu = torch.nn.Linear(layer_sizes[-1],action_dim)
+        self.log_sigma = torch.nn.Linear(layer_sizes[-1],action_dim).to(device=self.device)
+        self.mu = torch.nn.Linear(layer_sizes[-1],action_dim).to(device=self.device)
         self.learning_rate = torch.tensor(learning_rate).to(self.device)
         self.min_log_std = torch.tensor(-20).to(self.device)
         self.max_log_std = torch.tensor(2).to(self.device)
