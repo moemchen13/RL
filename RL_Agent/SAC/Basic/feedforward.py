@@ -25,6 +25,7 @@ class Feedforward(torch.nn.Module):
         
 
     def forward(self, x):
+        print(f"forward in feedforward is on cuda: {x.is_cuda}")
         for layer,activation_fun in zip(self.layers, self.activations):
             x = activation_fun(layer(x))
         if self.output_activation is not None:

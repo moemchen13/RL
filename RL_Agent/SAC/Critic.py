@@ -67,7 +67,7 @@ class Critic_Q(nn.Module):
 
 
     def update_critics(self,state,action,target):
-        Loss = None
+        Start = True
         for optimizer,loss,network in zip(self.optimizers,self.losses,self.networks):
             optimizer.zero_grad()
             q_pred = network.forward(torch.cat([state,action],dim=1))
@@ -75,8 +75,9 @@ class Critic_Q(nn.Module):
             Q_loss.backward()
             optimizer.step()
 
-            if Loss is None:
+            if Start:
                 Loss = Q_loss.item()
+                Start = False
             else:
                 Loss += Q_loss.item()
         return Loss
@@ -102,12 +103,13 @@ class Critic_Q(nn.Module):
     
 
     def get_min_Q_value(self,state,action):
-        min_Q = None
+        to_create_min_Q = True
         for network in self.networks:
             q_val = network.forward(torch.cat([state,action],dim=1))
 
-            if min_Q is None:
+            if to_create_min_Q:
                 min_Q = q_val
+                to_create_min_Q=False
             else:
                 torch.min(min_Q,q_val)
         return min_Q
