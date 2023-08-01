@@ -10,11 +10,11 @@ from torch.distributions.normal import Normal
 
 class Critic_Q(nn.Module):
     def __init__(self, input_dim, action_dim, learning_rate, hidden_sizes=[256, 256],
-                 loss='l2',tau=0,target=False,device='cpu'):
+                 loss='l2',tau=0,target=False,network_number = 2,device='cpu'):
         super().__init__()
         self.device=device
         self.tau = tau
-        self.network_number = 2
+        self.network_number = network_number
         self.input_dim = input_dim + action_dim
         self.learning_rate = learning_rate
         self.networks = []

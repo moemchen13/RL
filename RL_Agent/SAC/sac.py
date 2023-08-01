@@ -48,8 +48,10 @@ class SAC_Agent(agent):
             "update_target_every":1,
             "autotuned_temperature":True,
             "temperature":0.1,
+            "network_numbers_critic":2,
             "use_smooth_L1":False,
             }
+        
         self.device = device
         self._observation_space = observation_space
         self._obs_dim = self._observation_space.shape[0]
@@ -73,11 +75,12 @@ class SAC_Agent(agent):
         self.actor = Actor(self._obs_dim,self.action_dim,hidden_sizes=self._config["hidden_size_actor"],
                             learning_rate=self._config["lr_actor"],device=self.device)
         self.critic = Critic_Q(self._obs_dim,self.action_dim,self._config["lr_critic"],
-                               hidden_sizes=self._config["hidden_size_critic"],device=self.device)
+                               hidden_sizes=self._config["hidden_size_critic"],
+                               network_number=self._config["network_number_critic"],device=self.device)
 
         self.target = Critic_Q(self._obs_dim,self.action_dim,self._config["lr_critic"],
-                            hidden_sizes=self._config["hidden_size_critic"],
-                            tau=self.tau,target=True,device=self.device)
+                            hidden_sizes=self._config["hidden_size_critic"],tau=self.tau,target=True,
+                            network_number=self._config["network_number_critic"],device=self.device)
         
         self.target.soft_update(self.critic,tau=1)
         
