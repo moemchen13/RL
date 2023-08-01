@@ -31,7 +31,7 @@ class SAC_Agent(agent):
         super().__init__(observation_space,action_space,**userconfig)
         
         self._config = {
-            "start_steps":10000,
+            "start_steps":1000, #10000
             "discount": 0.99,
             "buffer_size": int(1e7),
             "batch_size": 256,
@@ -123,14 +123,13 @@ class SAC_Agent(agent):
 
     def act(self,state):
         state = torch.FloatTensor(state).to(self.device)[None,:]
-        print(f"state cuda {state.is_cuda}")
         if self.eval_mode:
             action = self.actor.get_action(state)
         else:
             if self.start_steps> self.memory.size:
                 action = self.actor.random_action()
             else:    
-                print("action")
+                print("not random action")
                 action, _ = self.actor.get_action_and_log_probs(state)
         action = self.rescale_action(action)
         return action.cpu().detach().numpy()

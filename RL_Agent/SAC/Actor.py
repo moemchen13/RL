@@ -30,6 +30,7 @@ class Actor(nn.Module):
         
     
     def forward(self, state):
+        print(f"dreckscuda {state.is_cuda}")
         for layer,activation_fun in zip(self.layers, self.activations):
             state = activation_fun(layer(state))
         
