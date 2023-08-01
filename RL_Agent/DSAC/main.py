@@ -6,11 +6,10 @@ import gymnasium as gym
 import numpy as np
 import pylab as plt
 import torch
+from dsac import DSAC_Agent
 from gymnasium import spaces
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
-
-from dsac import DSAC_Agent
 
 
 def save_statistics(rewards,lengths,q_losses,pi_losses,temperature_loss,env_name,random_seed,episode,name="DSAC"):
@@ -38,10 +37,12 @@ def plot(name,file,stepsize=50):
     plt.plot(running_mean(temperature_losses,stepsize),label=f"Temp loss")
     plt.legend()
     plt.savefig(f"./{name}_loss_env_{env_name}_episode_{max_episodes}.jpg")
+    plt.close()
 
     plt.plot(running_mean(rewards,10),label=f"rewards")
     plt.legend()
     plt.savefig(f"./{name}_rewards_env_{env_name}_episode_{max_episodes}.jpg")
+    plt.close()
 
 
 def run_sac_agent_in_environment(env_name,log_interval,save_interval,max_episodes,

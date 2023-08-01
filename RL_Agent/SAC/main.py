@@ -37,10 +37,12 @@ def plot(name,file,stepsize=50):
     plt.plot(running_mean(temperature_losses,stepsize),label=f"Temp loss")
     plt.legend()
     plt.savefig(f"./{name}_loss_env_{env_name}_episode_{max_episodes}.jpg")
+    plt.close()
 
     plt.plot(running_mean(rewards,10),label=f"rewards")
     plt.legend()
     plt.savefig(f"./{name}_rewards_env_{env_name}_episode_{max_episodes}.jpg")
+    plt.close()
 
 
 def plot_Q_function(q_function, observations, actions, plot_dim1=0, plot_dim2=2,
