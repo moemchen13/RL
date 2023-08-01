@@ -81,14 +81,14 @@ class Actor(nn.Module):
         mean,log_std = self.forward(state)
         
         std = log_std.exp()
-        distribution = Normal(torch.zeros(mean.shape),torch.ones(std.shape))
+        distribution = Normal(torch.zeros(mean.shape,device=self.device),torch.ones(std.shape,device=self.device))
         z = distribution.sample()
 
         std = log_std.exp()
         action_0 = mean + torch.mul(z, std)
         action_norm = torch.tanh(action_0)
         action = torch.mul(self.action_range, action_norm)
-        log_prob = Normal(mean, std).log_prob(action_0)-torch.log(torch.ones(action_norm.shape)
+        log_prob = Normal(mean, std).log_prob(action_0)-torch.log(torch.ones(action_norm.shape,device=self.device)
                     - action_norm.pow(2) + self.reparam_noise) - torch.log(self.action_range)
         log_prob = log_prob.sum(dim=-1, keepdim=True)
         
