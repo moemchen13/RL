@@ -45,7 +45,6 @@ class Critic_Q(nn.Module):
         
 
     def soft_update(self,CriticNetwork,tau=None):
-        
         if self.tau == 0:
             raise ValueError("This is a no TargetNetwork tau not specified")
         

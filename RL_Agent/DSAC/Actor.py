@@ -23,13 +23,13 @@ class Actor(nn.Module):
 
         self.shared_network = nn.Sequential(nn.Linear(self.input_dim,self.hidden_sizes),act_fun,
                                             nn.Linear(self.hidden_sizes,self.hidden_sizes),act_fun,
-                                            nn.Linear(self.hidden_sizes,hidden_sizes),act_fun)
+                                            nn.Linear(self.hidden_sizes,hidden_sizes),act_fun).to(self.device)
         self.mean_network = nn.Sequential(nn.Linear(self.hidden_sizes,self.hidden_sizes),act_fun,
                                           nn.Linear(self.hidden_sizes,self.hidden_sizes),act_fun,
-                                          nn.Linear(self.hidden_sizes,self.action_dim))
+                                          nn.Linear(self.hidden_sizes,self.action_dim)).to(self.device)
         self.std_network = nn.Sequential(nn.Linear(self.hidden_sizes,self.hidden_sizes),act_fun,
                                          nn.Linear(self.hidden_sizes,self.hidden_sizes),act_fun,
-                                         nn.Linear(self.hidden_sizes,self.action_dim))
+                                         nn.Linear(self.hidden_sizes,self.action_dim)).to(self.device)
 
         if self.device == 'cuda':
             self.cuda()
@@ -63,7 +63,7 @@ class Actor(nn.Module):
 
     def evaluate(self,state):
         mean,log_std = self.forward(state)
-        distribution = Normal(torch.zeros(mean.shape),torch.ones(log_std.shape))
+        distribution = Normal(torch.zeros(mean.shape,device= self.device),torch.ones(log_std.shape,device= self.device))
         z = distribution.sample()
         z = torch.clamp(z,-3,3)
         std = log_std.exp()
@@ -88,7 +88,8 @@ class Actor(nn.Module):
         action_0 = mean + torch.mul(z, std)
         action_norm = torch.tanh(action_0)
         action = torch.mul(self.action_range, action_norm)
-        log_prob = Normal(mean, std).log_prob(action_0)-torch.log(torch.ones(action_norm.shape) - action_norm.pow(2) + self.reparam_noise) - torch.log(self.action_range)
+        log_prob = Normal(mean, std).log_prob(action_0)-torch.log(torch.ones(action_norm.shape)
+                    - action_norm.pow(2) + self.reparam_noise) - torch.log(self.action_range)
         log_prob = log_prob.sum(dim=-1, keepdim=True)
         
         action_mean = torch.mul(self.action_range, torch.tanh(mean))

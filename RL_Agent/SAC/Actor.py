@@ -30,7 +30,6 @@ class Actor(nn.Module):
         
     
     def forward(self, state):
-        print(f"dreckscuda {state.is_cuda}")
         for layer,activation_fun in zip(self.layers, self.activations):
             state = activation_fun(layer(state))
         
@@ -53,23 +52,19 @@ class Actor(nn.Module):
 
     def get_action_and_log_probs(self, state,reparameterize=False):
         #gives random action for late exploration
-        print("action log_prob")
         mu, log_sigma = self.forward(state)
-        print("forward fin")
         sigma = log_sigma.exp()
         distribution = Normal(mu,sigma)
-        print("created dist")
 
         if reparameterize:
             #Makes it differentiable reparameterization trick
             sample = distribution.rsample()
         else:
             sample = distribution.sample()
-        print("sampled")
 
         action = torch.tanh(sample)
         log_prob = distribution.log_prob(sample)
         log_prob -= torch.log((1 - action.pow(2)) + self.reparam_noise)
         log_prob = log_prob.sum(axis=1,keepdim=True)
-        print("get_action_log_probs fin")
+        
         return action, log_prob

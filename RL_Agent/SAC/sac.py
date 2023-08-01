@@ -31,7 +31,7 @@ class SAC_Agent(agent):
         super().__init__(observation_space,action_space,**userconfig)
         
         self._config = {
-            "start_steps":1000, #10000
+            "start_steps":10000,
             "discount": 0.99,
             "buffer_size": int(1e7),
             "batch_size": 256,
@@ -132,7 +132,6 @@ class SAC_Agent(agent):
             if self.start_steps> self.memory.size:
                 action = self.actor.random_action()
             else:    
-                print("not random action")
                 action, _ = self.actor.get_action_and_log_probs(state)
         action = self.rescale_action(action)
         return action.cpu().detach().numpy()
@@ -159,30 +158,25 @@ class SAC_Agent(agent):
             y = (rew + self.discount * (1 - done)*target_value)
 
         q_loss = self.critic.update_critics(state=s0,action=action,target=y)
-        print("update Q finished")
         return q_loss      
 
 
     def update_policy(self,s0):
-        print("update policy")
         action, log_prob = self.actor.get_action_and_log_probs(s0,reparameterize=True)
         actor_Q = self.get_Q_value(s0,action)
         actor_loss = (-actor_Q+self.log_temperature.exp().detach()*log_prob).mean(axis=0)
         self.actor.optimizer.zero_grad()
         actor_loss.backward()
         self.actor.optimizer.step()
-        print("update policy finished")
         return actor_loss.item(), log_prob
     
 
     def update_temperature(self,log_probs):
-        print("update temp")
         self.temperature_optimizer.zero_grad()
         temperature_loss  =  -(self.log_temperature.exp() * 
                                (log_probs+ self.target_entropy).detach()).mean()
         temperature_loss.backward()
         self.temperature_optimizer.step()
-        print("update temp finished")
         return temperature_loss.item()
 
 

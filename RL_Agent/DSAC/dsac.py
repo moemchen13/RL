@@ -50,7 +50,6 @@ class DSAC_Agent(agent):
             "bound":True,
         }
         self.device = device
-        self.device = device
         self._observation_space = observation_space
         self._obs_dim = self._observation_space.shape[0]
         self._action_space = action_space
@@ -60,7 +59,8 @@ class DSAC_Agent(agent):
         self.train_iter=0
         self.eval_mode = False
         self.start_steps = self._config["start_steps"]
-        self.memory = mem.Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,action_dim=self.action_dim,device=self.device)
+        self.memory = mem.Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,
+                                 action_dim=self.action_dim,device=self.device)
 
         if self._config["autotuned_temperature"]:
             self.target_entropy = -torch.Tensor(self.action_dim).to(self.device)
@@ -212,15 +212,4 @@ class DSAC_Agent(agent):
                 if i % update_target == 0:
                     self.target.soft_update(self.critic,self.tau)
         
-        return q_losses,policy_losses,temperature_losses
-
-
-                
-
-
-
-                
-
-
-
         return q_losses,policy_losses,temperature_losses

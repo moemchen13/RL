@@ -19,13 +19,13 @@ class Critic(nn.Module):
 
         self.shared_network = nn.Sequential(nn.Linear(self.input_dim,self.hidden_sizes),nn.GELU(),
                                             nn.Linear(self.hidden_sizes,self.hidden_sizes),nn.GELU(),
-                                            nn.Linear(self.hidden_sizes,hidden_sizes),nn.GELU())
+                                            nn.Linear(self.hidden_sizes,hidden_sizes),nn.GELU()).to(self.device)
         self.mean_network = nn.Sequential(nn.Linear(self.hidden_sizes,self.hidden_sizes),nn.GELU(),
                                           nn.Linear(self.hidden_sizes,self.hidden_sizes),nn.GELU(),
-                                          nn.Linear(self.hidden_sizes,1))
+                                          nn.Linear(self.hidden_sizes,1)).to(self.device)
         self.std_network = nn.Sequential(nn.Linear(self.hidden_sizes,self.hidden_sizes),nn.GELU(),
                                          nn.Linear(self.hidden_sizes,self.hidden_sizes),nn.GELU(),
-                                         nn.Linear(self.hidden_sizes,1))
+                                         nn.Linear(self.hidden_sizes,1)).to(self.device)
 
         if device =='cuda':
             self.cuda()
@@ -57,13 +57,13 @@ class Critic(nn.Module):
     def evaluate(self,state,action,min=False):
         mean,log_std = self.forward(state,action)
         std = log_std.exp()
-        normal = Normal(torch.zeros(mean.shape),torch.ones(std.shape))
+        normal = Normal(torch.zeros(mean.shape,device=self.device),torch.ones(std.shape,device=self.device))
 
         if min:
-            z = normal.sample().to(self.device)
+            z = normal.sample()
             z = torch.clamp(z,-2,2)
         else:
-            z = -torch.abs(normal.sample()).to(self.device)
+            z = -torch.abs(normal.sample())
         
         q_val = mean + torch.mul(z,std)
         return mean,std,q_val
@@ -79,9 +79,9 @@ class Critic(nn.Module):
         std = log_q_std.exp()
         distribution  = Normal(mean,std)
         if min:
-            sample = -torch.abs(distribution.sample()).to(self.device)
+            sample = -torch.abs(distribution.sample())
         else:
-            sample = distribution.sample().to(self.device)
+            sample = distribution.sample()
             sample = torch.clamp(sample,mean-2,mean+2)
 
         return mean,std,sample
