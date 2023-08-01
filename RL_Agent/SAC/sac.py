@@ -87,8 +87,6 @@ class SAC_Agent(agent):
         else:
             self.action_scale = torch.tensor(1.).to(self.device)
             self.action_bias = torch.tensor(0.).to(self.device)
-        print("initialisation fin")
-
 
 
     def store_transition(self,transition):
@@ -124,7 +122,6 @@ class SAC_Agent(agent):
 
 
     def act(self,state):
-        print(f"is cuda {state.is_cuda()}")
         state = torch.FloatTensor(state).to(self.device)[None,:]
         print(f"is cuda {state.is_cuda()}")
         if self.eval_mode:
