@@ -87,6 +87,7 @@ class SAC_Agent(agent):
         else:
             self.action_scale = torch.tensor(1.).to(self.device)
             self.action_bias = torch.tensor(0.).to(self.device)
+        print("initialisation fin")
 
 
 
@@ -154,7 +155,6 @@ class SAC_Agent(agent):
             min_Q_next = self.get_target_Q_value(s1,a_next)
             #get V estimate
             target_value = min_Q_next - self.log_temperature.exp() * log_prob_next
-            
             y = (rew + self.discount * (1 - done)*target_value)
 
         q_loss = self.critic.update_critics(state=s0,action=action,target=y)

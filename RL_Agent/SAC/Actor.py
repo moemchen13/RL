@@ -28,9 +28,6 @@ class Actor(nn.Module):
 
         self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
         
-        
-
-
     
     def forward(self, state):
         for layer,activation_fun in zip(self.layers, self.activations):
@@ -44,7 +41,7 @@ class Actor(nn.Module):
 
     def random_action(self):
         #random for early exploration
-        action = 2 * torch.rand(self.action_dim) - 1
+        action = 2 * torch.rand(self.action_dim,device=self.device) - 1
         return action
 
     def get_action(self,state):
