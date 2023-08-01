@@ -71,5 +71,5 @@ class Actor(nn.Module):
         log_prob = distribution.log_prob(sample)
         log_prob -= torch.log((1 - action.pow(2)) + self.reparam_noise)
         log_prob = log_prob.sum(axis=1,keepdim=True)
-        
+        print("get_action_log_probs fin")
         return action, log_prob
