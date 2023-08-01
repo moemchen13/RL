@@ -70,7 +70,7 @@ class SAC_Agent(agent):
         else:
             self.log_temperature = torch.Tensor(self._config["temperature"].log()).to(self.device)
 
-        self.actor = Actor(self._obs_dim,self.action_dim,action_space=action_space,hidden_sizes=self._config["hidden_size_actor"],
+        self.actor = Actor(self._obs_dim,self.action_dim,hidden_sizes=self._config["hidden_size_actor"],
                             learning_rate=self._config["lr_actor"],device=self.device)
         self.critic = Critic_Q(self._obs_dim,self.action_dim,self._config["lr_critic"],
                                hidden_sizes=self._config["hidden_size_critic"],device=self.device)

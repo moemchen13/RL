@@ -8,7 +8,7 @@ from torch.distributions.normal import Normal
 #torch.set_num_threads(1)
 
 class Actor(nn.Module):
-    def __init__(self,input_dim,action_dim,action_space=None,hidden_sizes=[256,256],
+    def __init__(self,input_dim,action_dim,hidden_sizes=[256,256],
                  learning_rate= 0.0001,name="actor",
                  activation_fun= torch.nn.ReLU(),device='cpu'):
         super().__init__()
@@ -19,7 +19,6 @@ class Actor(nn.Module):
         self.log_sigma = torch.nn.Linear(layer_sizes[-1],action_dim)
         self.mu = torch.nn.Linear(layer_sizes[-1],action_dim)
         self.learning_rate = torch.tensor(learning_rate).to(self.device)
-        self.action_space = action_space
         self.min_log_std = torch.tensor(-20).to(self.device)
         self.max_log_std = torch.tensor(2).to(self.device)
         self.reparam_noise = torch.tensor(1e-6).to(self.device)
