@@ -149,7 +149,6 @@ class SAC_Agent(agent):
 
     
     def update_Q_functions(self,s0,action,done,rew,s1):
-        print("update Q")
         with torch.no_grad():
             a_next , log_prob_next = self.actor.get_action_and_log_probs(s1,reparameterize=False)
             min_Q_next = self.get_target_Q_value(s1,a_next)

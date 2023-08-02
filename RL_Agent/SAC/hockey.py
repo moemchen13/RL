@@ -7,10 +7,9 @@ import laserhockey.hockey_env as h_env
 import numpy as np
 import pylab as plt
 import torch
-from DSAC.dsac import DSAC_Agent
+from DR3 import DR3_Agent
 from IPython import display
-from SAC.DR3 import DR3_Agent
-from SAC.sac import SAC_Agent
+from sac import SAC_Agent
 
 
 def save_statistics(rewards,lengths,q_losses,pi_losses,temperature_loss,env_name,random_seed,episode,name):
@@ -196,8 +195,8 @@ def main():
     max_episodes = int(opts.maxepisodes) # max training episodes
     max_timesteps = 2000         # max timesteps in one episode
 
-    train_iter = int(opts.train_iter)      # update networks for given batched after every episode
-    lr  = int(opts.lr)                # learning rate of DDPG policy
+    train_iter = int(opts.train_iter)     # update networks for given batched after every episode
+    lr  = opts.lr                # learning rate of DDPG policy
     random_seed = int(opts.seed)
     save_interval=500
     #############################################
@@ -207,7 +206,8 @@ def main():
     if agent == 'SAC':
         agent = SAC_Agent(env.observation_space,env.action_space)
     elif agent == 'DSAC':
-        agent = DSAC_Agent(env.observation_space,env.action_space) 
+        #agent = DSAC_Agent(env.observation_space,env.action_space) 
+        raise NotImplementedError()
     elif agent == 'DR3':
         agent = DR3_Agent(env.observation_space,env.action_space)
     
@@ -216,9 +216,11 @@ def main():
         if opponent == 'SAC':
             opponent = SAC_Agent(env.observation_space,env.action_space)
         elif opponent == 'DSAC':
-            opponent = DSAC_Agent(env.observation_space,env.action_space) 
+            #opponent = DSAC_Agent(env.observation_space,env.action_space)
+            raise NotImplementedError() 
         elif opponent == 'DR3':
             opponent = DR3_Agent(env.observation_space,env.action_space)
+    env.close()
 
     if mode=="Defense" or mode=="Attack":
         run_sac_agent_in_env_modes(agent,mode,log_interval,save_interval,max_episodes,
