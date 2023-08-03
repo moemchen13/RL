@@ -1,18 +1,18 @@
 import os
 import pickle
 
+import Feedforward as NN
 import gymnasium as gym
+import memory as mem
 import numpy as np
 import torch
 from Actor import Actor
-from Basic import memory as mem
-from Basic.Agent import UnsupportedSpace, agent
-from Critic import Critic
+from Agent import UnsupportedSpace, agent
+from Critic import Critic_Q
 from gymnasium import spaces
-from torch.distributions import Normal
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 #device = torch.device('cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('Using device:', device)
 
 class UnsupportedSpace(Exception):
@@ -22,33 +22,33 @@ class UnsupportedSpace(Exception):
         self.message = message
         super().__init__(self.message)
 
-class DSAC_Agent(agent):
-    def __init__(self,observation_space,action_space,**userconfig):
+class DR3_Agent(agent):
+    def __init__(self,observation_space,action_space, **userconfig):
+        
         super().__init__(observation_space,action_space,**userconfig)
-
+        
         self._config = {
-           "start_steps":10000,
+            "start_steps":10000,
             "discount": 0.99,
-            "buffer_size": int(1e6),
+            "buffer_size": int(1e7),
             "batch_size": 256,
             "lr_actor": float(3e-4),
             "lr_critic": float(1e-3),
+            "lr_value": float(1e-3),
             "hidden_size_critic": [128,128],
             "hidden_size_actor": [128,128],
+            "hidden_size_value": [128,128],
             "frequency_update_Q":1,
             "frequency_update_actor":1,
             "frequency_update_targets":1,
             "tau": 0.005,
+            "reward_scale":2,
+            "update_target_every":1,
             "autotuned_temperature":True,
             "temperature":0.1,
-            "smoothing_trick":False, 
-            "number_critics":2,
-            "stochastic_actor":True,
-            "adaptive_bounds":True,
-            "bounds":True,
-            "TD_Bound":10,
-            "bound":True,
-        }
+            "use_smooth_L1":False,
+            "regularizer_q":0.001,
+            }
         self.device = device
         self._observation_space = observation_space
         self._obs_dim = self._observation_space.shape[0]
@@ -59,9 +59,8 @@ class DSAC_Agent(agent):
         self.train_iter=0
         self.eval_mode = False
         self.start_steps = self._config["start_steps"]
-        self.memory = mem.Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,
-                                 action_dim=self.action_dim,device=self.device)
-
+        self.memory = mem.Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,action_dim=self.action_dim,device=self.device)
+        
         if self._config["autotuned_temperature"]:
             self.target_entropy = -torch.Tensor(self.action_dim).to(self.device)
             self.log_temperature = torch.ones(1,requires_grad=True,device=self.device)
@@ -69,14 +68,17 @@ class DSAC_Agent(agent):
         else:
             self.log_temperature = torch.Tensor(self._config["temperature"].log()).to(self.device)
 
-        self.actor = Actor(self._obs_dim,self.action_dim,action_space=action_space,
+        self.actor = Actor(self._obs_dim,self.action_dim,action_space=action_space,hidden_sizes=self._config["hidden_size_actor"],
                             learning_rate=self._config["lr_actor"],device=self.device)
-        self.critic = Critic(self._obs_dim,self.action_dim,self._config["lr_critic"],
-                               device=self.device)
-        self.target = Critic(self._obs_dim,self.action_dim,self._config["lr_critic"],
-                            tau=self.tau,device=self.device)
+        self.critic = Critic_Q(self._obs_dim,self.action_dim,self._config["lr_critic"],
+                               hidden_sizes=self._config["hidden_size_critic"],device=self.device)
+
+        self.target = Critic_Q(self._obs_dim,self.action_dim,self._config["lr_critic"],
+                            hidden_sizes=self._config["hidden_size_critic"],
+                            tau=self.tau,target=True,device=self.device)
         
         self.target.soft_update(self.critic,tau=1)
+        
         
         if action_space is not None:
             self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2).to(self.device)
@@ -86,10 +88,10 @@ class DSAC_Agent(agent):
             self.action_bias = torch.tensor(0.).to(self.device)
 
 
-    def store_transition(self, transition):
+    def store_transition(self,transition):
         self.memory.add_transition(transition)
 
-
+    
     def get_networks_states(self):
         return (self.actor.state_dict(),self.critic.get_network_states(),self.target.get_network_states())
     
@@ -116,53 +118,59 @@ class DSAC_Agent(agent):
 
     def rescale_action(self,action):
         return action[0]*self.action_scale + self.action_bias
-    
+
+
     def act(self,state):
         state = torch.FloatTensor(state).to(self.device)[None,:]
         
         if self.eval_mode:
-            action,_,_ = self.actor.get_action_and_log_probs(state,deterministic=True)
+            action = self.actor.get_action(state)
         else:
             if self.start_steps> self.memory.size:
                 action = self.actor.random_action()
             else:    
-                action, _, _ = self.actor.get_action_and_log_probs(state)
+                action, _ = self.actor.get_action_and_log_probs(state)
         action = self.rescale_action(action)
         return action.cpu().detach().numpy()
+
+    
+    def get_Q_value(self,state,action):
+        Q_val = self.critic.get_min_Q_value(state,action)
+        return Q_val
     
 
-    def target_q(self,rew,done,q,q_std,target_q_next,log_prob_a_next):
-        td = rew + (1-done)*self._config["discount"]*(target_q_next- self.log_temperature.exp().detach()*log_prob_a_next)
-        if self._config["adaptive_bounds"]:
-            target_max = q + 3*q_std
-            target_min = q - 3*q_std
-            td = torch.min(target_max,td)
-            td = torch.max(target_min,td)
-        difference = torch.clamp(td-q,-self._config["TD_Bound"],self._config["TD_Bound"])
-        td_q_bound = difference + q
-        return td.detach(),td_q_bound.detach()
+    def get_target_Q_value(self,state,action):
+        #same as get_Q_value but from target networks
+        target_Q_val = self.target.get_min_Q_value(state,action)
+        return target_Q_val
 
+    
+    def update_Q_functions(self,s0,action,done,rew,s1):
+        beta = self._config["regularizer_q"]
+        with torch.no_grad():
+            a_next , log_prob_next = self.actor.get_action_and_log_probs(s1,reparameterize=True)
+            min_Q_next = self.get_target_Q_value(s1,a_next)
+            #get V estimate
+            target_value = min_Q_next - self.log_temperature.exp() * log_prob_next
+            
+            y = (rew + self.discount * (1 - done)*target_value).detach()
 
-    def update_critic(self,q_val,q_std,target_q,target_q_std):
-        if self._config["bound"]:
-            loss = (torch.pow(q_val-target_q,2) / (2*torch.pow(q_std,2)) 
-                    + torch.pow(q_val.detach()-target_q_std,2)/ (2*torch.pow(q_std,2))
-                    + torch.log(q_std)).mean()
-        else:
-            loss  = -Normal(q_val,q_std).log_prob(target_q).mean()
+        q_loss = self.critic.update_critics_DR3(s0,action,s1,a_next,y,beta)
         
-        self.critic.update(loss)
-        return loss.item()
+        return q_loss      
 
 
-    def update_policy(self,q_val,log_prob_next):
-        loss = (self.log_temperature.exp().detach()*log_prob_next-q_val).mean()
-        self.actor.update(loss)
-        return loss.item()
-
+    def update_policy(self,s0):
+        action, log_prob = self.actor.get_action_and_log_probs(s0,reparameterize=True)
+        actor_Q = self.get_Q_value(s0,action)
+        actor_loss = (-actor_Q+self.log_temperature.exp().detach()*log_prob).mean(axis=0)
+        self.actor.optimizer.zero_grad()
+        actor_loss.backward()
+        self.actor.optimizer.step()
+        return actor_loss.item(), log_prob
+    
 
     def update_temperature(self,log_probs):
-        #TODO: Check dimensions
         self.temperature_optimizer.zero_grad()
         temperature_loss  =  -(self.log_temperature.exp() * 
                                (log_probs+ self.target_entropy).detach()).mean()
@@ -175,41 +183,37 @@ class DSAC_Agent(agent):
         q_losses = []
         policy_losses = []
         temperature_losses=[]
+
         self.train_iter +=1
-        batch_size=self._config["batch_size"]
-        smoothing_trick =self._config["smoothing_trick"]
-        update_q= self._config["frequency_update_Q"]
-        update_actor = self._config["frequency_update_actor"]
-        update_target = self._config["frequency_update_targets"] 
-
+        
         for i in range(iter_fit):
-            if self.memory.size > batch_size:
-                data = self.memory.sample(batch=batch_size)
-                s0,a,rew,s1,done = data
-
+            #print(i)
+            if self.memory.size > self._config["batch_size"]:
+                #Sample Batches from the replay Buffer
+                data=self.memory.sample(batch=self._config["batch_size"])
+                s0,a,rew,s1,done=data
                 
-                q_val,q_std,_ = self.critic.evaluate(s0,a)
-                a_next,log_prob_next,_ = self.actor.evaluate(s1)
-                
-                _, _,target_q_next_sample = self.target.evaluate(s1,a_next,min=False)
-                target_q_val = target_q_next_sample
-
-                if i % update_q==0:
-                    with torch.no_grad():
-                        target_q_1,target_q_1_std = self.target_q(rew,done,q_val,q_std,target_q_val,log_prob_next)
-                    q_loss = self.update_critic(q_val,q_std,target_q_1,target_q_1_std)
+                ######Start SAC train loop#######
+                #updateQ
+                if i % self._config["frequency_update_Q"] == 0:
+                    q_loss = self.update_Q_functions(s0,a,done,rew,s1)
                     q_losses.append(q_loss)
 
-                if i % update_actor==0:
-                    a_next, log_prob_next,_ = self.actor.evaluate(s0)
+                #update policy
+                if i % self._config["frequency_update_actor"] == 0:
+                    actor_loss,log_prob = self.update_policy(s0)
+                    policy_losses.append(actor_loss)
+                    
+                #Update temperature
+                if self._config["autotuned_temperature"]:
+                    temperature_loss = self.update_temperature(log_prob)
+                else:
+                    temperature_loss = torch.tensor(0.)
+                temperature_losses.append(temperature_loss)
 
-                    temperature_loss = self.update_temperature(log_prob_next)
-                    q_val,_,_ = self.critic.evaluate(s0,a_next)
-                    pi_loss = self.update_policy(q_val,log_prob_next)
-                    temperature_losses.append(temperature_loss)
-                    policy_losses.append(pi_loss)
-
-                if i % update_target == 0:
-                    self.target.soft_update(self.critic,self.tau)
+                #Update targets networks
+                if i % self._config["frequency_update_targets"] == 0:
+                    self.target.soft_update(self.critic)
         
         return q_losses,policy_losses,temperature_losses
+

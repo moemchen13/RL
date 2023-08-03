@@ -8,7 +8,7 @@ import torch.optim as optim
 class Feedforward(torch.nn.Module):
     def __init__(self, input_dim, hidden_sizes, output_size, 
                  activation_fun=torch.nn.Tanh(),name="feedforward",folder="tmp",device='cpu'):
-        super(Feedforward, self).__init__()
+        super().__init__()
         self.device= device
         self.input_size = input_dim
         self.hidden_sizes  = hidden_sizes
