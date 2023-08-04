@@ -1,17 +1,15 @@
 import argparse
 import pickle
-from importlib import reload
 
 import gymnasium as gym
 import laserhockey.hockey_env as h_env
 import numpy as np
 import pylab as plt
 import torch
+from DR3 import DR3_Agent
+from dsac import DSAC_Agent
 from IPython import display
-
-from RL_Agent.SAC_Agents.SAC.DR3 import DR3_Agent
-from RL_Agent.SAC_Agents.SAC.dsac import DSAC_Agent
-from RL_Agent.SAC_Agents.SAC.sac import SAC_Agent
+from sac import SAC_Agent
 
 
 def save_statistics(rewards,lengths,q_losses,pi_losses,temperature_loss,env_name,random_seed,episode,name):
@@ -129,7 +127,7 @@ def run_sac_agent_hockey_game(agent,opponent,mode,log_interval,save_interval,max
             done = False
             action_player_1 = player1.act(ob)
             action_player_2 = player2.act(ob_player_2)
-            (ob_new,reward,done,trunc,info) = env.step([action_player_1,action_player_2])
+            (ob_new,reward,done,trunc,info) = env.step(np.hstack([action_player_1,action_player_2]))
             total_reward += reward
             player2.store_transition((ob,action_player_2,reward,ob_new,done))
             ob=ob_new

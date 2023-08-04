@@ -1,7 +1,7 @@
 import os
 import pickle
 
-import Feedforward as NN
+import feedforward as NN
 import gymnasium as gym
 import memory as mem
 import numpy as np
@@ -12,9 +12,6 @@ from Critic import Critic_Q
 from gymnasium import spaces
 
 #device = torch.device('cpu')
-#https://cloud.cs.uni-tuebingen.de/index.php/s/pm49B2xRpcNirry
-#https://arxiv.org/pdf/2010.09163.pdf
-#https://github.com/BY571/Soft-Actor-Critic-and-Extensions
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('Using device:', device)
 
@@ -25,7 +22,7 @@ class UnsupportedSpace(Exception):
         self.message = message
         super().__init__(self.message)
 
-class SAC_Agent(agent):
+class DR3_Agent(agent):
     def __init__(self,observation_space,action_space, **userconfig):
         
         super().__init__(observation_space,action_space,**userconfig)
@@ -38,20 +35,20 @@ class SAC_Agent(agent):
             "lr_actor": float(3e-4),
             "lr_critic": float(1e-3),
             "lr_value": float(1e-3),
-            "hidden_size_critic": [256,256],
-            "hidden_size_actor": [256,256],
-            "hidden_size_value": [256,256],
+            "hidden_size_critic": [128,128],
+            "hidden_size_actor": [128,128],
+            "hidden_size_value": [128,128],
             "frequency_update_Q":1,
             "frequency_update_actor":1,
             "frequency_update_targets":1,
             "tau": 0.005,
+            "reward_scale":2,
             "update_target_every":1,
             "autotuned_temperature":True,
             "temperature":0.1,
-            "numbers_critics":2,
             "use_smooth_L1":False,
+            "regularizer_q":0.001,
             }
-        
         self.device = device
         self._observation_space = observation_space
         self._obs_dim = self._observation_space.shape[0]
@@ -59,10 +56,9 @@ class SAC_Agent(agent):
         self.action_dim = action_space.shape[0]
         self.discount = self._config["discount"]
         self.tau = self._config["tau"]
-        self.train_iter = 0
+        self.train_iter=0
         self.eval_mode = False
         self.start_steps = self._config["start_steps"]
-
         self.memory = mem.Memory(max_size=self._config["buffer_size"],state_dim=self._obs_dim,action_dim=self.action_dim,device=self.device)
         
         if self._config["autotuned_temperature"]:
@@ -72,21 +68,21 @@ class SAC_Agent(agent):
         else:
             self.log_temperature = torch.Tensor(self._config["temperature"].log()).to(self.device)
 
-        self.actor = Actor(self._obs_dim,self.action_dim,hidden_sizes=self._config["hidden_size_actor"],
+        self.actor = Actor(self._obs_dim,self.action_dim,action_space=action_space,hidden_sizes=self._config["hidden_size_actor"],
                             learning_rate=self._config["lr_actor"],device=self.device)
         self.critic = Critic_Q(self._obs_dim,self.action_dim,self._config["lr_critic"],
-                               hidden_sizes=self._config["hidden_size_critic"],
-                               network_number=self._config["numbers_critics"],device=self.device)
+                               hidden_sizes=self._config["hidden_size_critic"],device=self.device)
 
         self.target = Critic_Q(self._obs_dim,self.action_dim,self._config["lr_critic"],
-                            hidden_sizes=self._config["hidden_size_critic"],tau=self.tau,target=True,
-                            network_number=self._config["numbers_critics"],device=self.device)
+                            hidden_sizes=self._config["hidden_size_critic"],
+                            tau=self.tau,target=True,device=self.device)
         
         self.target.soft_update(self.critic,tau=1)
         
+        
         if action_space is not None:
-            self.action_scale = torch.FloatTensor((action_space.high - action_space.low)/2).to(self.device)
-            self.action_bias = torch.FloatTensor((action_space.high + action_space.low)/2).to(self.device)
+            self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2).to(self.device)
+            self.action_bias = torch.FloatTensor((action_space.high + action_space.low) / 2).to(self.device)
         else:
             self.action_scale = torch.tensor(1.).to(self.device)
             self.action_bias = torch.tensor(0.).to(self.device)
@@ -126,6 +122,7 @@ class SAC_Agent(agent):
 
     def act(self,state):
         state = torch.FloatTensor(state).to(self.device)[None,:]
+        
         if self.eval_mode:
             action = self.actor.get_action(state)
         else:
@@ -149,14 +146,17 @@ class SAC_Agent(agent):
 
     
     def update_Q_functions(self,s0,action,done,rew,s1):
+        beta = self._config["regularizer_q"]
         with torch.no_grad():
-            a_next , log_prob_next = self.actor.get_action_and_log_probs(s1,reparameterize=False)
+            a_next , log_prob_next = self.actor.get_action_and_log_probs(s1,reparameterize=True)
             min_Q_next = self.get_target_Q_value(s1,a_next)
             #get V estimate
             target_value = min_Q_next - self.log_temperature.exp() * log_prob_next
-            y = (rew + self.discount * (1 - done)*target_value)
+            
+            y = (rew + self.discount * (1 - done)*target_value).detach()
 
-        q_loss = self.critic.update_critics(state=s0,action=action,target=y)
+        q_loss = self.critic.update_critics_DR3(s0,action,s1,a_next,y,beta)
+        
         return q_loss      
 
 
