@@ -1,14 +1,11 @@
 import argparse
 import pickle
 
-import gymnasium as gym
 import laserhockey.hockey_env as h_env
 import numpy as np
-import pylab as plt
 import torch
 from DR3 import DR3_Agent
 from dsac import DSAC_Agent
-from IPython import display
 from sac import SAC_Agent
 
 
