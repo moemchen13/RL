@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
+import memory as mem
 import numpy as np
 import torch
-from Basic import memory as mem
 from gymnasium import spaces
 
 

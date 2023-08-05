@@ -2,12 +2,12 @@ import os
 import pickle
 
 import gymnasium as gym
+import memory as mem
 import numpy as np
 import torch
-from Actor import Actor
-from Basic import memory as mem
-from Basic.Agent import UnsupportedSpace, agent
-from Critic import Critic
+from Agent import UnsupportedSpace, agent
+from DSAC_Actor import Actor
+from DSAC_Critic import Critic
 from gymnasium import spaces
 from torch.distributions import Normal
 

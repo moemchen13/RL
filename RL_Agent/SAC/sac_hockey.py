@@ -1,16 +1,12 @@
 import argparse
 import pickle
-from importlib import reload
 
-import gymnasium as gym
 import laserhockey.hockey_env as h_env
 import numpy as np
-import pylab as plt
 import torch
-from DSAC.dsac import DSAC_Agent
-from IPython import display
-from SAC.DR3 import DR3_Agent
-from SAC.sac import SAC_Agent
+from DR3 import DR3_Agent
+from dsac import DSAC_Agent
+from sac import SAC_Agent
 
 
 def save_statistics(rewards,lengths,q_losses,pi_losses,temperature_loss,env_name,random_seed,episode,name):
@@ -27,8 +23,16 @@ def reward_shaping(reward,info,player1):
         return -reward
     return reward
 
-def create_agent():
-    raise NotImplementedError()
+def create_agent(agent):
+    env = h_env.HockeyEnv()
+    if agent == 'SAC':
+        agent = SAC_Agent(env.observation_space,env.action_space)
+    elif agent == 'DSAC':
+        agent = DSAC_Agent(env.observation_space,env.action_space) 
+    elif agent == 'DR3':
+        agent = DR3_Agent(env.observation_space,env.action_space)
+        env.close()
+    return agent
 
 def run_sac_agent_in_env_modes(agent,mode,log_interval,save_interval,max_episodes,
                                  max_timesteps,train_iter,random_seed,name=""):
@@ -120,7 +124,7 @@ def run_sac_agent_hockey_game(agent,opponent,mode,log_interval,save_interval,max
             done = False
             action_player_1 = player1.act(ob)
             action_player_2 = player2.act(ob_player_2)
-            (ob_new,reward,done,trunc,info) = env.step([action_player_1,action_player_2])
+            (ob_new,reward,done,trunc,info) = env.step(np.hstack([action_player_1,action_player_2]))
             total_reward += reward
             player2.store_transition((ob,action_player_2,reward,ob_new,done))
             ob=ob_new
@@ -149,8 +153,8 @@ def run_sac_agent_hockey_game(agent,opponent,mode,log_interval,save_interval,max
             torch.save(player2.get_networks_states(),f'./{name}_{mode}-e{episode}-t{train_iter}-s{random_seed}-player2.pth')
             if mode == "self":
                 torch.save(player2.get_networks_states(),f'./{name}_{mode}-e{episode}-t{train_iter}-s{random_seed}-player1.pth')
-                save_statistics(rewards1,lengths1,q_losses1,policy_losses1,temperature_losses1,mode,random_seed,episode)
-            save_statistics(rewards2,lengths2,q_losses2,policy_losses2,temperature_losses2,mode,random_seed,episode)
+                save_statistics(rewards1,lengths1,q_losses1,policy_losses1,temperature_losses1,mode,random_seed,episode,name)
+            save_statistics(rewards2,lengths2,q_losses2,policy_losses2,temperature_losses2,mode,random_seed,episode,name)
 
         if episode % log_interval == 0:
             avg_reward = np.mean(rewards2[-log_interval:])
@@ -163,9 +167,9 @@ def run_sac_agent_hockey_game(agent,opponent,mode,log_interval,save_interval,max
                 print('Player1: Episode {} \t avg length: {} \t reward: {}'.format(episode, avg_length, avg_reward))
 
         
-    save_statistics(rewards2,lengths2,q_losses2,policy_losses2,temperature_losses2,mode,random_seed,episode)
+    save_statistics(rewards2,lengths2,q_losses2,policy_losses2,temperature_losses2,mode,random_seed,episode,name)
     if mode =="self":
-        save_statistics(rewards1,lengths1,q_losses1,policy_losses1,temperature_losses1,mode,random_seed,episode)
+        save_statistics(rewards1,lengths1,q_losses1,policy_losses1,temperature_losses1,mode,random_seed,episode,name)
 
 def main():
     parser = argparse.ArgumentParser(prog='RL Agents',
@@ -202,23 +206,10 @@ def main():
     save_interval=500
     #############################################
     
-    env = h_env.HockeyEnv()
-    
-    if agent == 'SAC':
-        agent = SAC_Agent(env.observation_space,env.action_space)
-    elif agent == 'DSAC':
-        agent = DSAC_Agent(env.observation_space,env.action_space) 
-    elif agent == 'DR3':
-        agent = DR3_Agent(env.observation_space,env.action_space)
-    
-    opponent = None
+    agent = create_agent(agent)    
     if mode == "self":
-        if opponent == 'SAC':
-            opponent = SAC_Agent(env.observation_space,env.action_space)
-        elif opponent == 'DSAC':
-            opponent = DSAC_Agent(env.observation_space,env.action_space) 
-        elif opponent == 'DR3':
-            opponent = DR3_Agent(env.observation_space,env.action_space)
+        opponent = create_agent(opponent)
+    
 
     if mode=="Defense" or mode=="Attack":
         run_sac_agent_in_env_modes(agent,mode,log_interval,save_interval,max_episodes,

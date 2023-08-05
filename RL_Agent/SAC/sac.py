@@ -1,13 +1,13 @@
 import os
 import pickle
 
+import feedforward as NN
 import gymnasium as gym
+import memory as mem
 import numpy as np
 import torch
 from Actor import Actor
 from Agent import UnsupportedSpace, agent
-from Basic import feedforward as NN
-from Basic import memory as mem
 from Critic import Critic_Q
 from gymnasium import spaces
 

@@ -1,8 +1,8 @@
+import feedforward as NN
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from Basic import feedforward as NN
 from torch.distributions.normal import Normal
 
 #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
