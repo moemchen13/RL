@@ -1,0 +1,44 @@
+{
+    "Actor":
+    {
+        "hidden_sizes": [128, 128, 64],
+        "activation": "torch.nn.ReLU()",
+        "output_activation": "torch.nn.Tanh()"
+    },
+    "Critic":
+    {
+        "hidden_sizes": [128, 128, 64],
+        "activation": "torch.nn.ReLU()",
+        "output_activation": "torch.nn.Identity()"
+    },
+    "TD3":
+    {
+        "actor_lr": 1e-4,
+        "actor_reg": 0.0,
+        "critic_lr": 1e-4,
+        "critic_reg": 0.0,
+        "training_batch_size": 100,
+        "gamma": 0.99,
+        "tau": 0.05,
+        "training_noise": 0.2,
+        "noise_clip": 0.5,
+        "update_frequency": 10
+    },
+    "Replay Buffer":
+    {
+        "capacity": 1e4
+    },
+    "Trainer": 
+    {
+        "train_episodes": 200,
+        "play_steps": 200,
+        "train_iter": 100,
+        "exploration_noise": 0.1
+    },
+    "Evaluator":
+    {
+        "eval_episodes": 50,
+        "play_steps": 200,
+        "exploration_noise": 0.0
+    }
+}

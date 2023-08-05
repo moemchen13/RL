@@ -4,20 +4,26 @@ import gymnasium as gym
 import torch
 import torch.nn.functional as F
 import numpy as np
+import matplotlib.pyplot as plt
+import time
+
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
+
 class ReplayBuffer(object):
     """
-    Replay Buffer to store data for experience replay.
+    Class to represent the replay buffer.
+    Stores environment transitions for experience replay.
+    Provides storage management by functions for adding, sampling and filling the buffer.
     """
     
 
     def __init__(self, config):
         """
-        Initialization function. Initializes Replay Buffer with config.
+        Initialization function. Initializes the replay buffer with config.
         """
         
         self.capacity = config["Replay Buffer"]["capacity"]
@@ -28,7 +34,7 @@ class ReplayBuffer(object):
 
     def add(self, data):
         """
-        Adds data to the replay buffer.
+        Adds given transition to the replay buffer.
         """
         
         if not self.full:
@@ -60,7 +66,7 @@ class ReplayBuffer(object):
 
     def sample(self, batch_size):
         """
-        Samples a random amount of experiences from buffer of batch size.
+        Samples random transitions of given size from the buffer.
         """
         
         data_idx = np.random.randint(0, len(self.storage), size=batch_size)
@@ -80,7 +86,7 @@ class ReplayBuffer(object):
 
 class Actor(torch.nn.Module):
     """
-    Class to represent Actor networks for TD3.
+    Class to represent actor networks for TD3.
     Defines network architecture and forward pass.
     """
 
@@ -112,7 +118,7 @@ class Actor(torch.nn.Module):
 
     def forward(self, state):
         """
-        Forward pass of the Actor network.
+        Forward pass of the actor network.
         Takes a state and returns an action.
         """
 
@@ -129,9 +135,9 @@ class Actor(torch.nn.Module):
 
 class Critic(torch.nn.Module):
     """
-    Class to represent Critic networks for TD3.
+    Class to represent critic networks for TD3.
     Defines network architecture and forward pass.
-    One Critic object already contains twin networks.
+    One critic object already contains the two twin networks.
     """
 
     def __init__(self, state_dim, action_dim, config):
@@ -148,6 +154,7 @@ class Critic(torch.nn.Module):
 
         self.layer_sizes = [input_size] + hidden_sizes + [output_size]
 
+        # Twin Networks
         self.layers_1 = torch.nn.ModuleList([torch.nn.Linear(in_size,out_size) for in_size,out_size in zip(self.layer_sizes[:-1], self.layer_sizes[1:])])
         self.layers_2 = torch.nn.ModuleList([torch.nn.Linear(in_size,out_size) for in_size,out_size in zip(self.layer_sizes[:-1], self.layer_sizes[1:])])
 
@@ -161,13 +168,12 @@ class Critic(torch.nn.Module):
 
     def forward(self, state, action):
         """
-        Forward pass of the Critic twin network.
+        Forward pass of the critic twin network.
         Takes state and action and returns two Q values.
         """
 
         Q1 = Q2 = torch.hstack([state, action])
 
-        
         for layer_1, layer_2, activation in zip(self.layers_1, self.layers_2, self.activations):
             Q1 = activation(layer_1(Q1))
             Q2 = activation(layer_2(Q2))
@@ -177,9 +183,10 @@ class Critic(torch.nn.Module):
 
     def Q1(self, state, action):
         """
-        Forward pass of the main Critic network.
+        Forward pass of the main critic network.
         Takes state and action and returns only the main Q value.
         """
+
         Q1 = torch.hstack([state, action])
 
         for layer_1, activation in zip(self.layers_1, self.activations):
@@ -193,7 +200,7 @@ class TD3(object):
     """
     Class to represent a TD3 agent. 
     Consists of actor and critic networks.
-    Provides functions to select (noisy) actions, to train from a Replay Buffer.
+    Provides functions to select (noisy) actions and to train from a replay buffer.
     Agents can be stored or read from disk.
     """
 
@@ -224,7 +231,6 @@ class TD3(object):
 
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=config["TD3"]["critic_lr"], weight_decay=config["TD3"]["critic_reg"])
 
-
         # Training
         self.training_batch_size = config["TD3"]["training_batch_size"]
         self.gamma = config["TD3"]["gamma"]
@@ -234,14 +240,15 @@ class TD3(object):
         self.update_frequency = config["TD3"]["update_frequency"]
 
 
-
     def select_action(self, state, noise, noise_clip=None):
         """
         Function to select an action from the agent policy for a given state.
-        Can be perturbed by noise.
+        Can be perturbed by Gaussian noise. Noise can be clipped.
         """
         
-        state = torch.tensor(state).to(device)
+        if not torch.is_tensor(state):
+            state = torch.FloatTensor(state).to(device)
+
         action = self.actor(state).cpu().detach().numpy()
         
         noise = np.random.normal(0, noise, size=self.action_dim)
@@ -249,64 +256,69 @@ class TD3(object):
             noise = noise.clip(-noise_clip,noise_clip)
 
         action = action + noise
-        return action.clip(self.env.action_space.low, self.env.action_space.high)
 
+        return action.clip(self.env.action_space.low, self.env.action_space.high)
 
 
     def train(self, buffer, train_iter):
         """
-        Train for a given number of iterations from the Replay Buffer.
+        Trains the agent for a given number of iterations with TD3 using transitions from a replay buffer.
+        Hyperparameters are given by the agent's attributes. Returns actor and critic losses.
         """
+
+        actor_losses = []
+        critic_losses = []
 
         for i in range(train_iter):
             
-
-            # Sample Batch of Transitions
+            # sample batch of transitions
             states, actions, rewards, next_states, dones = buffer.sample(self.training_batch_size)
 
+            # transfer data to device
             states = torch.FloatTensor(states).to(device)
             actions = torch.FloatTensor(actions).to(device)
             rewards = torch.FloatTensor(rewards).to(device)
             next_states = torch.FloatTensor(next_states).to(device)
             dones = torch.FloatTensor(dones).to(device)
 
-
+            # target policy smoothing
             noisy_next_actions = torch.FloatTensor(self.select_action(states, self.training_noise, self.noise_clip)).to(device)
 
+            # TD target
             target_Q1, target_Q2 = self.critic_target(next_states, noisy_next_actions)
-            td_target = rewards + (1.0-dones)  * self.gamma * torch.min(target_Q1, target_Q2)
+            td_target = rewards + (1.0-dones) * self.gamma * torch.min(target_Q1, target_Q2)
 
+            # critic loss
             current_Q1, current_Q2 = self.critic(states, actions)
-
             critic_loss = F.mse_loss(current_Q1, td_target) + F.mse_loss(current_Q2, td_target) 
+            critic_losses.append(critic_loss)
 
+            # update critic
             self.critic_optimizer.zero_grad()
             critic_loss.backward()
             self.critic_optimizer.step()
 
-            # Delayed policy updates
+            # delayed policy updates
             if i % self.update_frequency == 0:
 
-                # Compute actor loss
+                # actor loss
                 actor_loss = -self.critic.Q1(states, self.actor(states)).mean()
+                actor_losses.append(actor_loss)
 
-                # Optimize the actor 
+                # update actor
                 self.actor_optimizer.zero_grad()
                 actor_loss.backward()
                 self.actor_optimizer.step()
 
-                # Update the frozen target models
+                # update target networks
                 for param, target_param in zip(self.critic.parameters(), self.critic_target.parameters()):
                     target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
                 for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
                     target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
-      #  print("Actor ", actor_loss)
-      #  print("Critic ", critic_loss)
-        
-        return [], []
 
+        return actor_losses, critic_losses
 
 
     def save(self, file, directory="./saves"):
@@ -327,6 +339,10 @@ class TD3(object):
     
 
 class Trainer(object):
+    """
+    Class to organize the training process of a TD3 agent.
+    Manages environment transitions and replay buffer housekeeping.
+    """
     
     def __init__(self, env, agent, buffer, config):
         
@@ -343,11 +359,17 @@ class Trainer(object):
 
         # Logging
         self.episode_rewards = [] # length = train_episodes 
-        self.actor_losses = [] # length  = train_episodes * train_iter
-        self.critic_losses = [] # length = train_episods * train_iter
+        self.actor_losses = [] # length  = train_episodes * (train_iter / update_frequency)
+        self.critic_losses = [] # length = train_episodes * train_iter
 
 
     def run(self):
+        """
+        Trains a TD3 agent for the specified number of episodes and with respect to the specified configuration.
+        Consists of two phases: In the 'Play Phase', the agent's current policy is unrolled to fill the replay buffer and to collect training rewards.
+        In the 'Training Phase', the agent is asked to learn from the replay buffer for the specified number of iterations.
+        The information are collected and logged to enable further analysis.
+        """
 
         for episode in range(1, self.train_episodes+1):     
             
@@ -356,37 +378,51 @@ class Trainer(object):
             # Play Phase
             episode_reward = 0
             for step in range(1, self.play_steps+1):
-                action = self.agent.select_action(state, self.exploration_noise)
-                next_state, reward, done, trunc, _ = self.env.step(action) 
 
+                # action with exploration noise
+                action = self.agent.select_action(state, self.exploration_noise)
+                
+                # environment transition
+                next_state, reward, done, _, _ = self.env.step(action) 
+
+                # store transition in replay buffer
                 self.buffer.add((state, action, reward, next_state, done))
 
                 episode_reward += reward
 
-                if done or trunc:
+                if done:
                     break
                 else:
                     state = next_state
 
-            # Train Phase
+
+            # Training Phase
             actor_losses, critic_losses =  self.agent.train(self.buffer, self.train_iter)
 
 
             # Logging
-
             if episode % 10 == 0:
                 print("Episode ", episode, "- Reward: ", episode_reward)
 
             self.episode_rewards.append(episode_reward)
             self.actor_losses += actor_losses
             self.critic_losses += critic_losses
+
+        print("Episode Rewards: ", len(self.episode_rewards))
+        print("Actor Losses: ", len(self.actor_losses))
+        print("Critic Losses: ", len(self.critic_losses))
+
+        #plt.plot(self.episode_rewards)  # Training Rewards
+        # store plots for Training Rewards # Actor/Critic Losses TODO
+
+
         
 
 
 
 class Evaluator(object):
     
-    def __init__(self, config):
+    def __init__(self, env, agent, config):
         pass
 
     def run():
@@ -416,6 +452,7 @@ def main():
 
     with open(config_file, 'r') as f:
         config = json.load(f)
+
 
 
     ## Mode Selection ##
@@ -469,6 +506,7 @@ def main():
 
 
 if __name__ == "__main__":
+   
     main()
 
 
@@ -476,3 +514,9 @@ if __name__ == "__main__":
 
 ## IDEAS ##
 # Replay Buffer - def agent_fill(env, agent)
+# Training Time + Eval Time
+
+# Twin Polcies? => Slide!
+
+
+# Agent Evaluation after Training + File name with mean reward!
