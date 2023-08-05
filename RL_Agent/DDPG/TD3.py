@@ -1,0 +1,478 @@
+import argparse
+import json
+import gymnasium as gym
+import torch
+import torch.nn.functional as F
+import numpy as np
+
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+class ReplayBuffer(object):
+    """
+    Replay Buffer to store data for experience replay.
+    """
+    
+
+    def __init__(self, config):
+        """
+        Initialization function. Initializes Replay Buffer with config.
+        """
+        
+        self.capacity = config["Replay Buffer"]["capacity"]
+        self.storage = []
+        self.full = False
+        self.ptr = 0
+
+
+    def add(self, data):
+        """
+        Adds data to the replay buffer.
+        """
+        
+        if not self.full:
+            self.storage.append(data)
+            if len(self.storage) == self.capacity:
+                self.full = True
+        else:
+            self.storage[int(self.ptr)] = data
+            self.ptr = (self.ptr + 1) % self.capacity
+
+
+    def random_fill(self, env):
+        """
+        Fills the buffer with random environment transitions.
+        """
+        
+        state, _ = env.reset()
+
+        while not self.full:
+            action = env.action_space.sample()
+            next_state, reward, done, _ ,_ = env.step(action)
+            self.add((state, action, reward, next_state, done))
+
+            if done:
+                state, _ = env.reset()
+            else:
+                state = next_state
+
+
+    def sample(self, batch_size):
+        """
+        Samples a random amount of experiences from buffer of batch size.
+        """
+        
+        data_idx = np.random.randint(0, len(self.storage), size=batch_size)
+        states, actions, rewards, next_states, dones = [], [], [], [], []
+
+        for idx in data_idx: 
+            state, action, reward, next_state, done = self.storage[idx]
+            states.append(np.array(state, copy=False))
+            actions.append(np.array(action, copy=False))
+            rewards.append(np.array(reward, copy=False))
+            next_states.append(np.array(next_state, copy=False))
+            dones.append(np.array(done, copy=False))
+
+        return np.array(states), np.array(actions), np.array(rewards).reshape(-1, 1), np.array(next_states), np.array(dones).reshape(-1, 1)
+
+
+
+class Actor(torch.nn.Module):
+    """
+    Class to represent Actor networks for TD3.
+    Defines network architecture and forward pass.
+    """
+
+    def __init__(self, state_dim, action_dim, max_action, config):
+        """
+        Initialization function. Defines network architecture from environment information and config.
+        """    
+
+        super(Actor, self).__init__()
+
+        # Layers
+        input_size = state_dim
+        hidden_sizes  = config["Actor"]["hidden_sizes"]
+        output_size  = action_dim
+
+        self.layer_sizes = [input_size] + hidden_sizes + [output_size]
+        self.layers = torch.nn.ModuleList([torch.nn.Linear(in_size,out_size) for in_size,out_size in zip(self.layer_sizes[:-1], self.layer_sizes[1:])])
+
+        # Activations
+        activation = eval(config["Actor"]["activation"])
+        hidden_activations = [activation for layer in self.layers[:-1]]
+        output_activation = eval(config["Actor"]["output_activation"])
+        
+        self.activations =  hidden_activations + [output_activation]
+        
+        # Max Action
+        self.max_action = max_action
+
+
+    def forward(self, state):
+        """
+        Forward pass of the Actor network.
+        Takes a state and returns an action.
+        """
+
+        action = state
+        
+        for layer, activation in zip(self.layers, self.activations):
+            action = activation(layer(action))
+        
+        action = self.max_action * action
+
+        return action
+
+
+
+class Critic(torch.nn.Module):
+    """
+    Class to represent Critic networks for TD3.
+    Defines network architecture and forward pass.
+    One Critic object already contains twin networks.
+    """
+
+    def __init__(self, state_dim, action_dim, config):
+        """
+        Initialization function. Defines network architecture from environment information and config.
+        """    
+
+        super(Critic, self).__init__()
+
+        # Layers
+        input_size = state_dim + action_dim
+        hidden_sizes  = config["Critic"]["hidden_sizes"]
+        output_size  = 1
+
+        self.layer_sizes = [input_size] + hidden_sizes + [output_size]
+
+        self.layers_1 = torch.nn.ModuleList([torch.nn.Linear(in_size,out_size) for in_size,out_size in zip(self.layer_sizes[:-1], self.layer_sizes[1:])])
+        self.layers_2 = torch.nn.ModuleList([torch.nn.Linear(in_size,out_size) for in_size,out_size in zip(self.layer_sizes[:-1], self.layer_sizes[1:])])
+
+        # Activations
+        activation = eval(config["Critic"]["activation"])
+        hidden_activations = [activation for layer in self.layers_1[:-1]]
+        output_activation = eval(config["Critic"]["output_activation"])
+
+        self.activations =  hidden_activations + [output_activation]
+        
+
+    def forward(self, state, action):
+        """
+        Forward pass of the Critic twin network.
+        Takes state and action and returns two Q values.
+        """
+
+        Q1 = Q2 = torch.hstack([state, action])
+
+        
+        for layer_1, layer_2, activation in zip(self.layers_1, self.layers_2, self.activations):
+            Q1 = activation(layer_1(Q1))
+            Q2 = activation(layer_2(Q2))
+
+        return Q1, Q2
+
+
+    def Q1(self, state, action):
+        """
+        Forward pass of the main Critic network.
+        Takes state and action and returns only the main Q value.
+        """
+        Q1 = torch.hstack([state, action])
+
+        for layer_1, activation in zip(self.layers_1, self.activations):
+            Q1 = activation(layer_1(Q1))
+        
+        return Q1
+
+
+
+class TD3(object):
+    """
+    Class to represent a TD3 agent. 
+    Consists of actor and critic networks.
+    Provides functions to select (noisy) actions, to train from a Replay Buffer.
+    Agents can be stored or read from disk.
+    """
+
+    def __init__(self, env, config):
+        """
+        Initialization function. Defines agent networks and training setup from environment information and config.
+        """
+
+        # Environment
+        self.env = env
+        self.state_dim =  self.env.observation_space.shape[0]
+        self.action_dim = self.env.action_space.shape[0]
+        self.max_action = self.env.action_space.high[0]
+
+        # Actor Networks
+        self.actor = Actor(self.state_dim, self.action_dim, self.max_action, config).to(device)
+
+        self.actor_target = Actor(self.state_dim, self.action_dim, self.max_action, config).to(device)
+        self.actor_target.load_state_dict(self.actor.state_dict())
+
+        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=config["TD3"]["actor_lr"], weight_decay=config["TD3"]["actor_reg"])
+
+        # Critic Networks
+        self.critic = Critic(self.state_dim, self.action_dim, config).to(device)
+        
+        self.critic_target = Critic(self.state_dim, self.action_dim, config).to(device)
+        self.critic_target.load_state_dict(self.critic.state_dict())
+
+        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=config["TD3"]["critic_lr"], weight_decay=config["TD3"]["critic_reg"])
+
+
+        # Training
+        self.training_batch_size = config["TD3"]["training_batch_size"]
+        self.gamma = config["TD3"]["gamma"]
+        self.tau = config["TD3"]["tau"]
+        self.training_noise = config["TD3"]["training_noise"]
+        self.noise_clip = config["TD3"]["noise_clip"]
+        self.update_frequency = config["TD3"]["update_frequency"]
+
+
+
+    def select_action(self, state, noise, noise_clip=None):
+        """
+        Function to select an action from the agent policy for a given state.
+        Can be perturbed by noise.
+        """
+        
+        state = torch.tensor(state).to(device)
+        action = self.actor(state).cpu().detach().numpy()
+        
+        noise = np.random.normal(0, noise, size=self.action_dim)
+        if noise_clip is not None:
+            noise = noise.clip(-noise_clip,noise_clip)
+
+        action = action + noise
+        return action.clip(self.env.action_space.low, self.env.action_space.high)
+
+
+
+    def train(self, buffer, train_iter):
+        """
+        Train for a given number of iterations from the Replay Buffer.
+        """
+
+        for i in range(train_iter):
+            
+
+            # Sample Batch of Transitions
+            states, actions, rewards, next_states, dones = buffer.sample(self.training_batch_size)
+
+            states = torch.FloatTensor(states).to(device)
+            actions = torch.FloatTensor(actions).to(device)
+            rewards = torch.FloatTensor(rewards).to(device)
+            next_states = torch.FloatTensor(next_states).to(device)
+            dones = torch.FloatTensor(dones).to(device)
+
+
+            noisy_next_actions = torch.FloatTensor(self.select_action(states, self.training_noise, self.noise_clip)).to(device)
+
+            target_Q1, target_Q2 = self.critic_target(next_states, noisy_next_actions)
+            td_target = rewards + (1.0-dones)  * self.gamma * torch.min(target_Q1, target_Q2)
+
+            current_Q1, current_Q2 = self.critic(states, actions)
+
+            critic_loss = F.mse_loss(current_Q1, td_target) + F.mse_loss(current_Q2, td_target) 
+
+            self.critic_optimizer.zero_grad()
+            critic_loss.backward()
+            self.critic_optimizer.step()
+
+            # Delayed policy updates
+            if i % self.update_frequency == 0:
+
+                # Compute actor loss
+                actor_loss = -self.critic.Q1(states, self.actor(states)).mean()
+
+                # Optimize the actor 
+                self.actor_optimizer.zero_grad()
+                actor_loss.backward()
+                self.actor_optimizer.step()
+
+                # Update the frozen target models
+                for param, target_param in zip(self.critic.parameters(), self.critic_target.parameters()):
+                    target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+
+                for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
+                    target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+
+      #  print("Actor ", actor_loss)
+      #  print("Critic ", critic_loss)
+        
+        return [], []
+
+
+
+    def save(self, file, directory="./saves"):
+        """
+        Function to save agent to disk.
+        """
+        torch.save(self.actor.state_dict(), f'{directory}/{file}_actor.pth')
+        torch.save(self.critic.state_dict(), f'{directory}/{file}_critic.pth')
+
+
+    def load(self, file, directory="./saves"):
+        """
+        Function to load agent from disk.
+        """
+        self.actor.load_state_dict(torch.load(f'{directory}/{file}_actor.pth'))
+        self.critic.load_state_dict(torch.load(f'{directory}/{file}_actor.pth'))
+
+    
+
+class Trainer(object):
+    
+    def __init__(self, env, agent, buffer, config):
+        
+        # Configuration
+        self.env = env
+        self.agent = agent
+        self.buffer = buffer
+
+        self.train_episodes = config["Trainer"]["train_episodes"]
+        self.play_steps = config["Trainer"]["play_steps"]
+        self.train_iter = config["Trainer"]["train_iter"]
+
+        self.exploration_noise = config["Trainer"]["exploration_noise"]
+
+        # Logging
+        self.episode_rewards = [] # length = train_episodes 
+        self.actor_losses = [] # length  = train_episodes * train_iter
+        self.critic_losses = [] # length = train_episods * train_iter
+
+
+    def run(self):
+
+        for episode in range(1, self.train_episodes+1):     
+            
+            state, _ = self.env.reset()
+
+            # Play Phase
+            episode_reward = 0
+            for step in range(1, self.play_steps+1):
+                action = self.agent.select_action(state, self.exploration_noise)
+                next_state, reward, done, trunc, _ = self.env.step(action) 
+
+                self.buffer.add((state, action, reward, next_state, done))
+
+                episode_reward += reward
+
+                if done or trunc:
+                    break
+                else:
+                    state = next_state
+
+            # Train Phase
+            actor_losses, critic_losses =  self.agent.train(self.buffer, self.train_iter)
+
+
+            # Logging
+
+            if episode % 10 == 0:
+                print("Episode ", episode, "- Reward: ", episode_reward)
+
+            self.episode_rewards.append(episode_reward)
+            self.actor_losses += actor_losses
+            self.critic_losses += critic_losses
+        
+
+
+
+class Evaluator(object):
+    
+    def __init__(self, config):
+        pass
+
+    def run():
+        pass
+
+
+def main():
+
+
+    ## Argument Parser ##
+
+    parser = argparse.ArgumentParser(
+                    prog='TD3',
+                    description='Training and Evaluation of the TD3 Algorithm for RL')
+
+    parser.add_argument('-e', '--env', action='store', dest='env_name', default='Pendulum-v1', help='Environment') 
+    parser.add_argument('-c', '--config', action='store', dest='config_file', default='config.json', help='Configuration File')
+    parser.add_argument('-m', '--mode', action='store', dest='mode', choices=['train','eval'], default='train', help='Training or Evaluation')
+    parser.add_argument('-a', '--agent', action='store', dest='agent_file', default='agent.xyz', help='Agent File') # TODO
+
+    args = parser.parse_args()
+
+    env_name = args.env_name
+    config_file = args.config_file
+    mode = args.mode
+    agent_file = args.agent_file
+
+    with open(config_file, 'r') as f:
+        config = json.load(f)
+
+
+    ## Mode Selection ##
+
+    ## Training Mode ##
+
+    if mode == 'train':
+
+        # create Environment
+        env = gym.make(env_name)
+
+        # create Agent
+        agent = TD3(env, config)
+
+        # create Replay Buffer
+        buffer = ReplayBuffer(config)
+        buffer.random_fill(env)
+
+        # create Trainer
+        trainer = Trainer(env,agent,buffer,config)
+
+        # Train Agent
+        trainer.run()
+
+        # store TD3 agent
+        
+        env = gym.make(env_name, render_mode = "human")
+        env.reset()
+        env.render()
+
+        for episode in range(100):
+            state, _ = env.reset()
+            for step in range(200):
+                action = agent.select_action(state, 0)
+                next_state, reward, done, _, _ = env.step(action)
+                print("Episode ", episode, " - Reward: ", reward)
+                state = next_state
+
+        # store Log Data
+
+    ## Evaluation Mode ##
+    elif mode == 'eval':
+        pass
+        # create Environment
+        # load TD3 agent
+        # create Evaluator
+        # run Evaluator
+        # store Log Data
+
+
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+## IDEAS ##
+# Replay Buffer - def agent_fill(env, agent)
