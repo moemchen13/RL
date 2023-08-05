@@ -153,8 +153,8 @@ def run_sac_agent_hockey_game(agent,opponent,mode,log_interval,save_interval,max
             torch.save(player2.get_networks_states(),f'./{name}_{mode}-e{episode}-t{train_iter}-s{random_seed}-player2.pth')
             if mode == "self":
                 torch.save(player2.get_networks_states(),f'./{name}_{mode}-e{episode}-t{train_iter}-s{random_seed}-player1.pth')
-                save_statistics(rewards1,lengths1,q_losses1,policy_losses1,temperature_losses1,mode,random_seed,episode)
-            save_statistics(rewards2,lengths2,q_losses2,policy_losses2,temperature_losses2,mode,random_seed,episode)
+                save_statistics(rewards1,lengths1,q_losses1,policy_losses1,temperature_losses1,mode,random_seed,episode,name)
+            save_statistics(rewards2,lengths2,q_losses2,policy_losses2,temperature_losses2,mode,random_seed,episode,name)
 
         if episode % log_interval == 0:
             avg_reward = np.mean(rewards2[-log_interval:])
@@ -167,9 +167,9 @@ def run_sac_agent_hockey_game(agent,opponent,mode,log_interval,save_interval,max
                 print('Player1: Episode {} \t avg length: {} \t reward: {}'.format(episode, avg_length, avg_reward))
 
         
-    save_statistics(rewards2,lengths2,q_losses2,policy_losses2,temperature_losses2,mode,random_seed,episode)
+    save_statistics(rewards2,lengths2,q_losses2,policy_losses2,temperature_losses2,mode,random_seed,episode,name)
     if mode =="self":
-        save_statistics(rewards1,lengths1,q_losses1,policy_losses1,temperature_losses1,mode,random_seed,episode)
+        save_statistics(rewards1,lengths1,q_losses1,policy_losses1,temperature_losses1,mode,random_seed,episode,name)
 
 def main():
     parser = argparse.ArgumentParser(prog='RL Agents',
