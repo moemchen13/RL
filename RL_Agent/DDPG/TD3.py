@@ -350,7 +350,7 @@ class TD3(object):
         Function to load agent instance from disk.
         """
         self.actor.load_state_dict(torch.load(f'{directory}/{self.name}/{agent_instance}/{agent_instance}_actor.pth'),  strict=False)
-        self.critic.load_state_dict(torch.load(f'{directory}/{self.name}/{agent_instance}/{agent_instance}_actor.pth'), strict=False)
+        self.critic.load_state_dict(torch.load(f'{directory}/{self.name}/{agent_instance}/{agent_instance}_critic.pth'), strict=False)
 
     
 
@@ -550,6 +550,9 @@ class Evaluator(object):
 
             # preparations
             evaluated_episodes = 0
+            wins = 0
+            draws = 0
+            losses = 0
             total_reward = 0
             min_reward = np.infty
             max_reward = -np.infty
@@ -578,6 +581,12 @@ class Evaluator(object):
                     episode_reward += reward
 
                     if done or trunc:
+                        if info["winner"] == 1:
+                            wins += 1
+                        elif info["winner"] == 0:
+                            draws += 1
+                        elif info["winner"] == -1:
+                            losses += 1
                         break
                     else:
                         state = next_state
@@ -592,7 +601,7 @@ class Evaluator(object):
 
             avg_reward = total_reward/evaluated_episodes
             # TODO: Add Wins / Looses
-            self.evaluation_data.append([agent_instance, evaluated_episodes, total_reward, min_reward, max_reward, avg_reward])
+            self.evaluation_data.append([agent_instance, evaluated_episodes, wins, draws, losses, total_reward, min_reward, max_reward, avg_reward])
 
 
         stop = time.time()
@@ -608,7 +617,7 @@ class Evaluator(object):
         Function to store evaluation results in a csv file.
         """
 
-        df_results = pd.DataFrame(data= self.evaluation_data, columns=["Agent Instance", "Evaluated Episodes", "Total Reward", "Min Reward", "Max Reward", "Average Reward"])
+        df_results = pd.DataFrame(data= self.evaluation_data, columns=["Agent Instance", "Evaluated Episodes", "Wins", "Draws", "Losses", "Total Reward", "Min Reward", "Max Reward", "Average Reward"])
         df_results.to_csv(f"{directory}/{self.agent_name}/evaluation_results.csv", index=False)
 
 
@@ -662,6 +671,7 @@ class Player(object):
                 # agent action with exploration noise    
                 agent_action = self.agent_instance.select_action(state, self.exploration_noise)
                     
+
                 # opponent action
                 opponent_action = self.opponent.act(opponent_state)
 
