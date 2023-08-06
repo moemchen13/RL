@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import time
-
+import laserhockey.hockey_env as h_env
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -53,15 +53,19 @@ class ReplayBuffer(object):
         Fills the buffer with random environment transitions.
         """
         
-        state, _ = env.reset()
+        state, info = env.reset()
 
         while not self.full:
+  
             action = env.action_space.sample()
-            next_state, reward, done, _ ,_ = env.step(action)
-            self.add((state, action, reward, next_state, done))
+            agent_action = action[:4]
+            opponent_action = action[-4:]
+            
+            next_state, reward, done, trunc, info = env.step(action)
+            self.add((state, agent_action, reward, next_state, done))
 
-            if done:
-                state, _ = env.reset()
+            if done or trunc:
+                state, info = env.reset()
             else:
                 state = next_state
 
@@ -216,7 +220,7 @@ class TD3(object):
         # Environment
         self.env = env
         self.state_dim =  self.env.observation_space.shape[0]
-        self.action_dim = self.env.action_space.shape[0]
+        self.action_dim = self.env.action_space.shape[0] // 2
         self.max_action = self.env.action_space.high[0]
 
         # Actor Networks
@@ -256,12 +260,13 @@ class TD3(object):
         action = self.actor(state).cpu().detach().numpy()
         
         noise = np.random.normal(0, noise, size=self.action_dim)
+
         if noise_clip is not None:
             noise = noise.clip(-noise_clip,noise_clip)
 
         action = action + noise
 
-        return action.clip(self.env.action_space.low, self.env.action_space.high)
+        return action.clip(self.env.action_space.low[:4], self.env.action_space.high[:4])
 
 
     def train(self, buffer, train_iter):
@@ -355,7 +360,7 @@ class Trainer(object):
     Manages environment transitions and replay buffer housekeeping.
     """
     
-    def __init__(self, env, agent, buffer, config):
+    def __init__(self, env, agent, opponent, buffer, config):
         """
         Inititalization function.
         Initializes trainer with configuration and logging setup.
@@ -364,10 +369,10 @@ class Trainer(object):
         # Configuration
         self.env = env
         self.agent = agent
+        self.opponent = opponent
         self.buffer = buffer
 
         self.train_episodes = config["Trainer"]["train_episodes"]
-        self.play_steps = config["Trainer"]["play_steps"]
         self.train_iter = config["Trainer"]["train_iter"]
 
         self.exploration_noise = config["Trainer"]["exploration_noise"]
@@ -392,33 +397,41 @@ class Trainer(object):
         print("##             TRAINING MODE            ##")
         print("##########################################\n")
 
-        print(f"Training agent '{self.agent.name}' on environment '{self.env.spec.id}'...\n")
-        
+        print(f"Training agent '{self.agent.name}' on Hockey environment'...\n")
+
+
         start = time.time()
 
         for episode in range(1, self.train_episodes+1):     
             
-            state, _ = self.env.reset()
+            state, info = self.env.reset()
+            opponent_state = self.env.obs_agent_two()
 
             # Play Phase
             episode_reward = 0
-            for step in range(1, self.play_steps+1):
 
-                # action with exploration noise
-                action = self.agent.select_action(state, self.exploration_noise)
+            while True:
+
+                # agent action with exploration noise
+                agent_action = self.agent.select_action(state, self.exploration_noise)
                 
-                # environment transition
-                next_state, reward, done, _, _ = self.env.step(action) 
+                # opponent action
+                opponent_action = self.opponent.act(opponent_state)
 
+                # environment transition
+                next_state, reward, done, trunc, info = self.env.step(np.hstack([agent_action, opponent_action]))
+                opponent_state = self.env.obs_agent_two()
+                 
                 # store transition in replay buffer
-                self.buffer.add((state, action, reward, next_state, done))
+                self.buffer.add((state, agent_action, reward, next_state, done))
 
                 episode_reward += reward
 
-                if done:
+                if done or trunc:
                     break
                 else:
                     state = next_state
+
 
             # Training Phase
             actor_losses, critic_losses =  self.agent.train(self.buffer, self.train_iter)
@@ -451,7 +464,7 @@ class Trainer(object):
         # Result Plots
         plt.rcParams['figure.figsize'] = [15, 5]
         fig, (ax1, ax2, ax3) = plt.subplots(1,3)
-        fig.suptitle(f'Training Results - {self.agent.name} - {self.env.spec.id}')
+        fig.suptitle(f'Training Results')# - {self.agent.name} - {self.env.spec.id}')
 
         # Training Rewards
         ax1.plot(range(1,self.train_episodes+1), self.episode_rewards, 'g') 
@@ -486,7 +499,7 @@ class Evaluator(object):
     Manages environment transitions and collects rewards.
     """
     
-    def __init__(self, env, agent_name, directory, config):
+    def __init__(self, env, agent_name, opponent, directory, config):
         """
         Inititalization function.
         Initializes evaluator with configuration and logging setup.
@@ -501,8 +514,9 @@ class Evaluator(object):
         self.eval_instances = [file for file in os.listdir(self.agent_dir) if self.agent_name in file]
         self.eval_instances = sorted(self.eval_instances, key=lambda x: int((x.split("_")[-1])))
 
+        self.opponent = opponent
+
         self.eval_episodes = config["Evaluator"]["eval_episodes"]
-        self.play_steps = config["Evaluator"]["play_steps"]
 
         self.exploration_noise = config["Evaluator"]["exploration_noise"]
 
@@ -522,7 +536,7 @@ class Evaluator(object):
         print("##           EVALUATION MODE            ##")
         print("##########################################\n")
 
-        print(f"Evaluating agent '{self.agent_name}' on environment '{self.env.spec.id}'...\n")
+        print(f"Evaluating agent '{self.agent_name}' on Hockey environment...\n")
         
         start = time.time()
 
@@ -546,19 +560,24 @@ class Evaluator(object):
                 
                 episode_reward = 0
 
-                state, _ = self.env.reset()
-                
-                for step in range(self.play_steps):
+                state, info = self.env.reset()
+                opponent_state = self.env.obs_agent_two()
+          
+                while True:
 
-                    # action with exploration noise    
-                    action = agent.select_action(state, self.exploration_noise)
+                    # agent action with exploration noise    
+                    agent_action = agent.select_action(state, self.exploration_noise)
                     
+                    # opponent action
+                    opponent_action = self.opponent.act(opponent_state)
+
                     # environment transition
-                    next_state, reward, done, _, _ = self.env.step(action)
+                    next_state, reward, done, trunc, info = self.env.step(np.hstack([agent_action, opponent_action]))
+                    opponent_state = self.env.obs_agent_two()
 
                     episode_reward += reward
 
-                    if done:
+                    if done or trunc:
                         break
                     else:
                         state = next_state
@@ -572,7 +591,7 @@ class Evaluator(object):
                     max_reward = episode_reward
 
             avg_reward = total_reward/evaluated_episodes
-
+            # TODO: Add Wins / Looses
             self.evaluation_data.append([agent_instance, evaluated_episodes, total_reward, min_reward, max_reward, avg_reward])
 
 
@@ -600,7 +619,7 @@ class Player(object):
     Manages environment transitions and collects rewards..
     """
 
-    def __init__(self, env, agent_instance, config):
+    def __init__(self, env, agent_instance, opponent, config):
         """
         Inititalization function.
         Initializes player with configuration.
@@ -608,9 +627,9 @@ class Player(object):
         
         self.env = env
         self.agent_instance = agent_instance
+        self.opponent = opponent
         
         self.play_episodes = config["Player"]["play_episodes"]
-        self.play_steps = config["Player"]["play_steps"]
         self.exploration_noise = config["Player"]["exploration_noise"]
 
 
@@ -623,34 +642,40 @@ class Player(object):
         print("##             PLAYER MODE              ##")
         print("##########################################\n")
 
-        print(f"Playing agent '{self.agent_instance.name}' in environment '{self.env.spec.id}'...\n")
+        print(f"Playing agent '{self.agent_instance.name}' in Hockey environment...\n")
         
         start = time.time()
 
         self.env.reset()
-        self.env.render()
+        self.env.render(mode="human")
 
         for episode in range(1, self.play_episodes+1):
 
             episode_reward = 0
 
-            state, _ = self.env.reset()
+            state, info = self.env.reset()
+            opponent_state = self.env.obs_agent_two()
 
-            for step in range(self.play_steps):
+            while True:
 
-                # action with exploration noise
-                action = self.agent_instance.select_action(state, self.exploration_noise)
-                
+
+                # agent action with exploration noise    
+                agent_action = self.agent_instance.select_action(state, self.exploration_noise)
+                    
+                # opponent action
+                opponent_action = self.opponent.act(opponent_state)
+
                 # environment transition
-                next_state, reward, done, _, _ = self.env.step(action)
+                next_state, reward, done, trunc, info = self.env.step(np.hstack([agent_action, opponent_action]))
+                opponent_state = self.env.obs_agent_two()
 
                 episode_reward += reward
 
-                if done:
+                if done or trunc:
                     break
                 else:
                     state = next_state
-            
+   
             print(f"  Episode {episode} - Reward: {episode_reward}")
 
 
@@ -667,16 +692,14 @@ def main():
 
     parser = argparse.ArgumentParser(
                     prog='TD3',
-                    description='Training and Evaluation of the TD3 Algorithm for RL')
+                    description='Training and Evaluation of the TD3 Algorithm on the Hockey Environment')
 
-    parser.add_argument('-e', '--env', action='store', dest='env_name', default='Pendulum-v1', help='Environment') 
     parser.add_argument('-c', '--config', action='store', dest='config_file', default='config.json', help='Configuration File')
     parser.add_argument('-m', '--mode', action='store', dest='mode', choices=['train','eval', 'play'], default='train', help='Training or Evaluation')
     parser.add_argument('-a', '--agent', action='store', dest='agent_name', default='TD3', help='Agent Name')
 
     args = parser.parse_args()
 
-    env_name = args.env_name
     config_file = args.config_file
     mode = args.mode
     agent_name = args.agent_name
@@ -690,7 +713,7 @@ def main():
     if mode == 'train':
 
         # create environment
-        env = gym.make(env_name)
+        env = h_env.HockeyEnv()
 
         # create agent
         agent = TD3(agent_name, env, config)
@@ -699,8 +722,11 @@ def main():
         buffer = ReplayBuffer(config)
         buffer.random_fill(env)
 
+        # create opponent
+        opponent = h_env.BasicOpponent(weak=True)
+
         # create trainer
-        trainer = Trainer(env, agent, buffer, config)
+        trainer = Trainer(env, agent, opponent, buffer, config)
 
         # train agent
         trainer.run()
@@ -714,10 +740,13 @@ def main():
     elif mode == 'eval':
  
         # create environment
-        env = gym.make(env_name)
+        env = h_env.HockeyEnv()
+
+        # create opponent
+        opponent = h_env.BasicOpponent(weak=True)
 
         # create evaluator
-        evaluator = Evaluator(env, agent_name, "./results", config)
+        evaluator = Evaluator(env, agent_name, opponent, "./results", config)
 
         # evaluate agent
         evaluator.run()
@@ -731,14 +760,17 @@ def main():
     elif mode == "play":
 
         # create environment
-        env = gym.make(env_name, render_mode="human")
-        
+        env = h_env.HockeyEnv()
+
+        # create opponent
+        opponent = h_env.BasicOpponent(weak=True)
+  
         # load TD3 agent
         agent = TD3(agent_name.split("_")[0], env, config)
         agent.load(agent_name)
 
         # create player
-        player = Player(env, agent, config)
+        player = Player(env, agent, opponent, config)
 
         # run player
         player.run()
@@ -756,3 +788,4 @@ if __name__ == "__main__":
 
 # Twin Polcies? => Slide!
 # Prioritized Replay Buffer?
+# wins / looses for Evaluator

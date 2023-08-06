@@ -30,8 +30,7 @@
     },
     "Trainer": 
     {
-        "train_episodes": 1500,
-        "play_steps": 200,
+        "train_episodes": 500,
         "train_iter": 100,
         "exploration_noise": 0.1,
         "save_episodes": 50
@@ -39,14 +38,12 @@
     },
     "Evaluator":
     {
-        "eval_episodes": 500,
-        "play_steps": 200,
+        "eval_episodes": 50,
         "exploration_noise": 0.0
     },
     "Player":
     {
-        "play_episodes": 10,
-        "play_steps": 200,
+        "play_episodes": 100,
         "exploration_noise": 0.0
     }
 }
