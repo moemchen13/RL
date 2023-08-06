@@ -5,6 +5,8 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+import os
 import time
 
 
@@ -204,10 +206,12 @@ class TD3(object):
     Agents can be stored or read from disk.
     """
 
-    def __init__(self, env, config):
+    def __init__(self, agent_name, env, config):
         """
         Initialization function. Defines agent networks and training setup from environment information and config.
         """
+
+        self.name = agent_name
 
         # Environment
         self.env = env
@@ -291,7 +295,7 @@ class TD3(object):
             # critic loss
             current_Q1, current_Q2 = self.critic(states, actions)
             critic_loss = F.mse_loss(current_Q1, td_target) + F.mse_loss(current_Q2, td_target) 
-            critic_losses.append(critic_loss)
+            critic_losses.append(critic_loss.item())
 
             # update critic
             self.critic_optimizer.zero_grad()
@@ -303,7 +307,7 @@ class TD3(object):
 
                 # actor loss
                 actor_loss = -self.critic.Q1(states, self.actor(states)).mean()
-                actor_losses.append(actor_loss)
+                actor_losses.append(actor_loss.item())
 
                 # update actor
                 self.actor_optimizer.zero_grad()
@@ -321,20 +325,27 @@ class TD3(object):
         return actor_losses, critic_losses
 
 
-    def save(self, file, directory="./saves"):
+    def save(self, agent_instance, directory="./results"):
         """
-        Function to save agent to disk.
+        Function to save agent instance to disk.
         """
-        torch.save(self.actor.state_dict(), f'{directory}/{file}_actor.pth')
-        torch.save(self.critic.state_dict(), f'{directory}/{file}_critic.pth')
+        if not self.name in os.listdir(directory):
+            os.mkdir(f"{directory}/{self.name}")
 
 
-    def load(self, file, directory="./saves"):
+        if not agent_instance in os.listdir(f"{directory}/{self.name}"):
+            os.mkdir(f"{directory}/{self.name}/{agent_instance}")
+
+        torch.save(self.actor.state_dict(), f'{directory}/{self.name}/{agent_instance}/{agent_instance}_actor.pth')
+        torch.save(self.critic.state_dict(), f'{directory}/{self.name}/{agent_instance}/{agent_instance}_critic.pth')
+
+
+    def load(self, agent_instance, directory="./results"):
         """
-        Function to load agent from disk.
+        Function to load agent instance from disk.
         """
-        self.actor.load_state_dict(torch.load(f'{directory}/{file}_actor.pth'))
-        self.critic.load_state_dict(torch.load(f'{directory}/{file}_actor.pth'))
+        self.actor.load_state_dict(torch.load(f'{directory}/{self.name}/{agent_instance}/{agent_instance}_actor.pth'),  strict=False)
+        self.critic.load_state_dict(torch.load(f'{directory}/{self.name}/{agent_instance}/{agent_instance}_actor.pth'), strict=False)
 
     
 
@@ -345,6 +356,10 @@ class Trainer(object):
     """
     
     def __init__(self, env, agent, buffer, config):
+        """
+        Inititalization function.
+        Initializes trainer with configuration and logging setup.
+        """
         
         # Configuration
         self.env = env
@@ -362,14 +377,24 @@ class Trainer(object):
         self.actor_losses = [] # length  = train_episodes * (train_iter / update_frequency)
         self.critic_losses = [] # length = train_episodes * train_iter
 
+        self.save_episodes = config["Trainer"]["save_episodes"]
+
 
     def run(self):
         """
         Trains a TD3 agent for the specified number of episodes and with respect to the specified configuration.
         Consists of two phases: In the 'Play Phase', the agent's current policy is unrolled to fill the replay buffer and to collect training rewards.
         In the 'Training Phase', the agent is asked to learn from the replay buffer for the specified number of iterations.
-        The information are collected and logged to enable further analysis.
+        The information is collected and stored in plots to enable further analysis.
         """
+
+        print("\n##########################################")
+        print("##             TRAINING MODE            ##")
+        print("##########################################\n")
+
+        print(f"Training agent '{self.agent.name}' on environment '{self.env.spec.id}'...\n")
+        
+        start = time.time()
 
         for episode in range(1, self.train_episodes+1):     
             
@@ -395,39 +420,245 @@ class Trainer(object):
                 else:
                     state = next_state
 
-
             # Training Phase
             actor_losses, critic_losses =  self.agent.train(self.buffer, self.train_iter)
 
-
             # Logging
             if episode % 10 == 0:
-                print("Episode ", episode, "- Reward: ", episode_reward)
+                print(f"  Episode {episode} - Reward: {episode_reward}")
 
             self.episode_rewards.append(episode_reward)
             self.actor_losses += actor_losses
             self.critic_losses += critic_losses
 
-        print("Episode Rewards: ", len(self.episode_rewards))
-        print("Actor Losses: ", len(self.actor_losses))
-        print("Critic Losses: ", len(self.critic_losses))
-
-        #plt.plot(self.episode_rewards)  # Training Rewards
-        # store plots for Training Rewards # Actor/Critic Losses TODO
+            if episode % self.save_episodes == 0:
+                self.agent.save(f"{self.agent.name}_{episode}")
+                print("  Agent instance stored!")
 
 
-        
+        stop = time.time()
+        print("\nDone!\n")
+        print("----------------------------------------")
+        print(f"Episodes: {self.train_episodes}")
+        print(f"Time: {round(stop-start,2)}s\n")
+
+
+    def store_results(self, directory="./results"):
+        """
+        Function to store plots of the training results.
+        """
+
+        # Result Plots
+        plt.rcParams['figure.figsize'] = [15, 5]
+        fig, (ax1, ax2, ax3) = plt.subplots(1,3)
+        fig.suptitle(f'Training Results - {self.agent.name} - {self.env.spec.id}')
+
+        # Training Rewards
+        ax1.plot(range(1,self.train_episodes+1), self.episode_rewards, 'g') 
+        ax1.set_title("Training Rewards")
+        ax1.set_xlabel("Episode")
+        ax1.set_ylabel("Reward")
+        ax1.grid(True)
+
+        # Actor Loss
+        ax2.plot(range(1, len(self.actor_losses)+1), self.actor_losses, 'b')
+        ax2.set_title("Actor Loss")
+        ax2.set_xlabel("Actor Update")
+        ax2.set_ylabel("Loss")
+        ax2.grid(True)
+
+        # Critic Loss
+        ax3.plot(range(1, len(self.critic_losses)+1), self.critic_losses, 'r')
+        ax3.set_title("Critic Loss")
+        ax3.set_xlabel("Critic Update")
+        ax3.set_ylabel("Loss")
+        ax3.grid(True)
+
+        fig.tight_layout()
+        fig.savefig(f"{directory}/{self.agent.name}/training_results", format="png")
 
 
 
 class Evaluator(object):
+    """
+    Class to organize the evaluation process of a TD3 agent.
+    Evaluates all instances of the given agent, i.e. all intermediate agents.
+    Manages environment transitions and collects rewards.
+    """
     
-    def __init__(self, env, agent, config):
-        pass
+    def __init__(self, env, agent_name, directory, config):
+        """
+        Inititalization function.
+        Initializes evaluator with configuration and logging setup.
+        Collects all agent instances to be evaluated from the given agent name.
+        """
+        
+        # Configuration
+        self.env = env
+    
+        self.agent_name = agent_name
+        self.agent_dir  = f"{directory}/{self.agent_name}"
+        self.eval_instances = [file for file in os.listdir(self.agent_dir) if self.agent_name in file]
+        self.eval_instances = sorted(self.eval_instances, key=lambda x: int((x.split("_")[-1])))
 
-    def run():
-        pass
+        self.eval_episodes = config["Evaluator"]["eval_episodes"]
+        self.play_steps = config["Evaluator"]["play_steps"]
 
+        self.exploration_noise = config["Evaluator"]["exploration_noise"]
+
+        self.config = config
+
+        # Logging
+        self.evaluation_data = []
+
+
+    def run(self):
+        """
+        Evaluates all instances of the agent with specified name.
+        Collects evaluation information for each agent.
+        """
+
+        print("\n##########################################")
+        print("##           EVALUATION MODE            ##")
+        print("##########################################\n")
+
+        print(f"Evaluating agent '{self.agent_name}' on environment '{self.env.spec.id}'...\n")
+        
+        start = time.time()
+
+        for agent_instance in self.eval_instances:
+
+            print(f"  Evaluating instance '{agent_instance}'...")
+
+            # load agent
+            agent = TD3(self.agent_name, self.env, self.config)
+            agent.load(agent_instance)
+
+            # preparations
+            evaluated_episodes = 0
+            total_reward = 0
+            min_reward = np.infty
+            max_reward = -np.infty
+            avg_reward = 0
+
+            # evaluation
+            for episode in range(self.eval_episodes):
+                
+                episode_reward = 0
+
+                state, _ = self.env.reset()
+                
+                for step in range(self.play_steps):
+
+                    # action with exploration noise    
+                    action = agent.select_action(state, self.exploration_noise)
+                    
+                    # environment transition
+                    next_state, reward, done, _, _ = self.env.step(action)
+
+                    episode_reward += reward
+
+                    if done:
+                        break
+                    else:
+                        state = next_state
+
+                # logging
+                evaluated_episodes += 1
+                total_reward += episode_reward
+                if episode_reward < min_reward:
+                    min_reward = episode_reward
+                if episode_reward > max_reward:
+                    max_reward = episode_reward
+
+            avg_reward = total_reward/evaluated_episodes
+
+            self.evaluation_data.append([agent_instance, evaluated_episodes, total_reward, min_reward, max_reward, avg_reward])
+
+
+        stop = time.time()
+        print("\nDone!\n")
+        print("----------------------------------------")
+        print(f"Evaluated Instances: {len(self.eval_instances)}")
+        print(f"Evaluated Episodes: {self.eval_episodes}")
+        print(f"Time: {round(stop-start,2)}s\n")
+
+
+    def store_results(self, directory="./results"):
+        """
+        Function to store evaluation results in a csv file.
+        """
+
+        df_results = pd.DataFrame(data= self.evaluation_data, columns=["Agent Instance", "Evaluated Episodes", "Total Reward", "Min Reward", "Max Reward", "Average Reward"])
+        df_results.to_csv(f"{directory}/{self.agent_name}/evaluation_results.csv", index=False)
+
+
+
+class Player(object):
+    """
+    Class to enable playing a particular instance of a TD3 agent.
+    Manages environment transitions and collects rewards..
+    """
+
+    def __init__(self, env, agent_instance, config):
+        """
+        Inititalization function.
+        Initializes player with configuration.
+        """
+        
+        self.env = env
+        self.agent_instance = agent_instance
+        
+        self.play_episodes = config["Player"]["play_episodes"]
+        self.play_steps = config["Player"]["play_steps"]
+        self.exploration_noise = config["Player"]["exploration_noise"]
+
+
+    def run(self):
+        """
+        Runs the specified agent instance in the given environment for the specified number of episodes.
+        """
+
+        print("\n##########################################")
+        print("##             PLAYER MODE              ##")
+        print("##########################################\n")
+
+        print(f"Playing agent '{self.agent_instance.name}' in environment '{self.env.spec.id}'...\n")
+        
+        start = time.time()
+
+        self.env.reset()
+        self.env.render()
+
+        for episode in range(1, self.play_episodes+1):
+
+            episode_reward = 0
+
+            state, _ = self.env.reset()
+
+            for step in range(self.play_steps):
+
+                # action with exploration noise
+                action = self.agent_instance.select_action(state, self.exploration_noise)
+                
+                # environment transition
+                next_state, reward, done, _, _ = self.env.step(action)
+
+                episode_reward += reward
+
+                if done:
+                    break
+                else:
+                    state = next_state
+            
+            print(f"  Episode {episode} - Reward: {episode_reward}")
+
+
+        stop = time.time()
+        print("\nDone!\n")
+        print("----------------------------------------")
+        print(f"Played Episodes: {self.play_episodes}")
+        print(f"Time: {round(stop-start,2)}s\n")
 
 def main():
 
@@ -440,73 +671,81 @@ def main():
 
     parser.add_argument('-e', '--env', action='store', dest='env_name', default='Pendulum-v1', help='Environment') 
     parser.add_argument('-c', '--config', action='store', dest='config_file', default='config.json', help='Configuration File')
-    parser.add_argument('-m', '--mode', action='store', dest='mode', choices=['train','eval'], default='train', help='Training or Evaluation')
-    parser.add_argument('-a', '--agent', action='store', dest='agent_file', default='agent.xyz', help='Agent File') # TODO
+    parser.add_argument('-m', '--mode', action='store', dest='mode', choices=['train','eval', 'play'], default='train', help='Training or Evaluation')
+    parser.add_argument('-a', '--agent', action='store', dest='agent_name', default='TD3', help='Agent Name')
 
     args = parser.parse_args()
 
     env_name = args.env_name
     config_file = args.config_file
     mode = args.mode
-    agent_file = args.agent_file
+    agent_name = args.agent_name
 
     with open(config_file, 'r') as f:
         config = json.load(f)
 
 
-
-    ## Mode Selection ##
-
     ## Training Mode ##
 
     if mode == 'train':
 
-        # create Environment
+        # create environment
         env = gym.make(env_name)
 
-        # create Agent
-        agent = TD3(env, config)
+        # create agent
+        agent = TD3(agent_name, env, config)
 
-        # create Replay Buffer
+        # create replay buffer
         buffer = ReplayBuffer(config)
         buffer.random_fill(env)
 
-        # create Trainer
-        trainer = Trainer(env,agent,buffer,config)
+        # create trainer
+        trainer = Trainer(env, agent, buffer, config)
 
-        # Train Agent
+        # train agent
         trainer.run()
 
-        # store TD3 agent
-        
-        env = gym.make(env_name, render_mode = "human")
-        env.reset()
-        env.render()
+        # store results
+        trainer.store_results()
 
-        for episode in range(100):
-            state, _ = env.reset()
-            for step in range(200):
-                action = agent.select_action(state, 0)
-                next_state, reward, done, _, _ = env.step(action)
-                print("Episode ", episode, " - Reward: ", reward)
-                state = next_state
-
-        # store Log Data
 
     ## Evaluation Mode ##
-    elif mode == 'eval':
-        pass
-        # create Environment
-        # load TD3 agent
-        # create Evaluator
-        # run Evaluator
-        # store Log Data
 
+    elif mode == 'eval':
+ 
+        # create environment
+        env = gym.make(env_name)
+
+        # create evaluator
+        evaluator = Evaluator(env, agent_name, "./results", config)
+
+        # evaluate agent
+        evaluator.run()
+
+        # store results
+        evaluator.store_results()
+ 
+
+    ## Play Mode ##
+
+    elif mode == "play":
+
+        # create environment
+        env = gym.make(env_name, render_mode="human")
+        
+        # load TD3 agent
+        agent = TD3(agent_name.split("_")[0], env, config)
+        agent.load(agent_name)
+
+        # create player
+        player = Player(env, agent, config)
+
+        # run player
+        player.run()
 
 
 
 if __name__ == "__main__":
-   
     main()
 
 
@@ -514,9 +753,6 @@ if __name__ == "__main__":
 
 ## IDEAS ##
 # Replay Buffer - def agent_fill(env, agent)
-# Training Time + Eval Time
 
 # Twin Polcies? => Slide!
-
-
-# Agent Evaluation after Training + File name with mean reward!
+# Prioritized Replay Buffer?
