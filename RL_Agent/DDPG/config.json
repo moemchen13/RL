@@ -26,11 +26,11 @@
     },
     "Replay Buffer":
     {
-        "capacity": 1e5
+        "capacity": 1e6
     },
     "Trainer": 
     {
-        "train_episodes": 10000,
+        "train_episodes": 20000,
         "train_iter": 100,
         "exploration_noise": 0.1,
         "save_episodes": 250
