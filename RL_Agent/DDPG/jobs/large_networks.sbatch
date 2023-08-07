@@ -4,7 +4,7 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=TD3_Challenging
+#SBATCH --job-name=large_networks
 
 #resources:
 
@@ -14,13 +14,13 @@
 #SBATCH --partition=day
 # the slurm partition the job is queued to.
 
-#SBATCH --mem-per-cpu=1G
+#SBATCH --mem-per-cpu=3G
 # the job will need 12GB of memory equally distributed on 4 cpus.  (251GB are available in total on one node)
 
 #SBATCH --gres=gpu:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
-#SBATCH --time=10:00:00
+#SBATCH --time=23:00:00
 # the maximum time the scripts needs to run
 # "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"
 
@@ -48,6 +48,6 @@
 
 ##################################################################################################
 # TODO: update the following paths with your own!
-singularity exec --nv ~/Singularity_Torsten python3 ~/RL/RL_Agent/DDPG/TD3.py --mode "train" --agent "TD3_Challenging"
-singularity exec --nv ~/Singularity_Torsten python3 ~/RL/RL_Agent/DDPG/TD3.py --mode "eval" --agent "TD3_Challenging"
+singularity exec --nv ~/Singularity_Torsten python3 ~/RL/RL_Agent/DDPG/TD3.py --mode "train" --agent "large_networks" --config "~/RL/RL_Agent/DDPG/jobs/large_networks.json"
+singularity exec --nv ~/Singularity_Torsten python3 ~/RL/RL_Agent/DDPG/TD3.py --mode "eval" --agent "large_networks" --config "~/RL/RL_Agent/DDPG/jobs/large_networks.json"
 ##################################################################################################

@@ -1,13 +1,13 @@
 {
     "Actor":
     {
-        "hidden_sizes": [128, 128, 64],
+        "hidden_sizes": [300, 400, 100],
         "activation": "torch.nn.ReLU()",
         "output_activation": "torch.nn.Tanh()"
     },
     "Critic":
     {
-        "hidden_sizes": [128, 128, 64],
+        "hidden_sizes": [300, 400, 100],
         "activation": "torch.nn.ReLU()",
         "output_activation": "torch.nn.Identity()"
     },
@@ -17,7 +17,7 @@
         "actor_reg": 0.0,
         "critic_lr": 1e-3,
         "critic_reg": 0.0,
-        "training_batch_size": 100,
+        "training_batch_size": 256,
         "gamma": 0.99,
         "tau": 0.005,
         "training_noise": 0.2,
@@ -26,13 +26,13 @@
     },
     "Replay Buffer":
     {
-        "capacity": 1e4
+        "capacity": 1e7
     },
     "Trainer": 
     {
         "opponents": ["Test_12250", "h_env.BasicOpponent(weak=False)", "h_env.BasicOpponent(weak=True)"],
-        "opponent_probs": [0.4, 0.4, 0.2],
-        "train_episodes": 100000,
+        "opponent_probs": [0.3, 0.4, 0.3],
+        "train_episodes": 50000,
         "train_iter": 100,
         "exploration_noise": 0.1,
         "save_episodes": 250
@@ -41,7 +41,7 @@
     "Evaluator":
     {
         "opponents": ["Test_12250", "h_env.BasicOpponent(weak=False)", "h_env.BasicOpponent(weak=True)"],
-        "eval_episodes": 1000,
+        "eval_episodes": 100,
         "exploration_noise": 0.0
     },
     "Player":
