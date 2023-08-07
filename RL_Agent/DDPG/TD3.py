@@ -269,6 +269,13 @@ class TD3(object):
         return action.clip(self.env.action_space.low[:4], self.env.action_space.high[:4])
 
 
+    def act(self, state):
+        """
+        Wrapper for select action without noise.
+        """
+        return self.select_action(state, noise=0.0, noise_clip=None)
+
+
     def train(self, buffer, train_iter):
         """
         Trains the agent for a given number of iterations with TD3 using transitions from a replay buffer.
@@ -928,8 +935,8 @@ def main():
         buffer.random_fill(env)
 
         # create opponent
-        opponents = [h_env.BasicOpponent(weak=False)]
-        opponent_probs = [1.0]
+        opponents = [h_env.BasicOpponent(weak=False), h_env.BasicOpponent(weak=True)]
+        opponent_probs = [0.8, 0.2]
 
         # create trainer
         trainer = Trainer(env, agent, opponents, opponent_probs, buffer, config)

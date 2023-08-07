@@ -26,7 +26,7 @@
     },
     "Replay Buffer":
     {
-        "capacity": 1e4
+        "capacity": 1e6
     },
     "Trainer": 
     {
@@ -38,7 +38,7 @@
     },
     "Evaluator":
     {
-        "eval_episodes": 50,
+        "eval_episodes": 500,
         "exploration_noise": 0.0
     },
     "Player":
