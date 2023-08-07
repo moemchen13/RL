@@ -12,7 +12,8 @@ import laserhockey.hockey_env as h_env
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+torch.manual_seed(42)
+np.random.seed(42)
 
 
 class ReplayBuffer(object):
@@ -68,6 +69,63 @@ class ReplayBuffer(object):
                 state, info = env.reset()
             else:
                 state = next_state
+
+
+    def game_fill(self, env, agent, opponent, exploration_noise=0.1):
+        """
+        Fills the buffer with transitions from a game.
+        """
+
+        # sample agent side
+        #agent_side = np.random.choice(["left", "right"])
+        agent_side = "left"
+
+        if agent_side == "left":
+            state, info = env.reset()
+            opponent_state = env.obs_agent_two()
+
+
+        elif agent_side == "right":
+            opponent_state, _ = env.reset()
+            state = env.obs_agent_two()
+
+
+        while not self.full:
+ 
+            # agent action with exploration noise
+            agent_action = agent.select_action(state, exploration_noise)
+                
+            # opponent action
+            opponent_action = opponent.act(opponent_state)
+
+            # environment transition
+
+            if agent_side == "left":
+
+                next_state, reward, done, trunc, info = env.step(np.hstack([agent_action, opponent_action]))
+                opponent_state = env.obs_agent_two()
+                 
+                # store transition in replay buffer
+                self.add((state, agent_action, reward, next_state, max(done, trunc)))
+
+            elif agent_side == "right":
+
+                opponent_state, _, done, trunc, _ = env.step(np.hstack([opponent_action, agent_action]))
+                next_state = env.obs_agent_two()
+
+                agent_info = env.get_info_agent_two()
+                reward = env.get_reward_agent_two(agent_info)
+
+                # store transition in replay buffer
+                self.add((state, agent_action, reward, next_state, max(done, trunc)))
+
+
+            if done or trunc:
+                break
+            else:
+                state = next_state
+
+
 
 
     def sample(self, batch_size):
@@ -428,11 +486,13 @@ class Trainer(object):
             opponent = np.random.choice(self.opponents, p=self.opponent_probs)
 
             # sample agent side
-            agent_side = np.random.choice(["left", "right"])
+            #agent_side = np.random.choice(["left", "right"])
+            agent_side = "left"
 
             if agent_side == "left":
                 state, info = self.env.reset()
                 opponent_state = self.env.obs_agent_two()
+
 
             elif agent_side == "right":
                 opponent_state, _ = self.env.reset()
@@ -829,8 +889,9 @@ class Player(object):
         for episode in range(1, self.play_episodes+1):
             
             # sample agent side
-            agent_side = np.random.choice(["left", "right"])
-    
+            #agent_side = np.random.choice(["left", "right"])
+            agent_side =  "left"
+
             episode_reward = 0
 
             print(f"  Episode {episode} - {agent_side} - ", end="", flush=True)
@@ -965,7 +1026,7 @@ def main():
 
         # create replay buffer
         buffer = ReplayBuffer(config)
-        buffer.random_fill(env)
+        buffer.game_fill(env, agent, h_env.BasicOpponent(weak=True))
 
         # create trainer
         trainer = Trainer(env, agent, buffer, config)
@@ -1022,9 +1083,7 @@ if __name__ == "__main__":
 
 
 ## IDEAS ##
-# Replay Buffer - def agent_fill(env, agent)
 
 
 # Twin Polcies? => Slide!
 # Prioritized Replay Buffer?
-# random seed
