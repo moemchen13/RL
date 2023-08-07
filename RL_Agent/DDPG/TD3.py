@@ -566,10 +566,19 @@ class Evaluator(object):
         self.eval_instances = [file for file in os.listdir(self.agent_dir) if self.agent_name in file]
         self.eval_instances = sorted(self.eval_instances, key=lambda x: int((x.split("_")[-1])))
 
-        try:
-            self.opponent = eval(config["Evaluator"]["opponent"])
-        except:
-            self.opponent= TD3(config["Evaluator"]["opponent"], env, config, load=True)
+        self.opponents = []
+        self.oppenent_names = []
+        for opponent in config["Evaluator"]["opponents"]:
+            try:
+                self.opponents.append(eval(opponent))
+                if "weak=True" in opponent:
+                    self.oppenent_names.append("Weak Baseline")
+                elif "weak=False" in opponent:
+                    self.oppenent_names.append("Strong Baseline")
+            except:
+                self.opponents.append(TD3(opponent, env, config, load=True))
+                self.oppenent_names.append(opponent)
+
 
         self.eval_episodes = config["Evaluator"]["eval_episodes"]
 
@@ -603,132 +612,139 @@ class Evaluator(object):
             agent = TD3(self.agent_name, self.env, self.config)
             agent.load(agent_instance)
 
-            # preparations
-            evaluated_episodes = 0
-            wins = 0
-            draws = 0
-            losses = 0
+            # opponent selection
+            for i in range(len(self.opponents)):
 
-            evaluated_episodes_left = 0
-            wins_left = 0
-            draws_left = 0
-            losses_left = 0
+                opponent = self.opponents[i]
+                opponent_name = self.oppenent_names[i]
 
-            evaluated_episodes_right = 0
-            wins_right = 0
-            draws_right = 0
-            losses_right = 0
+                # preparations
 
-            total_reward = 0
-            min_reward = np.infty
-            max_reward = -np.infty
-            avg_reward = 0
+                evaluated_episodes = 0
+                wins = 0
+                draws = 0
+                losses = 0
 
-            # evaluation
+                evaluated_episodes_left = 0
+                wins_left = 0
+                draws_left = 0
+                losses_left = 0
 
-            # agent plays on left side
-            for left_episode in range(self.eval_episodes // 2):
+                evaluated_episodes_right = 0
+                wins_right = 0
+                draws_right = 0
+                losses_right = 0
+
+                total_reward = 0
+                min_reward = np.infty
+                max_reward = -np.infty
+                avg_reward = 0
+
+                # evaluation
+
+                # agent plays on left side
+                for left_episode in range(self.eval_episodes // 2):
                 
-                episode_reward = 0
+                    episode_reward = 0
 
-                state, info = self.env.reset()
-                opponent_state = self.env.obs_agent_two()
-          
-                while True:
-
-                    # agent action with exploration noise    
-                    agent_action = agent.select_action(state, self.exploration_noise)
-                    
-                    # opponent action
-                    opponent_action = self.opponent.act(opponent_state)
-
-                    # environment transition
-                    next_state, reward, done, trunc, info = self.env.step(np.hstack([agent_action, opponent_action]))
+                    state, info = self.env.reset()
                     opponent_state = self.env.obs_agent_two()
+          
+                    while True:
 
-                    episode_reward += reward
-
-                    if done or trunc:
-                        if info["winner"] == 1:
-                            wins_left += 1
-                            wins += 1
-                        elif info["winner"] == 0:
-                            draws_left += 1
-                            draws += 1
-                        elif info["winner"] == -1:
-                            losses_left += 1
-                            losses += 1
-                        evaluated_episodes_left += 1
-                        evaluated_episodes += 1
-                        break
-                    else:
-                        state = next_state
-
-                # logging
-                total_reward += episode_reward
-                if episode_reward < min_reward:
-                    min_reward = episode_reward
-                if episode_reward > max_reward:
-                    max_reward = episode_reward
-
-
-            # agent plays on right side
-            for right_episode in range(self.eval_episodes // 2):
-
-                episode_reward = 0
-                
-                opponent_state, _ = self.env.reset()
-                state = self.env.obs_agent_two()
-
-                while True:
-
-                    # agent action with exploration noise    
-                    agent_action = agent.select_action(state, self.exploration_noise)
+                        # agent action with exploration noise    
+                        agent_action = agent.select_action(state, self.exploration_noise)
                     
-                    # opponent action
-                    opponent_action = self.opponent.act(opponent_state)
+                        # opponent action
+                        opponent_action = opponent.act(opponent_state)
 
-                    # environment transition
+                        # environment transition
+                        next_state, reward, done, trunc, info = self.env.step(np.hstack([agent_action, opponent_action]))
+                        opponent_state = self.env.obs_agent_two()
 
-                    opponent_state, _, done, trunc, _ = self.env.step(np.hstack([opponent_action, agent_action]))
-                    next_state = self.env.obs_agent_two()
+                        episode_reward += reward
 
-                    agent_info = self.env.get_info_agent_two()
-                    reward = self.env.get_reward_agent_two(agent_info)
+                        if done or trunc:
+                            if info["winner"] == 1:
+                                wins_left += 1
+                                wins += 1
+                            elif info["winner"] == 0:
+                                draws_left += 1
+                                draws += 1
+                            elif info["winner"] == -1:
+                                losses_left += 1
+                                losses += 1
+                            evaluated_episodes_left += 1
+                            evaluated_episodes += 1
+                            break
+                        else:
+                            state = next_state
 
-                    episode_reward += reward
+                    # logging
+                    total_reward += episode_reward
+                    if episode_reward < min_reward:
+                        min_reward = episode_reward
+                    if episode_reward > max_reward:
+                        max_reward = episode_reward
 
-                    if done or trunc:
-                        if agent_info["winner"] == 1:
-                            wins_right += 1
-                            wins += 1
-                        elif agent_info["winner"] == 0:
-                            draws_right += 1
-                            draws += 1
-                        elif agent_info["winner"] == -1:
-                            losses_right += 1
-                            losses +=1
-                        evaluated_episodes_right += 1
-                        evaluated_episodes += 1
-                        break
-                    else:
-                        state = next_state
+
+                # agent plays on right side
+                for right_episode in range(self.eval_episodes // 2):
+
+                    episode_reward = 0
+                
+                    opponent_state, _ = self.env.reset()
+                    state = self.env.obs_agent_two()
+
+                    while True:
+
+                        # agent action with exploration noise    
+                        agent_action = agent.select_action(state, self.exploration_noise)
+                    
+                        # opponent action
+                        opponent_action = opponent.act(opponent_state)
+
+                        # environment transition
+
+                        opponent_state, _, done, trunc, _ = self.env.step(np.hstack([opponent_action, agent_action]))
+                        next_state = self.env.obs_agent_two()
+
+                        agent_info = self.env.get_info_agent_two()
+                        reward = self.env.get_reward_agent_two(agent_info)
+
+                        episode_reward += reward
+
+                        if done or trunc:
+                            if agent_info["winner"] == 1:
+                                wins_right += 1
+                                wins += 1
+                            elif agent_info["winner"] == 0:
+                                draws_right += 1
+                                draws += 1
+                            elif agent_info["winner"] == -1:
+                                losses_right += 1
+                                losses +=1
+                            evaluated_episodes_right += 1
+                            evaluated_episodes += 1
+                            break
+                        else:
+                            state = next_state
             
-                # logging
-                total_reward += episode_reward
-                if episode_reward < min_reward:
-                    min_reward = episode_reward
-                if episode_reward > max_reward:
-                    max_reward = episode_reward
+                    # logging
+                    total_reward += episode_reward
+                    if episode_reward < min_reward:
+                        min_reward = episode_reward
+                    if episode_reward > max_reward:
+                        max_reward = episode_reward
 
 
-            win_rate_left = round(wins_left/evaluated_episodes_left, 2)
-            win_rate_right = round(wins_right/evaluated_episodes_right, 2)
-            win_rate = round(wins/evaluated_episodes, 2)
+                win_rate_left = round(wins_left/evaluated_episodes_left, 2)
+                win_rate_right = round(wins_right/evaluated_episodes_right, 2)
+                win_rate = round(wins/evaluated_episodes, 2)
 
-            avg_reward = total_reward/evaluated_episodes
+                avg_reward = total_reward/evaluated_episodes
 
-            self.evaluation_data.append([agent_instance, evaluated_episodes, wins, draws, losses, win_rate, evaluated_episodes_left, wins_left, draws_left, losses_left, win_rate_left, evaluated_episodes_right, wins_right, draws_right, losses_right, win_rate_right, total_reward, min_reward, max_reward, avg_reward])
+                self.evaluation_data.append([agent_instance, opponent_name, evaluated_episodes, wins, draws, losses, win_rate, evaluated_episodes_left, wins_left, draws_left, losses_left, win_rate_left, evaluated_episodes_right, wins_right, draws_right, losses_right, win_rate_right, total_reward, min_reward, max_reward, avg_reward])
 
 
         stop = time.time()
@@ -744,7 +760,7 @@ class Evaluator(object):
         Function to store evaluation results in a csv file.
         """
 
-        df_results = pd.DataFrame(data= self.evaluation_data, columns=["Agent Instance", "Total Episodes", "Total Wins", "Total Draws", "Total Losses", "Total Win Rate", "Left Episodes", "Left Wins", "Left Draws", "Left Losses", "Left Win Rate", "Right Episodes", "Right Wins", "Right Draws", "Right Losses", "Right Win Rate", "Total Reward", "Min Reward", "Max Reward", "Average Reward"])
+        df_results = pd.DataFrame(data= self.evaluation_data, columns=["Agent Instance", "Opponent", "Total Episodes", "Total Wins", "Total Draws", "Total Losses", "Total Win Rate", "Left Episodes", "Left Wins", "Left Draws", "Left Losses", "Left Win Rate", "Right Episodes", "Right Wins", "Right Draws", "Right Losses", "Right Win Rate", "Total Reward", "Min Reward", "Max Reward", "Average Reward"])
         df_results.to_csv(f"{directory}/{self.agent_name}/evaluation_results.csv", index=False)
 
 
