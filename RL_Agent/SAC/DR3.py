@@ -48,12 +48,15 @@ class DR3_Agent(agent):
             "temperature":0.1,
             "use_smooth_L1":False,
             "regularizer_q":0.001,
+            "play_hockey":True,
             }
         self.device = device
         self._observation_space = observation_space
         self._obs_dim = self._observation_space.shape[0]
         self._action_space = action_space
         self.action_dim = action_space.shape[0]
+        if self._config["play_hockey"]:
+            self.action_dim = action_space.shape[0]//2
         self.discount = self._config["discount"]
         self.tau = self._config["tau"]
         self.train_iter=0
@@ -79,13 +82,16 @@ class DR3_Agent(agent):
         
         self.target.soft_update(self.critic,tau=1)
         
-        
-        if action_space is not None:
-            self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2).to(self.device)
-            self.action_bias = torch.FloatTensor((action_space.high + action_space.low) / 2).to(self.device)
+        if self._config["play_hockey"]:
+            self.action_scale = 1
+            self.action_bias = 0
         else:
-            self.action_scale = torch.tensor(1.).to(self.device)
-            self.action_bias = torch.tensor(0.).to(self.device)
+            if action_space is not None:
+                self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2).to(self.device)
+                self.action_bias = torch.FloatTensor((action_space.high + action_space.low) / 2).to(self.device)
+            else:
+                self.action_scale = torch.tensor(1.).to(self.device)
+                self.action_bias = torch.tensor(0.).to(self.device)
 
 
     def store_transition(self,transition):

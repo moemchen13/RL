@@ -31,9 +31,9 @@ class SAC_Agent(agent):
         super().__init__(observation_space,action_space,**userconfig)
         
         self._config = {
-            "start_steps":10000,
+            "start_steps":1000,
             "discount": 0.99,
-            "buffer_size": int(1e7),
+            "buffer_size": int(1e5),
             "batch_size": 256,
             "lr_actor": float(3e-4),
             "lr_critic": float(1e-3),
@@ -50,13 +50,19 @@ class SAC_Agent(agent):
             "temperature":0.1,
             "numbers_critics":2,
             "use_smooth_L1":False,
+            "play_hockey":True
             }
         
         self.device = device
         self._observation_space = observation_space
         self._obs_dim = self._observation_space.shape[0]
         self._action_space = action_space
-        self.action_dim = action_space.shape[0]
+        if self._config["play_hockey"]:
+            self.action_dim = int(action_space.shape[0]/2)
+            print(f"halfed the action space to {self.action_dim}")
+        else:
+            self.action_dim = action_space.shape[0]
+            print(f"normal actionsspace of {self.action_dim}")
         self.discount = self._config["discount"]
         self.tau = self._config["tau"]
         self.train_iter = 0
@@ -84,12 +90,16 @@ class SAC_Agent(agent):
         
         self.target.soft_update(self.critic,tau=1)
         
-        if action_space is not None:
-            self.action_scale = torch.FloatTensor((action_space.high - action_space.low)/2).to(self.device)
-            self.action_bias = torch.FloatTensor((action_space.high + action_space.low)/2).to(self.device)
+        if self._config["play_hockey"]:
+            self.action_scale = torch.ones(self.action_dim)
+            self.action_bias = torch.zeros(self.action_dim)
         else:
-            self.action_scale = torch.tensor(1.).to(self.device)
-            self.action_bias = torch.tensor(0.).to(self.device)
+            if action_space is not None:
+                self.action_scale = torch.FloatTensor((action_space.high - action_space.low)/2).to(self.device)
+                self.action_bias = torch.FloatTensor((action_space.high + action_space.low)/2).to(self.device)
+            else:
+                self.action_scale = torch.tensor(1.).to(self.device)
+                self.action_bias = torch.tensor(0.).to(self.device)
 
 
     def store_transition(self,transition):
