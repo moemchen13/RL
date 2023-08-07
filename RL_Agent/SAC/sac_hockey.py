@@ -15,18 +15,9 @@ def save_statistics(rewards,lengths,q_losses,pi_losses,temperature_loss,env_name
         pickle.dump({"rewards" : rewards, "lengths": lengths,
                         "pi_losses": pi_losses, "q_losses": q_losses,
                         "temperature_loss":temperature_loss}, f)
-
-
-def reward_shaping(reward,info,opponent,already_touched):
-    #opponent is the right player
-    #closeness_reward = info["reward_closeness_to_puck"]*0.01
     
-    if not opponent:
-        reward= -reward
-    #reward += closeness_reward
-    #if not already_touched:
-    #    if reward >0:
-    #        reward=0
+
+def reward_shaping(reward,info,right,touched_puck):
     return reward
 
 def create_agent(agent):
@@ -99,9 +90,9 @@ def run_sac_agent_hockey_game(agent,mode,log_interval,save_interval,max_episodes
 
     env = h_env.HockeyEnv()
     if mode == "easy":  
-        player = h_env.BasicOpponent(weak=True)
+        opponent = h_env.BasicOpponent(weak=True)
     elif mode == "hard":
-        player = h_env.HockeyEnv(weak=False)
+        opponent = h_env.HockeyEnv(weak=False)
     
     rewards = []
     lengths = []
@@ -109,39 +100,45 @@ def run_sac_agent_hockey_game(agent,mode,log_interval,save_interval,max_episodes
     policy_losses = []
     temperature_losses = []
 
-    opponent = agent
+    player = agent
+
+    #leftsided
+    win = 0
+    loss = 0
+    tie = 0
 
     for episode in range(1,max_episodes+1):
         ob, _info = env.reset()
-        ob_opponent = env.obs_agent_two()
         total_reward=0
         done = False
-        touched_puck = False
         for t in range(max_timesteps):
-            
+            ob_opponent = env.obs_agent_two()
             action_player = player.act(ob)
             action_opponent = opponent.act(ob_opponent)
-            (ob_new,reward,done,trunc,info) = env.step(np.hstack([action_player,action_opponent]))
-            ob_new_opponent = env.obs_agent_two()
-            # Documentation of hockey wrong???
-            info_opponent = env.get_info_agent_two()
-            reward = env.get_reward(info)
-            reward_opponent = env.get_reward_agent_two(info_opponent)
-            if info["reward_touch_puck"] !=0:
-                touched_puck=True
-            if info_opponent["reward_touch_puck"] !=0:
-                touched_puck_opponent=True
+            action_environment = np.hstack([action_player,action_opponent])
 
-            reward_shaped = reward_shaping(reward,info,True,touched_puck)
-            reward_shaped = -reward
+            (ob_new,reward,done,trunc,info) = env.step(action_environment)
+            
+            reward_shaped = reward
             total_reward += reward_shaped
             
-            opponent.store_transition((ob_opponent,action_opponent,reward_shaped,ob_new_opponent,done))
+            player.store_transition((ob,action_player,reward_shaped,ob_new,done))
             ob=ob_new
-            ob_opponent=env.obs_agent_two() 
-            if done or trunc: break
 
-        q_loss,pi_loss,temperature_loss = opponent.train(train_iter)
+
+            if done or trunc: 
+                if done:
+                    if env.winner ==1:
+                        win +=1
+                    elif env.winner == -1: 
+                        loss +=1
+                    else:
+                        tie +=1
+                break
+
+
+
+        q_loss,pi_loss,temperature_loss = player.train(train_iter)
         
         q_losses.extend(q_loss)
         policy_losses.extend(pi_loss)
@@ -151,13 +148,13 @@ def run_sac_agent_hockey_game(agent,mode,log_interval,save_interval,max_episodes
 
         if episode % save_interval == 0:
             print("########### Save checkpoint ################")
-            torch.save(opponent.get_networks_states(),f'./{name}_{mode}-e{episode}-t{train_iter}-s{random_seed}-player2.pth')
+            torch.save(player.get_networks_states(),f'./{name}_{mode}-e{episode}-t{train_iter}-s{random_seed}-player.pth')
             save_statistics(rewards,lengths,q_losses,policy_losses,temperature_losses,mode,random_seed,episode,name)
 
         if episode % log_interval == 0:
             avg_reward = np.mean(rewards[-log_interval:])
             avg_length = int(np.mean(lengths[-log_interval:]))
-            print('Player2: Episode {} \t avg length: {} \t reward: {}'.format(episode, avg_length, avg_reward))
+            print(f'Player: Episode {episode} \t avg length: {avg_length} \t avg_reward: {avg_reward} \t wins: {win} \t losses: {loss} \t  ties: {tie} \t last reward: {rewards[-1]}')
         
     save_statistics(rewards,lengths,q_losses,policy_losses,temperature_losses,mode,random_seed,episode,name)
 
@@ -183,6 +180,10 @@ def run_sac_agent_against_yourself(agent,enemy,log_interval,save_interval,max_ep
     policy_losses_opponent = []
     temperature_losses_opponent = []
 
+    #leftsided
+    win = 0
+    loss = 0
+    tie = 0
 
     for episode in range(1,max_episodes+1):
         ob, _info = env.reset()
@@ -199,16 +200,16 @@ def run_sac_agent_against_yourself(agent,enemy,log_interval,save_interval,max_ep
             (ob_new,reward,done,trunc,info) = env.step(np.hstack([action_player,action_opponent]))
             ob_new_opponent = env.obs_agent_two()
             # Documentation of hockey wrong???
-            #info_opponent = env.get_info_agent_two()
-            #reward = env.get_reward(info)
-            #reward_opponent = env.get_reward_agent_two(info_opponent)
+            info_opponent = env.get_info_agent_two()
+            reward = env.get_reward(info)
+            reward_opponent = env.get_reward_agent_two(info_opponent)
             if info["reward_touch_puck"] !=0:
                 touched_puck=True
-            #if info_opponent["reward_touch_puck"] !=0:
-            #    touched_puck_opponent=True
+            if info_opponent["reward_touch_puck"] !=0:
+                touched_puck_opponent=True
 
             reward_shaped = reward_shaping(reward,info,False,touched_puck)
-            #reward_shaped_opponent = reward_shaping(reward_opponent,info_opponent,True,touched_puck_opponent)
+            reward_shaped_opponent = reward_shaping(reward_opponent,info_opponent,True,touched_puck_opponent)
             reward_shaped_opponent = -reward
             total_reward += reward_shaped
             total_reward_opponent += reward_shaped_opponent
@@ -217,7 +218,15 @@ def run_sac_agent_against_yourself(agent,enemy,log_interval,save_interval,max_ep
             opponent.store_transition((ob_opponent,action_opponent,reward_shaped_opponent,ob_new_opponent,done))
             ob=ob_new
             ob_opponent=env.obs_agent_two() 
-            if done or trunc: break
+            if done or trunc: 
+                if done:
+                    if env.winner ==1:
+                        win +=1
+                    elif env.winner == -1: 
+                        loss +=1
+                    else:
+                        tie +=1
+                break
 
         q_loss_opponent,pi_loss_opponent,temperature_loss_opponent = opponent.train(train_iter)
         q_loss,pi_loss,temperature_loss = player.train(train_iter)
@@ -244,12 +253,12 @@ def run_sac_agent_against_yourself(agent,enemy,log_interval,save_interval,max_ep
         if episode % log_interval == 0:
             avg_reward = np.mean(rewards[-log_interval:])
             avg_length = int(np.mean(lengths[-log_interval:]))
-            print('Player2: Episode {} \t avg length: {} \t reward: {}'.format(episode, avg_length, avg_reward))
+            print(f'Player2: Episode {episode} \t avg length: {avg_length} \t reward: {avg_reward} \t wins: {win} \t losses: {loss} \t ties: {tie} \t last reward: {rewards[-1]}')
             
             if show_both_logs:
                 avg_reward = np.mean(rewards_opponent[-log_interval:])
                 avg_length = int(np.mean(lengths_opponent[-log_interval:]))
-                print('Player1: Episode {} \t avg length: {} \t reward: {}'.format(episode, avg_length, avg_reward))
+                print(f'Player1: Episode {episode} \t avg length: {avg_length} \t reward: {avg_reward} \t wins: {loss} \t losses: {win} \t ties: {tie} \t last reward: {rewards_opponent[-1]}')
 
         
     save_statistics(rewards_opponent,lengths_opponent,q_losses_opponent,policy_losses_opponent,temperature_losses_opponent,"self_play_player2",random_seed,episode,name)
