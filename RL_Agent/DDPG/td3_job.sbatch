@@ -4,14 +4,14 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=TestRL
+#SBATCH --job-name=TD3_Challenging
 
 #resources:
 
-#SBATCH --cpus-per-task=2
+#SBATCH --cpus-per-task=4
 # the job can use and see 4 CPUs (from max 24).
 
-#SBATCH --partition=test
+#SBATCH --partition=day
 # the slurm partition the job is queued to.
 
 #SBATCH --mem-per-cpu=1G
@@ -20,7 +20,7 @@
 #SBATCH --gres=gpu:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
-#SBATCH --time=10:00
+#SBATCH --time=10:00:00
 # the maximum time the scripts needs to run
 # "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"
 
@@ -33,7 +33,7 @@
 #SBATCH --mail-type=ALL
 #write a mail if a job begins, ends, fails, gets requeued or stages out
 
-#SBATCH --mail-user=**@uni-tuebingen.de
+#SBATCH --mail-user=torsten.foehr@student.uni-tuebingen.de
 # your mail address
 
 ####
@@ -48,5 +48,6 @@
 
 ##################################################################################################
 # TODO: update the following paths with your own!
-singularity exec --nv /home/my_home_folder/rl_lecture.simg python3 /home/my_home_folder/rl_test.py
+singularity exec --nv ~/Singularity_Torsten python3 ~/RL/RL_Agent/DDPG/TD3.py --mode "train" --agent "TD3_Challenging"
+singularity exec --nv ~/Singularity_Torsten python3 ~/RL/RL_Agent/DDPG/TD3.py --mode "eval" --agent "TD3_Challenging"
 ##################################################################################################

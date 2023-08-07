@@ -659,7 +659,6 @@ class Player(object):
         self.env.render(mode="human")
 
         for episode in range(1, self.play_episodes+1):
-
             episode_reward = 0
 
             state, info = self.env.reset()
@@ -667,6 +666,7 @@ class Player(object):
 
             while True:
 
+                self.env.render()
 
                 # agent action with exploration noise    
                 agent_action = self.agent_instance.select_action(state, self.exploration_noise)
@@ -733,7 +733,7 @@ def main():
         buffer.random_fill(env)
 
         # create opponent
-        opponent = h_env.BasicOpponent(weak=True)
+        opponent = h_env.BasicOpponent(weak=False)
 
         # create trainer
         trainer = Trainer(env, agent, opponent, buffer, config)
@@ -744,6 +744,8 @@ def main():
         # store results
         trainer.store_results()
 
+        env.close()
+
 
     ## Evaluation Mode ##
 
@@ -753,7 +755,7 @@ def main():
         env = h_env.HockeyEnv()
 
         # create opponent
-        opponent = h_env.BasicOpponent(weak=True)
+        opponent = h_env.BasicOpponent(weak=False)
 
         # create evaluator
         evaluator = Evaluator(env, agent_name, opponent, "./results", config)
@@ -763,6 +765,8 @@ def main():
 
         # store results
         evaluator.store_results()
+
+        env.close()
  
 
     ## Play Mode ##
@@ -773,10 +777,10 @@ def main():
         env = h_env.HockeyEnv()
 
         # create opponent
-        opponent = h_env.BasicOpponent(weak=True)
+        opponent = h_env.BasicOpponent(weak=False)
   
         # load TD3 agent
-        agent = TD3(agent_name.split("_")[0], env, config)
+        agent = TD3("_".join(agent_name.split("_")[:-1]), env, config)
         agent.load(agent_name)
 
         # create player
@@ -785,11 +789,14 @@ def main():
         # run player
         player.run()
 
+        env.close()
 
 
 if __name__ == "__main__":
     main()
 
+# Idea: Train with fractions 0.3: weak opponent, strong opponent, own agent, moritz agent
+# + 0.5 for each side
 
 
 
