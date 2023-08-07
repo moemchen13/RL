@@ -62,7 +62,7 @@ class ReplayBuffer(object):
             opponent_action = action[-4:]
             
             next_state, reward, done, trunc, info = env.step(action)
-            self.add((state, agent_action, reward, next_state, done))
+            self.add((state, agent_action, reward, next_state, max(done, trunc)))
 
             if done or trunc:
                 state, info = env.reset()
@@ -360,7 +360,7 @@ class Trainer(object):
     Manages environment transitions and replay buffer housekeeping.
     """
     
-    def __init__(self, env, agent, opponent, buffer, config):
+    def __init__(self, env, agent, opponents, opponent_probs, buffer, config):
         """
         Inititalization function.
         Initializes trainer with configuration and logging setup.
@@ -369,7 +369,8 @@ class Trainer(object):
         # Configuration
         self.env = env
         self.agent = agent
-        self.opponent = opponent
+        self.opponents = opponents
+        self.opponent_probs = opponent_probs
         self.buffer = buffer
 
         self.train_episodes = config["Trainer"]["train_episodes"]
@@ -402,12 +403,27 @@ class Trainer(object):
 
         start = time.time()
 
-        for episode in range(1, self.train_episodes+1):     
-            
-            state, info = self.env.reset()
-            opponent_state = self.env.obs_agent_two()
 
-            # Play Phase
+
+        for episode in range(1, self.train_episodes+1):   
+
+            # sample opponent 
+            opponent = np.random.choice(self.opponents, p=self.opponent_probs)
+
+            # sample agent side
+            agent_side = np.random.choice(["left", "right"])
+    
+
+            if agent_side == "left":
+                state, info = self.env.reset()
+                opponent_state = self.env.obs_agent_two()
+
+            elif agent_side == "right":
+                opponent_state, _ = self.env.reset()
+                state = self.env.obs_agent_two()
+
+
+            ## Play Phase ##
             episode_reward = 0
 
             while True:
@@ -416,22 +432,42 @@ class Trainer(object):
                 agent_action = self.agent.select_action(state, self.exploration_noise)
                 
                 # opponent action
-                opponent_action = self.opponent.act(opponent_state)
+                opponent_action = opponent.act(opponent_state)
 
                 # environment transition
-                next_state, reward, done, trunc, info = self.env.step(np.hstack([agent_action, opponent_action]))
-                opponent_state = self.env.obs_agent_two()
+
+                if agent_side == "left":
+
+                    next_state, reward, done, trunc, info = self.env.step(np.hstack([agent_action, opponent_action]))
+                    opponent_state = self.env.obs_agent_two()
                  
-                # store transition in replay buffer
-                self.buffer.add((state, agent_action, reward, next_state, done))
+                    # store transition in replay buffer
+                    self.buffer.add((state, agent_action, reward, next_state, max(done, trunc)))
 
-                episode_reward += reward
+                    episode_reward += reward
 
-                if done or trunc:
-                    break
-                else:
-                    state = next_state
+                    if done or trunc:
+                        break
+                    else:
+                        state = next_state
 
+                elif agent_side == "right":
+
+                    opponent_state, _, done, trunc, _ = self.env.step(np.hstack([opponent_action, agent_action]))
+                    next_state = self.env.obs_agent_two()
+
+                    agent_info = self.env.get_info_agent_two()
+                    reward = self.env.get_reward_agent_two(agent_info)
+
+                    # store transition in replay buffer
+                    self.buffer.add((state, agent_action, reward, next_state, max(done, trunc)))
+
+                    episode_reward += reward
+
+                    if done or trunc:
+                        break
+                    else:
+                        state = next_state
 
             # Training Phase
             actor_losses, critic_losses =  self.agent.train(self.buffer, self.train_iter)
@@ -636,6 +672,7 @@ class Evaluator(object):
                     # environment transition
 
                     opponent_state, _, done, trunc, _ = self.env.step(np.hstack([opponent_action, agent_action]))
+                    next_state = self.env.obs_agent_two()
 
                     agent_info = self.env.get_info_agent_two()
                     reward = self.env.get_reward_agent_two(agent_info)
@@ -656,7 +693,7 @@ class Evaluator(object):
                         evaluated_episodes += 1
                         break
                     else:
-                        state = self.env.obs_agent_two()
+                        state = next_state
             
                 # logging
                 total_reward += episode_reward
@@ -806,6 +843,7 @@ class Player(object):
                 elif agent_side == "right":
 
                     opponent_state, _, done, trunc, _ = self.env.step(np.hstack([opponent_action, agent_action]))
+                    next_state = self.env.obs_agent_two()
 
                     agent_info = self.env.get_info_agent_two()
                     reward = self.env.get_reward_agent_two(agent_info)
@@ -826,7 +864,7 @@ class Player(object):
                         played_episodes += 1
                         break
                     else:
-                        state = self.env.obs_agent_two()
+                        state = next_state
 
             print(f"Reward: {episode_reward}")
 
@@ -890,10 +928,11 @@ def main():
         buffer.random_fill(env)
 
         # create opponent
-        opponent = h_env.BasicOpponent(weak=False)
+        opponents = [h_env.BasicOpponent(weak=False)]
+        opponent_probs = [1.0]
 
         # create trainer
-        trainer = Trainer(env, agent, opponent, buffer, config)
+        trainer = Trainer(env, agent, opponents, opponent_probs, buffer, config)
 
         # train agent
         trainer.run()

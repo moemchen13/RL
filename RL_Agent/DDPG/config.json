@@ -26,7 +26,7 @@
     },
     "Replay Buffer":
     {
-        "capacity": 1e6
+        "capacity": 1e4
     },
     "Trainer": 
     {
