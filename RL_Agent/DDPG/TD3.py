@@ -587,12 +587,12 @@ class Evaluator(object):
                             draws += 1
                         elif info["winner"] == -1:
                             losses += 1
+                        evaluated_episodes += 1
                         break
                     else:
                         state = next_state
 
                 # logging
-                evaluated_episodes += 1
                 total_reward += episode_reward
                 if episode_reward < min_reward:
                     min_reward = episode_reward
@@ -624,11 +624,11 @@ class Evaluator(object):
 
 class Player(object):
     """
-    Class to enable playing a particular instance of a TD3 agent.
+    Class to enable playing a particular instance of a TD3 ageto_csvnt.
     Manages environment transitions and collects rewards..
     """
 
-    def __init__(self, env, agent_instance, opponent, config):
+    def __init__(self, env, agent_instance, opponent, render, config):
         """
         Inititalization function.
         Initializes player with configuration.
@@ -640,6 +640,7 @@ class Player(object):
         
         self.play_episodes = config["Player"]["play_episodes"]
         self.exploration_noise = config["Player"]["exploration_noise"]
+        self.render = render
 
 
     def run(self):
@@ -656,44 +657,129 @@ class Player(object):
         start = time.time()
 
         self.env.reset()
-        self.env.render(mode="human")
+        
+        if self.render:
+            self.env.render(mode="human")
+
+        # Logging
+        played_episodes = 0
+        wins = 0
+        draws = 0
+        losses = 0
+
+        played_episodes_left = 0
+        wins_left = 0
+        draws_left = 0
+        losses_left = 0
+
+        played_episodes_right = 0
+        wins_right = 0
+        draws_right = 0
+        losses_right = 0
+
 
         for episode in range(1, self.play_episodes+1):
+            
+            # sample agent side
+            agent_side = np.random.choice(["left", "right"])
+    
             episode_reward = 0
 
-            state, info = self.env.reset()
-            opponent_state = self.env.obs_agent_two()
+            print(f"  Episode {episode} - {agent_side} - ", end="", flush=True)
+
+            if agent_side == "left":
+                state, info = self.env.reset()
+                opponent_state = self.env.obs_agent_two()
+
+            elif agent_side == "right":
+                opponent_state, _ = self.env.reset()
+                state = self.env.obs_agent_two()
+
 
             while True:
 
-                self.env.render()
+                if self.render:
+                    self.env.render()
 
                 # agent action with exploration noise    
                 agent_action = self.agent_instance.select_action(state, self.exploration_noise)
                     
-
                 # opponent action
                 opponent_action = self.opponent.act(opponent_state)
 
                 # environment transition
-                next_state, reward, done, trunc, info = self.env.step(np.hstack([agent_action, opponent_action]))
-                opponent_state = self.env.obs_agent_two()
 
-                episode_reward += reward
+                if agent_side == "left":
 
-                if done or trunc:
-                    break
-                else:
-                    state = next_state
+                    next_state, reward, done, trunc, info = self.env.step(np.hstack([agent_action, opponent_action]))
+                    opponent_state = self.env.obs_agent_two()
+
+                    episode_reward += reward
+
+                    if done or trunc:
+                        if info["winner"] == 1:
+                            wins_left += 1
+                            wins += 1
+                        elif info["winner"] == 0:
+                            draws_left += 1
+                            draws += 1
+                        elif info["winner"] == -1:
+                            losses_left += 1
+                            losses += 1
+                        played_episodes_left += 1
+                        played_episodes += 1
+                        break
+                    else:
+                        state = next_state
    
-            print(f"  Episode {episode} - Reward: {episode_reward}")
+                elif agent_side == "right":
+
+                    opponent_state, _, done, trunc, info = self.env.step(np.hstack([opponent_action, agent_action]))
+
+                    agent_info = self.env.get_info_agent_two()
+                    reward = self.env.get_reward_agent_two(agent_info)
+
+                    episode_reward += reward
+
+                    if done or trunc:
+                        if agent_info["winner"] == 1:
+                            wins_right += 1
+                            wins += 1
+                        elif agent_info["winner"] == 0:
+                            draws_right += 1
+                            draws += 1
+                        elif agent_info["winner"] == -1:
+                            losses_right += 1
+                            losses +=1
+                        played_episodes_right += 1
+                        played_episodes += 1
+                        break
+                    else:
+                        state = self.env.obs_agent_two()
+
+            print(f"Reward: {episode_reward}")
 
 
         stop = time.time()
         print("\nDone!\n")
         print("----------------------------------------")
-        print(f"Played Episodes: {self.play_episodes}")
+        print(f"Episodes: {played_episodes}")
+        print(f"Wins: {wins}")
+        print(f"Draws: {draws}")
+        print(f"Losses: {losses}")
+        print("----------------------------------------")
+        print(f"Left Episodes: {played_episodes_left}")
+        print(f"Left Wins: {wins_left}")
+        print(f"Left Draws: {draws_left}")
+        print(f"Left Losses: {losses_left}")
+        print("----------------------------------------")
+        print(f"Right Episodes: {played_episodes_right}")
+        print(f"Right Wins: {wins_right}")
+        print(f"Right Draws: {draws_right}")
+        print(f"Right Losses: {losses_right}")
+        print("----------------------------------------")
         print(f"Time: {round(stop-start,2)}s\n")
+
 
 def main():
 
@@ -784,7 +870,7 @@ def main():
         agent.load(agent_name)
 
         # create player
-        player = Player(env, agent, opponent, config)
+        player = Player(env, agent, opponent, False, config)
 
         # run player
         player.run()
@@ -806,3 +892,4 @@ if __name__ == "__main__":
 # Twin Polcies? => Slide!
 # Prioritized Replay Buffer?
 # wins / looses for Evaluator
+# random seed
