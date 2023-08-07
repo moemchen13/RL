@@ -3,7 +3,7 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
-with open("SAC_run_easy-s42-e1000-stat.pkl", 'rb') as f:
+with open("DSAC_Easy_easy-s42-e3000-stat.pkl", 'rb') as f:
     data = pickle.load(f)
     rewards = np.asarray(data["rewards"])
     q_losses =  np.asarray(data["q_losses"])
