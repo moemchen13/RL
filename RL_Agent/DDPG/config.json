@@ -43,7 +43,7 @@
     },
     "Player":
     {
-        "play_episodes": 100,
+        "play_episodes": 1000,
         "exploration_noise": 0.0
     }
 }

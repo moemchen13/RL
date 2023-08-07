@@ -62,7 +62,7 @@ class ReplayBuffer(object):
             opponent_action = action[-4:]
             
             next_state, reward, done, trunc, info = env.step(action)
-            self.add((state, agent_action, reward, next_state, done))
+            self.add((state, agent_action, reward, next_state, max(done, trunc)))
 
             if done or trunc:
                 state, info = env.reset()
@@ -269,6 +269,13 @@ class TD3(object):
         return action.clip(self.env.action_space.low[:4], self.env.action_space.high[:4])
 
 
+    def act(self, state):
+        """
+        Wrapper for select action without noise.
+        """
+        return self.select_action(state, noise=0.0, noise_clip=None)
+
+
     def train(self, buffer, train_iter):
         """
         Trains the agent for a given number of iterations with TD3 using transitions from a replay buffer.
@@ -360,7 +367,7 @@ class Trainer(object):
     Manages environment transitions and replay buffer housekeeping.
     """
     
-    def __init__(self, env, agent, opponent, buffer, config):
+    def __init__(self, env, agent, opponents, opponent_probs, buffer, config):
         """
         Inititalization function.
         Initializes trainer with configuration and logging setup.
@@ -369,7 +376,8 @@ class Trainer(object):
         # Configuration
         self.env = env
         self.agent = agent
-        self.opponent = opponent
+        self.opponents = opponents
+        self.opponent_probs = opponent_probs
         self.buffer = buffer
 
         self.train_episodes = config["Trainer"]["train_episodes"]
@@ -402,12 +410,27 @@ class Trainer(object):
 
         start = time.time()
 
-        for episode in range(1, self.train_episodes+1):     
-            
-            state, info = self.env.reset()
-            opponent_state = self.env.obs_agent_two()
 
-            # Play Phase
+
+        for episode in range(1, self.train_episodes+1):   
+
+            # sample opponent 
+            opponent = np.random.choice(self.opponents, p=self.opponent_probs)
+
+            # sample agent side
+            agent_side = np.random.choice(["left", "right"])
+    
+
+            if agent_side == "left":
+                state, info = self.env.reset()
+                opponent_state = self.env.obs_agent_two()
+
+            elif agent_side == "right":
+                opponent_state, _ = self.env.reset()
+                state = self.env.obs_agent_two()
+
+
+            ## Play Phase ##
             episode_reward = 0
 
             while True:
@@ -416,22 +439,42 @@ class Trainer(object):
                 agent_action = self.agent.select_action(state, self.exploration_noise)
                 
                 # opponent action
-                opponent_action = self.opponent.act(opponent_state)
+                opponent_action = opponent.act(opponent_state)
 
                 # environment transition
-                next_state, reward, done, trunc, info = self.env.step(np.hstack([agent_action, opponent_action]))
-                opponent_state = self.env.obs_agent_two()
+
+                if agent_side == "left":
+
+                    next_state, reward, done, trunc, info = self.env.step(np.hstack([agent_action, opponent_action]))
+                    opponent_state = self.env.obs_agent_two()
                  
-                # store transition in replay buffer
-                self.buffer.add((state, agent_action, reward, next_state, done))
+                    # store transition in replay buffer
+                    self.buffer.add((state, agent_action, reward, next_state, max(done, trunc)))
 
-                episode_reward += reward
+                    episode_reward += reward
 
-                if done or trunc:
-                    break
-                else:
-                    state = next_state
+                    if done or trunc:
+                        break
+                    else:
+                        state = next_state
 
+                elif agent_side == "right":
+
+                    opponent_state, _, done, trunc, _ = self.env.step(np.hstack([opponent_action, agent_action]))
+                    next_state = self.env.obs_agent_two()
+
+                    agent_info = self.env.get_info_agent_two()
+                    reward = self.env.get_reward_agent_two(agent_info)
+
+                    # store transition in replay buffer
+                    self.buffer.add((state, agent_action, reward, next_state, max(done, trunc)))
+
+                    episode_reward += reward
+
+                    if done or trunc:
+                        break
+                    else:
+                        state = next_state
 
             # Training Phase
             actor_losses, critic_losses =  self.agent.train(self.buffer, self.train_iter)
@@ -553,13 +596,26 @@ class Evaluator(object):
             wins = 0
             draws = 0
             losses = 0
+
+            evaluated_episodes_left = 0
+            wins_left = 0
+            draws_left = 0
+            losses_left = 0
+
+            evaluated_episodes_right = 0
+            wins_right = 0
+            draws_right = 0
+            losses_right = 0
+
             total_reward = 0
             min_reward = np.infty
             max_reward = -np.infty
             avg_reward = 0
 
             # evaluation
-            for episode in range(self.eval_episodes):
+
+            # agent plays on left side
+            for left_episode in range(self.eval_episodes // 2):
                 
                 episode_reward = 0
 
@@ -582,26 +638,85 @@ class Evaluator(object):
 
                     if done or trunc:
                         if info["winner"] == 1:
+                            wins_left += 1
                             wins += 1
                         elif info["winner"] == 0:
+                            draws_left += 1
                             draws += 1
                         elif info["winner"] == -1:
+                            losses_left += 1
                             losses += 1
+                        evaluated_episodes_left += 1
+                        evaluated_episodes += 1
                         break
                     else:
                         state = next_state
 
                 # logging
-                evaluated_episodes += 1
                 total_reward += episode_reward
                 if episode_reward < min_reward:
                     min_reward = episode_reward
                 if episode_reward > max_reward:
                     max_reward = episode_reward
 
+
+            # agent plays on right side
+            for right_episode in range(self.eval_episodes // 2):
+
+                episode_reward = 0
+                
+                opponent_state, _ = self.env.reset()
+                state = self.env.obs_agent_two()
+
+                while True:
+
+                    # agent action with exploration noise    
+                    agent_action = agent.select_action(state, self.exploration_noise)
+                    
+                    # opponent action
+                    opponent_action = self.opponent.act(opponent_state)
+
+                    # environment transition
+
+                    opponent_state, _, done, trunc, _ = self.env.step(np.hstack([opponent_action, agent_action]))
+                    next_state = self.env.obs_agent_two()
+
+                    agent_info = self.env.get_info_agent_two()
+                    reward = self.env.get_reward_agent_two(agent_info)
+
+                    episode_reward += reward
+
+                    if done or trunc:
+                        if agent_info["winner"] == 1:
+                            wins_right += 1
+                            wins += 1
+                        elif agent_info["winner"] == 0:
+                            draws_right += 1
+                            draws += 1
+                        elif agent_info["winner"] == -1:
+                            losses_right += 1
+                            losses +=1
+                        evaluated_episodes_right += 1
+                        evaluated_episodes += 1
+                        break
+                    else:
+                        state = next_state
+            
+                # logging
+                total_reward += episode_reward
+                if episode_reward < min_reward:
+                    min_reward = episode_reward
+                if episode_reward > max_reward:
+                    max_reward = episode_reward
+
+
+            win_rate_left = round(wins_left/evaluated_episodes_left, 2)
+            win_rate_right = round(wins_right/evaluated_episodes_right, 2)
+            win_rate = round(wins/evaluated_episodes, 2)
+
             avg_reward = total_reward/evaluated_episodes
-            # TODO: Add Wins / Looses
-            self.evaluation_data.append([agent_instance, evaluated_episodes, wins, draws, losses, total_reward, min_reward, max_reward, avg_reward])
+
+            self.evaluation_data.append([agent_instance, evaluated_episodes, wins, draws, losses, win_rate, evaluated_episodes_left, wins_left, draws_left, losses_left, win_rate_left, evaluated_episodes_right, wins_right, draws_right, losses_right, win_rate_right, total_reward, min_reward, max_reward, avg_reward])
 
 
         stop = time.time()
@@ -617,18 +732,18 @@ class Evaluator(object):
         Function to store evaluation results in a csv file.
         """
 
-        df_results = pd.DataFrame(data= self.evaluation_data, columns=["Agent Instance", "Evaluated Episodes", "Wins", "Draws", "Losses", "Total Reward", "Min Reward", "Max Reward", "Average Reward"])
+        df_results = pd.DataFrame(data= self.evaluation_data, columns=["Agent Instance", "Total Episodes", "Total Wins", "Total Draws", "Total Losses", "Total Win Rate", "Left Episodes", "Left Wins", "Left Draws", "Left Losses", "Left Win Rate", "Right Episodes", "Right Wins", "Right Draws", "Right Losses", "Right Win Rate", "Total Reward", "Min Reward", "Max Reward", "Average Reward"])
         df_results.to_csv(f"{directory}/{self.agent_name}/evaluation_results.csv", index=False)
 
 
 
 class Player(object):
     """
-    Class to enable playing a particular instance of a TD3 agent.
+    Class to enable playing a particular instance of a TD3 ageto_csvnt.
     Manages environment transitions and collects rewards..
     """
 
-    def __init__(self, env, agent_instance, opponent, config):
+    def __init__(self, env, agent_instance, opponent, render, config):
         """
         Inititalization function.
         Initializes player with configuration.
@@ -640,6 +755,7 @@ class Player(object):
         
         self.play_episodes = config["Player"]["play_episodes"]
         self.exploration_noise = config["Player"]["exploration_noise"]
+        self.render = render
 
 
     def run(self):
@@ -656,44 +772,130 @@ class Player(object):
         start = time.time()
 
         self.env.reset()
-        self.env.render(mode="human")
+        
+        if self.render:
+            self.env.render(mode="human")
+
+        # Logging
+        played_episodes = 0
+        wins = 0
+        draws = 0
+        losses = 0
+
+        played_episodes_left = 0
+        wins_left = 0
+        draws_left = 0
+        losses_left = 0
+
+        played_episodes_right = 0
+        wins_right = 0
+        draws_right = 0
+        losses_right = 0
+
 
         for episode in range(1, self.play_episodes+1):
+            
+            # sample agent side
+            agent_side = np.random.choice(["left", "right"])
+    
             episode_reward = 0
 
-            state, info = self.env.reset()
-            opponent_state = self.env.obs_agent_two()
+            print(f"  Episode {episode} - {agent_side} - ", end="", flush=True)
+
+            if agent_side == "left":
+                state, info = self.env.reset()
+                opponent_state = self.env.obs_agent_two()
+
+            elif agent_side == "right":
+                opponent_state, _ = self.env.reset()
+                state = self.env.obs_agent_two()
+
 
             while True:
 
-                self.env.render()
+                if self.render:
+                    self.env.render()
 
                 # agent action with exploration noise    
                 agent_action = self.agent_instance.select_action(state, self.exploration_noise)
                     
-
                 # opponent action
                 opponent_action = self.opponent.act(opponent_state)
 
                 # environment transition
-                next_state, reward, done, trunc, info = self.env.step(np.hstack([agent_action, opponent_action]))
-                opponent_state = self.env.obs_agent_two()
 
-                episode_reward += reward
+                if agent_side == "left":
 
-                if done or trunc:
-                    break
-                else:
-                    state = next_state
+                    next_state, reward, done, trunc, info = self.env.step(np.hstack([agent_action, opponent_action]))
+                    opponent_state = self.env.obs_agent_two()
+
+                    episode_reward += reward
+
+                    if done or trunc:
+                        if info["winner"] == 1:
+                            wins_left += 1
+                            wins += 1
+                        elif info["winner"] == 0:
+                            draws_left += 1
+                            draws += 1
+                        elif info["winner"] == -1:
+                            losses_left += 1
+                            losses += 1
+                        played_episodes_left += 1
+                        played_episodes += 1
+                        break
+                    else:
+                        state = next_state
    
-            print(f"  Episode {episode} - Reward: {episode_reward}")
+                elif agent_side == "right":
+
+                    opponent_state, _, done, trunc, _ = self.env.step(np.hstack([opponent_action, agent_action]))
+                    next_state = self.env.obs_agent_two()
+
+                    agent_info = self.env.get_info_agent_two()
+                    reward = self.env.get_reward_agent_two(agent_info)
+
+                    episode_reward += reward
+
+                    if done or trunc:
+                        if agent_info["winner"] == 1:
+                            wins_right += 1
+                            wins += 1
+                        elif agent_info["winner"] == 0:
+                            draws_right += 1
+                            draws += 1
+                        elif agent_info["winner"] == -1:
+                            losses_right += 1
+                            losses +=1
+                        played_episodes_right += 1
+                        played_episodes += 1
+                        break
+                    else:
+                        state = next_state
+
+            print(f"Reward: {episode_reward}")
 
 
         stop = time.time()
         print("\nDone!\n")
         print("----------------------------------------")
-        print(f"Played Episodes: {self.play_episodes}")
+        print(f"Episodes: {played_episodes}")
+        print(f"Wins: {wins}")
+        print(f"Draws: {draws}")
+        print(f"Losses: {losses}")
+        print("----------------------------------------")
+        print(f"Left Episodes: {played_episodes_left}")
+        print(f"Left Wins: {wins_left}")
+        print(f"Left Draws: {draws_left}")
+        print(f"Left Losses: {losses_left}")
+        print("----------------------------------------")
+        print(f"Right Episodes: {played_episodes_right}")
+        print(f"Right Wins: {wins_right}")
+        print(f"Right Draws: {draws_right}")
+        print(f"Right Losses: {losses_right}")
+        print("----------------------------------------")
         print(f"Time: {round(stop-start,2)}s\n")
+
 
 def main():
 
@@ -733,10 +935,11 @@ def main():
         buffer.random_fill(env)
 
         # create opponent
-        opponent = h_env.BasicOpponent(weak=False)
+        opponents = [h_env.BasicOpponent(weak=False), h_env.BasicOpponent(weak=True)]
+        opponent_probs = [0.8, 0.2]
 
         # create trainer
-        trainer = Trainer(env, agent, opponent, buffer, config)
+        trainer = Trainer(env, agent, opponents, opponent_probs, buffer, config)
 
         # train agent
         trainer.run()
@@ -784,7 +987,7 @@ def main():
         agent.load(agent_name)
 
         # create player
-        player = Player(env, agent, opponent, config)
+        player = Player(env, agent, opponent, False, config)
 
         # run player
         player.run()
@@ -806,3 +1009,4 @@ if __name__ == "__main__":
 # Twin Polcies? => Slide!
 # Prioritized Replay Buffer?
 # wins / looses for Evaluator
+# random seed
