@@ -15,7 +15,10 @@ def save_statistics(rewards,lengths,q_losses,pi_losses,temperature_loss,env_name
         pickle.dump({"rewards" : rewards, "lengths": lengths,
                         "pi_losses": pi_losses, "q_losses": q_losses,
                         "temperature_loss":temperature_loss}, f)
+    
 
+def reward_shaping(reward,info,right,touched_puck):
+    return reward
 
 def create_agent(agent):
     env = h_env.HockeyEnv()
