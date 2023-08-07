@@ -110,6 +110,13 @@ class DSAC_Agent(agent):
         self.target.load_network_states(state[2])
     
 
+    def load_network_states_from_file(self,filename,trained_on_cuda=False):
+        if trained_on_cuda:
+            self.load_network_states(torch.load(filename, map_location=torch.device('cpu')))
+        else:
+            self.load_network_states(torch.load(filename))
+
+
     def reset(self):
         raise NotImplementedError("U might wanna reset the policy network for faster learning as in DR3")
 
