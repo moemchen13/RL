@@ -336,7 +336,7 @@ def main():
     random_seed = int(opts.seed)
     save_interval=500
     reward_shaping = False
-    file_with_weights = opts.file
+    file_of_weights = opts.file
     from_cuda = opts.cuda
     #############################################
     
