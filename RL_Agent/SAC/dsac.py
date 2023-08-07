@@ -85,8 +85,8 @@ class DSAC_Agent(agent):
         self.target.soft_update(self.critic,tau=1)
         
         if self._config["play_hockey"]:
-            self.action_scale = 1
-            self.action_bias = 0
+            self.action_scale = torch.ones(self.action_dim).to(self.device)
+            self.action_bias = torch.zeros(self.action_dim).to(self.device)
         else:
             if action_space is not None:
                 self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2).to(self.device)
