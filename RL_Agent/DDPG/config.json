@@ -38,7 +38,7 @@
     },
     "Evaluator":
     {
-        "eval_episodes": 500,
+        "eval_episodes": 50,
         "exploration_noise": 0.0
     },
     "Player":
