@@ -210,12 +210,10 @@ class TD3(object):
     Agents can be stored or read from disk.
     """
 
-    def __init__(self, agent_name, env, config):
+    def __init__(self, agent_name, env, config, load=False):
         """
         Initialization function. Defines agent networks and training setup from environment information and config.
         """
-
-        self.name = agent_name
 
         # Environment
         self.env = env
@@ -238,6 +236,14 @@ class TD3(object):
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=config["TD3"]["critic_lr"], weight_decay=config["TD3"]["critic_reg"])
+
+
+        # Load Agent Instance
+        if load:
+            self.name = "_".join(agent_name.split("_")[:-1])
+            self.load(agent_name)    
+        self.name = agent_name
+
 
         # Training
         self.training_batch_size = config["TD3"]["training_batch_size"]
@@ -359,7 +365,6 @@ class TD3(object):
         self.actor.load_state_dict(torch.load(f'{directory}/{self.name}/{agent_instance}/{agent_instance}_actor.pth'),  strict=False)
         self.critic.load_state_dict(torch.load(f'{directory}/{self.name}/{agent_instance}/{agent_instance}_critic.pth'), strict=False)
 
-    
 
 class Trainer(object):
     """
@@ -367,7 +372,7 @@ class Trainer(object):
     Manages environment transitions and replay buffer housekeeping.
     """
     
-    def __init__(self, env, agent, opponents, opponent_probs, buffer, config):
+    def __init__(self, env, agent, buffer, config):
         """
         Inititalization function.
         Initializes trainer with configuration and logging setup.
@@ -376,9 +381,15 @@ class Trainer(object):
         # Configuration
         self.env = env
         self.agent = agent
-        self.opponents = opponents
-        self.opponent_probs = opponent_probs
         self.buffer = buffer
+
+        self.opponents = []
+        for opponent in config["Trainer"]["opponents"]:
+            try:
+                self.opponents.append(eval(opponent))
+            except:
+                self.opponents.append(TD3(opponent, env, config, load=True))
+        self.opponent_probs = config["Trainer"]["opponent_probs"]
 
         self.train_episodes = config["Trainer"]["train_episodes"]
         self.train_iter = config["Trainer"]["train_iter"]
@@ -411,7 +422,6 @@ class Trainer(object):
         start = time.time()
 
 
-
         for episode in range(1, self.train_episodes+1):   
 
             # sample opponent 
@@ -419,7 +429,6 @@ class Trainer(object):
 
             # sample agent side
             agent_side = np.random.choice(["left", "right"])
-    
 
             if agent_side == "left":
                 state, info = self.env.reset()
@@ -542,7 +551,7 @@ class Evaluator(object):
     Manages environment transitions and collects rewards.
     """
     
-    def __init__(self, env, agent_name, opponent, directory, config):
+    def __init__(self, env, agent_name, directory, config):
         """
         Inititalization function.
         Initializes evaluator with configuration and logging setup.
@@ -557,7 +566,10 @@ class Evaluator(object):
         self.eval_instances = [file for file in os.listdir(self.agent_dir) if self.agent_name in file]
         self.eval_instances = sorted(self.eval_instances, key=lambda x: int((x.split("_")[-1])))
 
-        self.opponent = opponent
+        try:
+            self.opponent = eval(config["Evaluator"]["opponent"])
+        except:
+            self.opponent= TD3(config["Evaluator"]["opponent"], env, config, load=True)
 
         self.eval_episodes = config["Evaluator"]["eval_episodes"]
 
@@ -743,7 +755,7 @@ class Player(object):
     Manages environment transitions and collects rewards..
     """
 
-    def __init__(self, env, agent_instance, opponent, render, config):
+    def __init__(self, env, agent_instance, config):
         """
         Inititalization function.
         Initializes player with configuration.
@@ -751,11 +763,16 @@ class Player(object):
         
         self.env = env
         self.agent_instance = agent_instance
-        self.opponent = opponent
-        
+
+        try:
+            self.opponent = eval(config["Player"]["opponent"])
+        except:
+            self.opponent= TD3(config["Player"]["opponent"], env, config, load=True)
+
         self.play_episodes = config["Player"]["play_episodes"]
         self.exploration_noise = config["Player"]["exploration_noise"]
-        self.render = render
+
+        self.render = config["Player"]["render"]
 
 
     def run(self):
@@ -934,12 +951,8 @@ def main():
         buffer = ReplayBuffer(config)
         buffer.random_fill(env)
 
-        # create opponent
-        opponents = [h_env.BasicOpponent(weak=False), h_env.BasicOpponent(weak=True)]
-        opponent_probs = [0.8, 0.2]
-
         # create trainer
-        trainer = Trainer(env, agent, opponents, opponent_probs, buffer, config)
+        trainer = Trainer(env, agent, buffer, config)
 
         # train agent
         trainer.run()
@@ -957,11 +970,8 @@ def main():
         # create environment
         env = h_env.HockeyEnv()
 
-        # create opponent
-        opponent = h_env.BasicOpponent(weak=False)
-
         # create evaluator
-        evaluator = Evaluator(env, agent_name, opponent, "./results", config)
+        evaluator = Evaluator(env, agent_name, "./results", config)
 
         # evaluate agent
         evaluator.run()
@@ -978,16 +988,12 @@ def main():
 
         # create environment
         env = h_env.HockeyEnv()
-
-        # create opponent
-        opponent = h_env.BasicOpponent(weak=False)
   
         # load TD3 agent
-        agent = TD3("_".join(agent_name.split("_")[:-1]), env, config)
-        agent.load(agent_name)
+        agent = TD3(agent_name, env, config, load=True)
 
         # create player
-        player = Player(env, agent, opponent, False, config)
+        player = Player(env, agent, config)
 
         # run player
         player.run()
@@ -998,15 +1004,11 @@ def main():
 if __name__ == "__main__":
     main()
 
-# Idea: Train with fractions 0.3: weak opponent, strong opponent, own agent, moritz agent
-# + 0.5 for each side
-
-
 
 ## IDEAS ##
 # Replay Buffer - def agent_fill(env, agent)
 
+
 # Twin Polcies? => Slide!
 # Prioritized Replay Buffer?
-# wins / looses for Evaluator
 # random seed

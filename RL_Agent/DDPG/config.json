@@ -30,6 +30,8 @@
     },
     "Trainer": 
     {
+        "opponents": ["Test_12250", "h_env.BasicOpponent(weak=False)", "h_env.BasicOpponent(weak=True)"],
+        "opponent_probs": [0.4, 0.4, 0.2],
         "train_episodes": 20000,
         "train_iter": 100,
         "exploration_noise": 0.1,
@@ -38,12 +40,15 @@
     },
     "Evaluator":
     {
-        "eval_episodes": 500,
+        "opponent": "h_env.BasicOpponent(weak=True)",
+        "eval_episodes": 10,
         "exploration_noise": 0.0
     },
     "Player":
     {
+        "opponent": "h_env.BasicOpponent(weak=True)",
         "play_episodes": 1000,
-        "exploration_noise": 0.0
+        "exploration_noise": 0.0,
+        "render": true
     }
 }
