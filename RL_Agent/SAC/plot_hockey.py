@@ -28,5 +28,5 @@ def running_mean(x, N):
     cumsum = np.cumsum(np.insert(x, 0, 0)) 
     return (cumsum[N:] - cumsum[:-N]) / float(N)    
 
-plt.plot(running_mean(rewards,100))
+plt.plot(running_mean(all_rewards,100))
 plt.savefig("reward_SAC")

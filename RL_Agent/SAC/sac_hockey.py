@@ -34,7 +34,8 @@ def create_agent(agent,filename,from_cuda):
         agent = DSAC_Agent(env.observation_space,env.action_space) 
     elif agent == 'DR3':
         agent = DR3_Agent(env.observation_space,env.action_space)
-        env.close()
+        
+    env.close()
     if filename != '':
         agent.load_network_states_from_file(filename,from_cuda)
     return agent
@@ -309,7 +310,6 @@ def main():
     parser.add_argument('-m', '--mode',choices=["Attack","Defense","self","easy","hard"],default="easy",
                          help='Possible modes to play (default %(default)s) Options: Attack/Defense/self/easy/hard')
     parser.add_argument('-t', '--train_iter',default=32,help='number of training batches per episode (default %(default)s)')
-    parser.add_argument('-l', '--lr',default=0.0001,help='learning rate for actor/policy (default %(default)s)')
     parser.add_argument('-e', '--maxepisodes',default=2000,help='number of episodes (default %(default)i)')
     parser.add_argument('-u', '--update',default=1,help='number of episodes between target network updates (default %(default)s)')
     parser.add_argument('-s', '--seed',default=42,help='random seed (default %(default)s)')
@@ -318,7 +318,9 @@ def main():
     parser.add_argument('-o', '--opponent',choices=["SAC","DR3","DSAC"],default='SAC',
                          help='Choose an opponent only in self (default %(default)s) Options: SAC/DSAC/DR3')
     parser.add_argument('-f', '--file',default='',help='load Agent from file')
+    parser.add_argument('-v','--enemyfile',default='',help='weights of the opponent')
     parser.add_argument('-c', '--cuda',default=False,help='load Agent from cuda file')
+    parser.add_argument('-k', '--cudaenemy',default=False,help='load enemy from cuda file')
     opts = parser.parse_args()
     ############## Hyperparameters ##############
     run_name = opts.name
@@ -332,17 +334,18 @@ def main():
     max_timesteps = 2000         # max timesteps in one episode
 
     train_iter = int(opts.train_iter)      # update networks for given batched after every episode
-    lr  = int(opts.lr)                # learning rate of DDPG policy
     random_seed = int(opts.seed)
     save_interval=500
     reward_shaping = False
     file_of_weights = opts.file
     from_cuda = opts.cuda
+    from_cuda_enemy = opts.cudaenemy
+    enemy_file = opts.enemyfile
     #############################################
     
     agent = create_agent(agent,file_of_weights,from_cuda)    
     if mode == "self":
-        enemy = create_agent(opponent)
+        enemy = create_agent(opponent,enemy_file,from_cuda_enemy)
         run_sac_agent_against_yourself(agent,enemy,log_interval,save_interval,max_episodes,
                                  max_timesteps,train_iter,random_seed,name=run_name,shape_rewards=reward_shaping)
     elif mode=="Defense" or mode=="Attack":
