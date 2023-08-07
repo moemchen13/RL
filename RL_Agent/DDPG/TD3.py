@@ -63,7 +63,7 @@ class ReplayBuffer(object):
             opponent_action = action[-4:]
             
             next_state, reward, done, trunc, info = env.step(action)
-            self.add((state, agent_action, reward, next_state, max(done, trunc)))
+            self.add((state, agent_action, reward, next_state, done)) #max(done, trunc)))
 
             if done or trunc:
                 state, info = env.reset()
@@ -106,7 +106,7 @@ class ReplayBuffer(object):
                 opponent_state = env.obs_agent_two()
                  
                 # store transition in replay buffer
-                self.add((state, agent_action, reward, next_state, max(done, trunc)))
+                self.add((state, agent_action, reward, next_state, done)) #max(done, trunc)))
 
             elif agent_side == "right":
 
@@ -117,7 +117,7 @@ class ReplayBuffer(object):
                 reward = env.get_reward_agent_two(agent_info)
 
                 # store transition in replay buffer
-                self.add((state, agent_action, reward, next_state, max(done, trunc)))
+                self.add((state, agent_action, reward, next_state, done)) #max(done, trunc)))
 
 
             if done or trunc:
@@ -518,7 +518,7 @@ class Trainer(object):
                     opponent_state = self.env.obs_agent_two()
                  
                     # store transition in replay buffer
-                    self.buffer.add((state, agent_action, reward, next_state, max(done, trunc)))
+                    self.buffer.add((state, agent_action, reward, next_state, done)) #max(done, trunc)))
 
                     episode_reward += reward
 
@@ -536,7 +536,7 @@ class Trainer(object):
                     reward = self.env.get_reward_agent_two(agent_info)
 
                     # store transition in replay buffer
-                    self.buffer.add((state, agent_action, reward, next_state, max(done, trunc)))
+                    self.buffer.add((state, agent_action, reward, next_state, done)) #max(done, trunc)))
 
                     episode_reward += reward
 
