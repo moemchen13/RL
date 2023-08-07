@@ -26,7 +26,7 @@ def reward_shaping(reward,info,touched_puck):
     #But trying to let the direction lose by shoting onto boundaries
     reward += info["reward_puck_direction"]*0.01
 
-def create_agent(agent):
+def create_agent(agent,filename,from_cuda):
     env = h_env.HockeyEnv()
     if agent == 'SAC':
         agent = SAC_Agent(env.observation_space,env.action_space)
@@ -35,6 +35,8 @@ def create_agent(agent):
     elif agent == 'DR3':
         agent = DR3_Agent(env.observation_space,env.action_space)
         env.close()
+    if filename != '':
+        agent.load_network_states_from_file(filename,from_cuda)
     return agent
 
 
@@ -315,6 +317,8 @@ def main():
                          help='Choose an Agent you wanna activate (default %(default)s) Options: SAC/DSAC/DR3')
     parser.add_argument('-o', '--opponent',choices=["SAC","DR3","DSAC"],default='SAC',
                          help='Choose an opponent only in self (default %(default)s) Options: SAC/DSAC/DR3')
+    parser.add_argument('-f', '--file',default='',help='load Agent from file')
+    parser.add_argument('-c', '--cuda',default=False,help='load Agent from cuda file')
     opts = parser.parse_args()
     ############## Hyperparameters ##############
     run_name = opts.name
@@ -332,9 +336,11 @@ def main():
     random_seed = int(opts.seed)
     save_interval=500
     reward_shaping = False
+    file_of_weights = opts.file
+    from_cuda = opts.cuda
     #############################################
     
-    agent = create_agent(agent)    
+    agent = create_agent(agent,file_of_weights,from_cuda)    
     if mode == "self":
         enemy = create_agent(opponent)
         run_sac_agent_against_yourself(agent,enemy,log_interval,save_interval,max_episodes,

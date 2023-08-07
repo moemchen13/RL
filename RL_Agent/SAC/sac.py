@@ -33,7 +33,7 @@ class SAC_Agent(agent):
         self._config = {
             "start_steps":10000,
             "discount": 0.99,
-            "buffer_size": int(1e7),
+            "buffer_size": int(1e6),
             "batch_size": 256,
             "lr_actor": float(3e-4),
             "lr_critic": float(1e-3),
