@@ -103,12 +103,11 @@ def run_sac_agent_hockey_game(agent,mode,log_interval,save_interval,max_episodes
     elif mode == "hard":
         player = h_env.HockeyEnv(weak=False)
     
-        rewards = []
-        lengths = []
-        q_losses = []
-        policy_losses = []
-        temperature_losses = []
-        raise NotImplementedError("Implement self training")
+    rewards = []
+    lengths = []
+    q_losses = []
+    policy_losses = []
+    temperature_losses = []
 
     opponent = agent
 
@@ -303,7 +302,7 @@ def main():
         run_sac_agent_in_env_modes(agent,mode,log_interval,save_interval,max_episodes,
                                  max_timesteps,train_iter,random_seed,name=run_name)
     else:
-        run_sac_agent_hockey_game(agent,opponent,mode,log_interval,save_interval,max_episodes,
+        run_sac_agent_hockey_game(agent,mode,log_interval,save_interval,max_episodes,
                                  max_timesteps,train_iter,random_seed,run_name)
 
 if __name__ == '__main__':
