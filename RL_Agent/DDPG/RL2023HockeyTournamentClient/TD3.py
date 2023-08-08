@@ -11,6 +11,14 @@ import time
 import laserhockey.hockey_env as h_env
 
 
+
+# Remote Play
+from client.remoteControllerInterface import RemoteControllerInterface
+from client.backend.client import Client
+
+
+
+# Preparations
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 torch.manual_seed(42)
@@ -423,6 +431,24 @@ class TD3(object):
         """
         self.actor.load_state_dict(torch.load(f'{directory}/{self.name}/{agent_instance}/{agent_instance}_actor.pth', map_location=device),  strict=False)
         self.critic.load_state_dict(torch.load(f'{directory}/{self.name}/{agent_instance}/{agent_instance}_critic.pth', map_location=device), strict=False)
+
+
+
+
+class RemoteTD3(TD3, RemoteControllerInterface):
+
+    def __init__(self, agent_name, env, config):
+        TD3.__init__(self, agent_name, env, config, load=True)
+        RemoteControllerInterface.__init__(self, identifier='TD3')
+
+    def remote_act(self,
+            obs : np.ndarray,
+           ) -> np.ndarray:
+
+        return self.act(obs)
+
+
+
 
 
 class Trainer(object):
@@ -1001,7 +1027,7 @@ def main():
                     description='Training and Evaluation of the TD3 Algorithm on the Hockey Environment')
 
     parser.add_argument('-c', '--config', action='store', dest='config_file', default='config.json', help='Configuration File')
-    parser.add_argument('-m', '--mode', action='store', dest='mode', choices=['train','eval', 'play'], default='train', help='Training or Evaluation')
+    parser.add_argument('-m', '--mode', action='store', dest='mode', choices=['train','eval', 'play', 'remote'], default='train', help='Training or Evaluation')
     parser.add_argument('-a', '--agent', action='store', dest='agent_name', default='TD3', help='Agent Name')
     parser.add_argument('-l', '--load', action='store', dest='load', default=False, help='Load Agent for Training')
 
@@ -1081,6 +1107,38 @@ def main():
         player.run()
 
         env.close()
+
+
+    ## Remote Mode ##
+    elif mode == "remote":
+        
+        # create environment
+        env = h_env.HockeyEnv()
+  
+        # create remote TD3 agent
+        controller = RemoteTD3(agent_name, env, config)
+
+        # Play n (None for an infinite amount) games and quit
+        client = Client(username='great descent',
+                    password='lo2beisaeK',
+                    controller=controller,
+                    output_path='logs/stud3', # rollout buffer with finished games will be saved in here
+                    interactive=False,
+                    op='start_queuing',
+                    # server_addr='localhost',
+                    num_games=None)
+
+    # Start interactive mode. Start playing by typing start_queuing. Stop playing by pressing escape and typing stop_queueing
+    # client = Client(username='user0',
+    #                 password='1234',
+    #                 controller=controller,
+    #                 output_path='logs/basic_opponents',
+    #                )
+
+
+
+
+
 
 
 if __name__ == "__main__":
