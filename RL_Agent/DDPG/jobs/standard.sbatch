@@ -48,6 +48,5 @@
 
 ##################################################################################################
 # TODO: update the following paths with your own!
-singularity exec --nv ~/Singularity_Torsten python3 ~/RL/RL_Agent/DDPG/TD3.py --mode "train" --agent "standard" --config "~/RL/RL_Agent/DDPG/jobs/standard.json"
-singularity exec --nv ~/Singularity_Torsten python3 ~/RL/RL_Agent/DDPG/TD3.py --mode "eval" --agent "standard" --config "~/RL/RL_Agent/DDPG/jobs/standard.json"
+singularity exec --nv ~/Singularity_Torsten python3 ~/RL/RL_Agent/DDPG/TD3.py --mode train --agent standard --config ~/RL/RL_Agent/DDPG/jobs/standard.json
 ##################################################################################################

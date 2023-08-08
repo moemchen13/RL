@@ -48,6 +48,5 @@
 
 ##################################################################################################
 # TODO: update the following paths with your own!
-singularity exec --nv ~/Singularity_Torsten python3 ~/RL/RL_Agent/DDPG/TD3.py --mode "train" --agent "large_buffer" --config "~/RL/RL_Agent/DDPG/jobs/large_buffer.json"
-singularity exec --nv ~/Singularity_Torsten python3 ~/RL/RL_Agent/DDPG/TD3.py --mode "eval" --agent "large_buffer" --config "~/RL/RL_Agent/DDPG/jobs/large_buffer.json"
+singularity exec --nv ~/Singularity_Torsten python3 ~/RL/RL_Agent/DDPG/TD3.py --mode train --agent large_buffer --config ~/RL/RL_Agent/DDPG/jobs/large_buffer.json
 ##################################################################################################

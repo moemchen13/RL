@@ -4,7 +4,7 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=large_batches
+#SBATCH --job-name=skywalker_1e6_256
 
 #resources:
 
@@ -48,5 +48,5 @@
 
 ##################################################################################################
 # TODO: update the following paths with your own!
-singularity exec --nv ~/Singularity_Torsten python3 ~/RL/RL_Agent/DDPG/TD3.py --mode train --agent large_batches --config ~/RL/RL_Agent/DDPG/jobs/large_batches.json
+singularity exec --nv ~/Singularity_Torsten python3 ~/RL/RL_Agent/DDPG/TD3.py --mode train --agent skywalker_1e6_256 --config ~/RL/RL_Agent/DDPG/jobs/skywalker_1e6_256.json
 ##################################################################################################
