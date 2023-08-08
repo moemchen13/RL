@@ -80,7 +80,7 @@ class ReplayBuffer(object):
                 state = next_state
 
 
-    def game_fill(self, env, agent, opponent, exploration_noise=0.1):
+    def game_fill(self, env, agent, opponents, opponent_probs, exploration_noise=0.1):
         """
         Fills the buffer with transitions from a game.
         """
@@ -100,7 +100,9 @@ class ReplayBuffer(object):
 
 
         while not self.full:
- 
+
+            opponent = np.random.choice(opponents, p=opponent_probs)
+
             # agent action with exploration noise
             agent_action = agent.select_action(state, exploration_noise)
                 
@@ -439,7 +441,7 @@ class RemoteTD3(TD3, RemoteControllerInterface):
 
     def __init__(self, agent_name, env, config):
         TD3.__init__(self, agent_name, env, config, load=True)
-        RemoteControllerInterface.__init__(self, identifier='TD3')
+        RemoteControllerInterface.__init__(self, identifier='TD3v2')
 
     def remote_act(self,
             obs : np.ndarray,
@@ -1057,7 +1059,7 @@ def main():
 
         # create replay buffer
         buffer = ReplayBuffer(config)
-        buffer.game_fill(env, agent, eval(config["Trainer"]["opponents"][0]))
+        buffer.game_fill(env, agent, [eval(opponent) for opponent in config["Trainer"]["opponents"]], config["Trainer"]["opponent_probs"])
 
         # create trainer
         trainer = Trainer(env, agent, buffer, config)
