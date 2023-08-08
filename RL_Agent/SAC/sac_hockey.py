@@ -301,8 +301,6 @@ def run_sac_agent_against_yourself(agent,enemy,log_interval,save_interval,max_ep
     save_statistics(rewards,lengths,q_losses,policy_losses,temperature_losses,"self_play_player1",random_seed,episode,name)
 
 
-
-
 def main():
     parser = argparse.ArgumentParser(prog='RL Agents',
                     description='This programm trains the given agent on the Laserhockey environment',
@@ -337,7 +335,7 @@ def main():
 
     train_iter = int(opts.train_iter)      # update networks for given batched after every episode
     random_seed = int(opts.seed)
-    save_interval=20#500
+    save_interval=500
     reward_shaping = False
     file_of_weights = opts.file
     from_cuda = opts.cuda
