@@ -25,6 +25,7 @@ def reward_shaping(reward,info,touched_puck):
     #want to encourage shoots on goal
     #But trying to let the direction lose by shoting onto boundaries
     reward += info["reward_puck_direction"]*0.01
+    return reward
 
 def create_agent(agent,filename,from_cuda):
     env = h_env.HockeyEnv()
@@ -60,7 +61,7 @@ def run_sac_agent_in_env_modes(agent,mode,log_interval,save_interval,max_episode
 
     for episode in range(1,max_episodes+1):
         ob, _info = env.reset()
-        total_reward=0
+        total_reward=0.0
         for t in range(max_timesteps):
             done = False
             a = agent.act(ob)
@@ -118,7 +119,7 @@ def run_sac_agent_hockey_game(agent,mode,log_interval,save_interval,max_episodes
 
     for episode in range(1,max_episodes+1):
         ob, _info = env.reset()
-        total_reward=0
+        total_reward=0.0
         done = False
         touched_puck = False
         for t in range(max_timesteps):
@@ -336,7 +337,7 @@ def main():
     train_iter = int(opts.train_iter)      # update networks for given batched after every episode
     random_seed = int(opts.seed)
     save_interval=500
-    reward_shaping = False
+    reward_shaping = True
     file_of_weights = opts.file
     from_cuda = opts.cuda
     from_cuda_enemy = opts.cudaenemy
