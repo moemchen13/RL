@@ -1031,7 +1031,7 @@ def main():
 
         # create replay buffer
         buffer = ReplayBuffer(config)
-        buffer.game_fill(env, agent, eval(config["Trainer"]["opponents"][-1]))
+        buffer.game_fill(env, agent, eval(config["Trainer"]["opponents"][0]))
 
         # create trainer
         trainer = Trainer(env, agent, buffer, config)
