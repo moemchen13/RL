@@ -12,6 +12,7 @@ import laserhockey.hockey_env as h_env
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 torch.manual_seed(42)
 np.random.seed(42)
 
@@ -420,8 +421,8 @@ class TD3(object):
         """
         Function to load agent instance from disk.
         """
-        self.actor.load_state_dict(torch.load(f'{directory}/{self.name}/{agent_instance}/{agent_instance}_actor.pth'),  strict=False)
-        self.critic.load_state_dict(torch.load(f'{directory}/{self.name}/{agent_instance}/{agent_instance}_critic.pth'), strict=False)
+        self.actor.load_state_dict(torch.load(f'{directory}/{self.name}/{agent_instance}/{agent_instance}_actor.pth', map_location=device),  strict=False)
+        self.critic.load_state_dict(torch.load(f'{directory}/{self.name}/{agent_instance}/{agent_instance}_critic.pth', map_location=device), strict=False)
 
 
 class Trainer(object):
@@ -889,8 +890,7 @@ class Player(object):
         for episode in range(1, self.play_episodes+1):
             
             # sample agent side
-            #agent_side = np.random.choice(["left", "right"])
-            agent_side =  "left"
+            agent_side = np.random.choice(["left", "right"])
 
             episode_reward = 0
 
@@ -1003,12 +1003,14 @@ def main():
     parser.add_argument('-c', '--config', action='store', dest='config_file', default='config.json', help='Configuration File')
     parser.add_argument('-m', '--mode', action='store', dest='mode', choices=['train','eval', 'play'], default='train', help='Training or Evaluation')
     parser.add_argument('-a', '--agent', action='store', dest='agent_name', default='TD3', help='Agent Name')
+    parser.add_argument('-l', '--load', action='store', dest='load', default=False, help='Load Agent for Training')
 
     args = parser.parse_args()
 
     config_file = args.config_file
     mode = args.mode
     agent_name = args.agent_name
+    load = args.load
 
     with open(config_file, 'r') as f:
         config = json.load(f)
@@ -1023,10 +1025,13 @@ def main():
 
         # create agent
         agent = TD3(agent_name, env, config)
+        if load:
+            agent.load(agent_name)
+            print(f"\n{agent_name} loaded!")
 
         # create replay buffer
         buffer = ReplayBuffer(config)
-        buffer.game_fill(env, agent, h_env.BasicOpponent(weak=True))
+        buffer.game_fill(env, agent, eval(config["Trainer"]["opponents"][-1]))
 
         # create trainer
         trainer = Trainer(env, agent, buffer, config)
