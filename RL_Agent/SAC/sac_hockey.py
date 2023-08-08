@@ -19,12 +19,12 @@ def save_statistics(rewards,lengths,q_losses,pi_losses,temperature_loss,env_name
 
 def reward_shaping(reward,info,touched_puck):
     #reward shaping should encourage interaction with ball and penailze if none available
-    reward += int(touched_puck) * 0.1 
+    reward += int(touched_puck) * 0.2 
     #shaping should improve movement to ball for defense and attack
-    reward += info["reward_closeness_to_puck"]*1
+    reward += info["reward_closeness_to_puck"]*0.01
     #want to encourage shoots on goal
     #But trying to let the direction lose by shoting onto boundaries
-    reward += info["reward_puck_direction"]*0.01
+    reward += info["reward_puck_direction"]*0.001
     return reward
 
 def create_agent(agent,filename,from_cuda):
@@ -301,6 +301,141 @@ def run_sac_agent_against_yourself(agent,enemy,log_interval,save_interval,max_ep
     save_statistics(rewards_opponent,lengths_opponent,q_losses_opponent,policy_losses_opponent,temperature_losses_opponent,"self_play_player2",random_seed,episode,name)
     save_statistics(rewards,lengths,q_losses,policy_losses,temperature_losses,"self_play_player1",random_seed,episode,name)
 
+def generate_probabilities(episode):
+    if episode < 10000:
+        return [0.2,0.5,0.3]
+    elif episode < 20000:
+        return [0.2,0.3,0.5]
+    else:
+        return [0.6,0.1,0.3]
+    
+
+def run_sac_agent_against_yourself_alternating(agent,enemy,log_interval,save_interval,max_episodes,
+                            max_timesteps,train_iter,random_seed,rotating_interval,name="",shape_rewards=False):
+    torch.manual_seed(random_seed)
+    np.random.seed(random_seed)
+
+    env = h_env.HockeyEnv()
+    computer_opponent_easy = h_env.BasicOpponent(weak=True)
+    computer_opponent_hard = h_env.BasicOpponent(weak=False)
+
+    rewards = []
+    lengths = []
+    q_losses = []
+    policy_losses = []
+    temperature_losses = []
+
+    #leftsided
+    win = 0
+    loss = 0
+    tie = 0
+    player_trained_left = True
+
+    for episode in range(1,max_episodes+1):
+        ob, _info = env.reset()
+        ob_opponent = env.obs_agent_two()
+        done = False
+        touched_puck = False
+        total_reward=0
+        enemy_id = np.random.choice(3, 1, replace=False, p=generate_probabilities(episode))[0]
+        
+        if player_trained_left:
+            player = agent
+            if enemy_id == 1:
+                opponent = enemy
+            elif enemy_id == 2:
+                opponent = computer_opponent_easy
+            else: 
+                opponent = computer_opponent_hard   
+        else:
+            opponent = enemy
+            if enemy_id == 1:
+                player = agent
+            elif enemy_id == 2:
+                player = computer_opponent_easy
+            else:
+                player = computer_opponent_hard        
+
+        for t in range(max_timesteps):
+            
+            action_player = player.act(ob)
+            action_opponent = opponent.act(ob_opponent)
+            (ob_new,reward,done,trunc,info) = env.step(np.hstack([action_player,action_opponent]))
+            if not player_trained_left:
+                ob_new_opponent = env.obs_agent_two()
+                info_opponent = env.get_info_agent_two()
+                reward = env.get_reward_agent_two(info_opponent)
+                if info_opponent["reward_touch_puck"] !=0:
+                    touched_puck=True
+                reward_shaped = reward
+                if shape_rewards:
+                        reward_shaped = reward_shaping(reward,info,touched_puck)
+
+            else:
+                reward = env.get_reward(info)
+                if info["reward_touch_puck"] !=0:
+                    touched_puck=True
+                reward_shaped = reward
+                if shape_rewards:
+                    reward_shaped = reward_shaping(reward,info,touched_puck)
+            
+            total_reward += reward_shaped
+            
+            if player_trained_left:
+                player.store_transition((ob,action_player,reward_shaped,ob_new,done))
+            else:
+                opponent.store_transition((ob_opponent,action_opponent,reward_shaped,ob_new_opponent,done))
+
+            ob=ob_new
+            ob_opponent=env.obs_agent_two() 
+            if done or trunc: 
+                if done:
+                    if env.winner ==1:
+                        win +=1
+                    elif env.winner == -1: 
+                        loss +=1
+                    else:
+                        tie +=1
+                break
+        
+        if player_trained_left:
+            q_loss,pi_loss,temperature_loss = player.train(train_iter)
+        else:
+            q_loss,pi_loss,temperature_loss = opponent.train(train_iter)
+           
+        q_losses.extend(q_loss)
+        policy_losses.extend(pi_loss)
+        temperature_losses.extend(temperature_loss)
+        rewards.append(total_reward)
+        lengths.append(t)
+        
+
+
+        if episode % log_interval == 0:
+            if player_trained_left:
+                avg_reward = np.mean(rewards[-log_interval:])
+                avg_length = int(np.mean(lengths[-log_interval:]))
+            side = "left" if player_trained_left else "right"
+            print(f'Agent {side}: Episode {episode} \t avg length: {avg_length} \t reward: {avg_reward} \t wins: {win} \t losses: {loss} \t ties: {tie} \t last reward: {int(rewards[-1])}')
+                
+
+        if episode % save_interval == 0:
+            print("########### Save checkpoint ################")
+            torch.save(agent.get_networks_states(),f'./{name}_self_play-e{episode}-t{train_iter}-s{random_seed}-player2.pth')
+            torch.save(enemy.get_networks_states(),f'./{name}_self_play-e{episode}-t{train_iter}-s{random_seed}-player1.pth')
+            save_statistics(rewards,lengths,q_losses,policy_losses,temperature_losses,"self_play_alternating",random_seed,episode,name)
+            rewards = []
+            lengths = []
+            q_losses = []
+            policy_losses = []
+            temperature_losses = []
+        
+        if episode % rotating_interval == 0:
+            player_trained_left = not player_trained_left
+
+    save_statistics(rewards,lengths,q_losses,policy_losses,temperature_losses,"self_play_alternating",random_seed,episode,name)
+
+
 
 def main():
     parser = argparse.ArgumentParser(prog='RL Agents',
@@ -322,6 +457,7 @@ def main():
     parser.add_argument('-v','--enemyfile',default='',help='weights of the opponent')
     parser.add_argument('-c', '--cuda',default=False,help='load Agent from cuda file')
     parser.add_argument('-k', '--cudaenemy',default=False,help='load enemy from cuda file')
+    parser.add_argument('-r', '--rotating',default=0,help='rotating which side is trained')
     opts = parser.parse_args()
     ############## Hyperparameters ##############
     run_name = opts.name
@@ -342,12 +478,17 @@ def main():
     from_cuda = opts.cuda
     from_cuda_enemy = opts.cudaenemy
     enemy_file = opts.enemyfile
+    rotating = int(opts.rotating)
     #############################################
     
     agent = create_agent(agent,file_of_weights,from_cuda)    
     if mode == "self":
         enemy = create_agent(opponent,enemy_file,from_cuda_enemy)
-        run_sac_agent_against_yourself(agent,enemy,log_interval,save_interval,max_episodes,
+        if rotating != 0:
+            run_sac_agent_against_yourself_alternating(agent,enemy,log_interval,save_interval,max_episodes*2,
+                                 max_timesteps,train_iter,random_seed,rotating,name=run_name,shape_rewards=reward_shaping)
+        else:
+            run_sac_agent_against_yourself(agent,enemy,log_interval,save_interval,max_episodes,
                                  max_timesteps,train_iter,random_seed,name=run_name,shape_rewards=reward_shaping)
     elif mode=="Defense" or mode=="Attack":
         run_sac_agent_in_env_modes(agent,mode,log_interval,save_interval,max_episodes,

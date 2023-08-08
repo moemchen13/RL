@@ -148,6 +148,13 @@ class DSAC_Agent(agent):
         return action.cpu().detach().numpy()
     
 
+    def remote_act(self,state):
+        state = torch.FloatTensor(state).to(self.device)[None,:]
+        action = self.actor.get_action(state)
+        acion = self.rescale_action(action)
+        return action.cpu().detach().numpy()
+
+
     def target_q(self,rew,done,q,q_std,target_q_next,log_prob_a_next):
         td = rew + (1-done)*self._config["discount"]*(target_q_next- self.log_temperature.exp().detach()*log_prob_a_next)
         if self._config["adaptive_bounds"]:
