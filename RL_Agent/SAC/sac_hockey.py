@@ -160,6 +160,11 @@ def run_sac_agent_hockey_game(agent,mode,log_interval,save_interval,max_episodes
         rewards.append(total_reward)
         lengths.append(t)
 
+        if episode % log_interval == 0:
+            avg_reward = np.mean(rewards[-log_interval:])
+            avg_length = int(np.mean(lengths[-log_interval:]))
+            print(f'Player: Episode {episode} \t avg length: {avg_length} \t avg_reward: {avg_reward} \t wins: {win} \t losses: {loss} \t  ties: {tie} \t last reward: {int(rewards[-1])}')
+        
 
         if episode % save_interval == 0:
             print("########### Save checkpoint ################")
@@ -171,11 +176,7 @@ def run_sac_agent_hockey_game(agent,mode,log_interval,save_interval,max_episodes
             policy_losses = []
             temperature_losses = []
 
-        if episode % log_interval == 0:
-            avg_reward = np.mean(rewards[-log_interval:])
-            avg_length = int(np.mean(lengths[-log_interval:]))
-            print(f'Player: Episode {episode} \t avg length: {avg_length} \t avg_reward: {avg_reward} \t wins: {win} \t losses: {loss} \t  ties: {tie} \t last reward: {int(rewards[-1])}')
-        
+
     save_statistics(rewards,lengths,q_losses,policy_losses,temperature_losses,mode,random_seed,episode,name)
 
 
@@ -265,6 +266,18 @@ def run_sac_agent_against_yourself(agent,enemy,log_interval,save_interval,max_ep
         rewards.append(total_reward)
         lengths.append(t)
 
+
+        if episode % log_interval == 0:
+            avg_reward = np.mean(rewards[-log_interval:])
+            avg_length = int(np.mean(lengths[-log_interval:]))
+            print(f'Player2: Episode {episode} \t avg length: {avg_length} \t reward: {avg_reward} \t wins: {win} \t losses: {loss} \t ties: {tie} \t last reward: {int(rewards[-1])}')
+            
+            if show_both_logs:
+                avg_reward = np.mean(rewards_opponent[-log_interval:])
+                avg_length = int(np.mean(lengths_opponent[-log_interval:]))
+                print(f'Player1: Episode {episode} \t avg length: {avg_length} \t reward: {avg_reward} \t wins: {loss} \t losses: {win} \t ties: {tie} \t last reward: {int(rewards_opponent[-1])}')
+
+
         if episode % save_interval == 0:
             print("########### Save checkpoint ################")
             torch.save(player.get_networks_states(),f'./{name}_self_play-e{episode}-t{train_iter}-s{random_seed}-player2.pth')
@@ -282,17 +295,6 @@ def run_sac_agent_against_yourself(agent,enemy,log_interval,save_interval,max_ep
             q_losses_opponent = []
             policy_losses_opponent = []
             temperature_losses = []
-
-
-        if episode % log_interval == 0:
-            avg_reward = np.mean(rewards[-log_interval:])
-            avg_length = int(np.mean(lengths[-log_interval:]))
-            print(f'Player2: Episode {episode} \t avg length: {avg_length} \t reward: {avg_reward} \t wins: {win} \t losses: {loss} \t ties: {tie} \t last reward: {int(rewards[-1])}')
-            
-            if show_both_logs:
-                avg_reward = np.mean(rewards_opponent[-log_interval:])
-                avg_length = int(np.mean(lengths_opponent[-log_interval:]))
-                print(f'Player1: Episode {episode} \t avg length: {avg_length} \t reward: {avg_reward} \t wins: {loss} \t losses: {win} \t ties: {tie} \t last reward: {int(rewards_opponent[-1])}')
 
         
     save_statistics(rewards_opponent,lengths_opponent,q_losses_opponent,policy_losses_opponent,temperature_losses_opponent,"self_play_player2",random_seed,episode,name)
@@ -335,7 +337,7 @@ def main():
 
     train_iter = int(opts.train_iter)      # update networks for given batched after every episode
     random_seed = int(opts.seed)
-    save_interval=500
+    save_interval=20#500
     reward_shaping = False
     file_of_weights = opts.file
     from_cuda = opts.cuda
