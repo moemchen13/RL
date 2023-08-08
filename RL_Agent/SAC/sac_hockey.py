@@ -101,7 +101,7 @@ def run_sac_agent_hockey_game(agent,mode,log_interval,save_interval,max_episodes
     if mode == "easy":  
         opponent = h_env.BasicOpponent(weak=True)
     elif mode == "hard":
-        opponent = h_env.HockeyEnv(weak=False)
+        opponent = h_env.BasicOpponent(weak=False)
     
     rewards = []
     lengths = []
