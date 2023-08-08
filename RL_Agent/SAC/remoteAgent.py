@@ -13,7 +13,7 @@ class RemoteSACAgent(SAC_Agent, RemoteControllerInterface):
         self.load_network_states_from_file(file,cuda)
         RemoteControllerInterface.__init__(self)
     
-    def remote_act(self, obs: np.ndarray) -> np.ndarray:
+    def remote_act(self, obs):
         return self.act(obs)
     
 
@@ -25,7 +25,7 @@ class RemoteDSACAgent(DSAC_Agent, RemoteControllerInterface):
         self.load_network_states_from_file(file,cuda)
         RemoteControllerInterface.__init__(self)
 
-    def remote_act(self, obs: np.ndarray) -> np.ndarray:
+    def remote_act(self, obs):
         return self.act(obs)
 
 
