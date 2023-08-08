@@ -151,7 +151,7 @@ class DSAC_Agent(agent):
     def remote_act(self,state):
         state = torch.FloatTensor(state).to(self.device)[None,:]
         action = self.actor.get_action(state)
-        acion = self.rescale_action(action)
+        action = self.rescale_action(action)
         return action.cpu().detach().numpy()
 
 
