@@ -20,7 +20,7 @@ class Actor(nn.Module):
         self.mu = torch.nn.Linear(layer_sizes[-1],action_dim).to(device=self.device)
         self.learning_rate = learning_rate
         self.min_log_std = torch.tensor(-20).to(self.device)
-        self.max_log_std = torch.tensor(2).to(self.device)
+        self.max_log_std = torch.tensor(10).to(self.device)
         self.reparam_noise = torch.tensor(1e-6).to(self.device)
         self.action_dim = torch.tensor(action_dim).to(self.device)
         if self.device =='cuda':
@@ -56,11 +56,11 @@ class Actor(nn.Module):
         sigma = log_sigma.exp()
         distribution = Normal(mu,sigma)
 
-        if reparameterize:
+        #if reparameterize:
             #Makes it differentiable reparameterization trick
-            sample = distribution.rsample()
-        else:
-            sample = distribution.sample()
+        sample = distribution.rsample()
+        #else:
+        #    sample = distribution.sample()
 
         action = torch.tanh(sample)
         log_prob = distribution.log_prob(sample)

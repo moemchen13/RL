@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 episode = 500
+#episode = 10000
 max_episode = 10000
 all_rewards = []
 all_q_losses = []
@@ -11,7 +12,7 @@ all_pi_losses = []
 all_temperature_losses = []
 
 while episode <= max_episode:
-    with open(f"SAC_run_easy-s42-e{episode}-stat.pkl", 'rb') as f:
+    with open(f"DSAC_Easy_easy-s42-e{episode}-stat.pkl", 'rb') as f:
         data = pickle.load(f)
         rewards = np.asarray(data["rewards"])
         q_losses =  np.asarray(data["q_losses"])

@@ -73,7 +73,7 @@ class SAC_Agent(agent):
         
         if self._config["autotuned_temperature"]:
             self.target_entropy = -torch.Tensor(self.action_dim).to(self.device)
-            self.log_temperature = torch.ones(1,requires_grad=True,device=self.device)
+            self.log_temperature = torch.zeros(1,requires_grad=True,device=self.device)
             self.temperature_optimizer = torch.optim.Adam([self.log_temperature],lr=self._config["lr_critic"])
         else:
             self.log_temperature = torch.Tensor(self._config["temperature"].log()).to(self.device)
@@ -91,8 +91,8 @@ class SAC_Agent(agent):
         self.target.soft_update(self.critic,tau=1)
         
         if self._config["play_hockey"]:
-            self.action_scale = torch.ones(self.action_dim).to(self.device)
-            self.action_bias = torch.zeros(self.action_dim).to(self.device)
+            self.action_scale = torch.FloatTensor((action_space.high[:self.action_dim] - action_space.low[:self.action_dim])/2).to(self.device)
+            self.action_bias = torch.FloatTensor((action_space.high[:self.action_dim] + action_space.low[:self.action_dim])/2).to(self.device)
         else:
             if action_space is not None:
                 self.action_scale = torch.FloatTensor((action_space.high - action_space.low)/2).to(self.device)
@@ -151,6 +151,13 @@ class SAC_Agent(agent):
             else:    
                 action, _ = self.actor.get_action_and_log_probs(state)
         action = self.rescale_action(action)
+        return action.cpu().detach().numpy()
+    
+
+    def remote_act(self,state):
+        state = torch.FloatTensor(state).to(self.device)[None,:]
+        action = self.actor.get_action(state)
+        acion = self.rescale_action(action)
         return action.cpu().detach().numpy()
 
     

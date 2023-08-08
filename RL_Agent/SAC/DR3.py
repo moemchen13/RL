@@ -145,6 +145,13 @@ class DR3_Agent(agent):
                 action, _ = self.actor.get_action_and_log_probs(state)
         action = self.rescale_action(action)
         return action.cpu().detach().numpy()
+    
+    
+    def remote_act(self,state):
+        state = torch.FloatTensor(state).to(self.device)[None,:]
+        action = self.actor.get_action(state)
+        acion = self.rescale_action(action)
+        return action.cpu().detach().numpy()
 
     
     def get_Q_value(self,state,action):
