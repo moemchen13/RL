@@ -30,8 +30,8 @@
     },
     "Trainer": 
     {
-        "opponents": ["Test_12250", "h_env.BasicOpponent(weak=False)", "h_env.BasicOpponent(weak=True)"],
-        "opponent_probs": [0.3, 0.4, 0.3],
+        "opponents": ["h_env.BasicOpponent(weak=False)", "h_env.BasicOpponent(weak=True)"],
+        "opponent_probs": [0.5, 0.5],
         "train_episodes": 20000,
         "train_iter": 100,
         "exploration_noise": 0.1,
@@ -40,7 +40,7 @@
     },
     "Evaluator":
     {
-        "opponents": ["Test_12250", "h_env.BasicOpponent(weak=False)", "h_env.BasicOpponent(weak=True)"],
+        "opponents": ["h_env.BasicOpponent(weak=False)", "h_env.BasicOpponent(weak=True)"],
         "eval_episodes": 100,
         "exploration_noise": 0.0
     },
