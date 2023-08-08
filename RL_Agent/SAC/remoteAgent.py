@@ -7,36 +7,41 @@ from sac import SAC_Agent
 
 
 class RemoteSACAgent(SAC_Agent, RemoteControllerInterface):
-    def __init__(self):
+    def __init__(self,file='',cuda=True):
         SAC_Agent.__init__(self,h_env.HockeyEnv().observation_space,h_env.HockeyEnv().action_space)
-        file = './results/SAC_Easy_easy-e10000-t32-s42-player.pth'
-        SAC_Agent.load_network_states_from_file(file,True)
-        RemoteControllerInterface.__init__(self, identifier='SAC_Great_Descent')
+        self.eval()
+        self.load_network_states_from_file(file,cuda)
+        RemoteControllerInterface.__init__(self)
     
     def remote_act(self, obs: np.ndarray) -> np.ndarray:
-        return super().remote_act(obs)
+        return self.act(obs)
     
 
 class RemoteDSACAgent(DSAC_Agent, RemoteControllerInterface):
-    def __init__(self):
-        DSAC_Agent.__init__(self,h_env.HockeyEnv().observation_space,h_env.HockeyEnv().action_space)
-        file = './results/DSAC_Easy_easy-e10000-t32-s42-player.pth'
-        DSAC_Agent.load_network_states_from_file(file,True)
-        RemoteControllerInterface.__init__(self, identifier='DSAC_Great_Descent')
 
-    
+    def __init__(self,file="",cuda=""):
+        DSAC_Agent.__init__(self,h_env.HockeyEnv().observation_space,h_env.HockeyEnv().action_space)
+        self.eval()
+        self.load_network_states_from_file(file,cuda)
+        RemoteControllerInterface.__init__(self)
+
     def remote_act(self, obs: np.ndarray) -> np.ndarray:
-        return super().remote_act(obs)
+        return self.act(obs)
+
 
 if __name__ == '__main__':
-    
-    controller = RemoteDSACAgent()
+    file = './results/DSAC_Easy_easy-e10000-t32-s42-player.pth'
+    use_DSAC = True
+    if use_DSAC:
+        controller = RemoteDSACAgent(file=file,cuda=True)
+    else:
+        controller = RemoteSACAgent(file=file,cuda=True)
 
     # Play n (None for an infinite amount) games and quit
-    client = Client(username='yourusername',
-                    password='1234',
+    client = Client(username='great descent',
+                    password='',
                     controller=controller,
-                    output_path='logs/SAC', # rollout buffer with finished games will be saved in here
+                    output_path='logs/stud3', # rollout buffer with finished games will be saved in here
                     interactive=False,
                     op='start_queuing',
                     # server_addr='localhost',

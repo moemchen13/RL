@@ -24,7 +24,7 @@ def reward_shaping(reward,info,touched_puck):
     reward += info["reward_closeness_to_puck"]*0.01
     #want to encourage shoots on goal
     #But trying to let the direction lose by shoting onto boundaries
-    reward += info["reward_puck_direction"]*0.001
+    reward += info["reward_puck_direction"]*0.001 if touched_puck else 0
     return reward
 
 def create_agent(agent,filename,from_cuda):

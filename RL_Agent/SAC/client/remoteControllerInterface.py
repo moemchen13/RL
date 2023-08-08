@@ -2,11 +2,10 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+
 class RemoteControllerInterface(ABC):
 
-    def __init__(self,
-                 identifier : str,
-                ) -> None:
+    def __init__(self,identifier="SAC") -> None:
 
         """
         Please use the identifier to specify the Algorithm you are using
