@@ -5,7 +5,9 @@ import numpy as np
 
 class RemoteControllerInterface(ABC):
 
-    def __init__(self,identifier="SAC") -> None:
+    def __init__(self,
+                 identifier="SAC_great_Descent",
+                ) -> None:
 
         """
         Please use the identifier to specify the Algorithm you are using
