@@ -19,7 +19,7 @@ def create_winrate_timeline(wins,losses,draws):
         winrate.append(win/(loss+draw+win))
     return winrate
 
-def play_hockey_game(agent,opponent,rounds = 10,time_one_round=400):
+def play_hockey_game(agent,opponent,rounds = 1000,time_one_round=400):
     agent.eval()
     loss = 0
     win = 0
@@ -119,7 +119,7 @@ def create_winrates(all_prefixes,all_suffixes,are_DSAC,opponent,steps,points=2):
 def main():
     file = 'winrate-different_training.png'
     title = 'Winrate over time for different training methods against weak Opponent'
-    legendes = ['DSAC','SAC']
+    legendes = ['DSAC against easy','DSAC against hard','SAC against easy','SAC against hard']
 
     opponent = create_opponent()
     file_prefixes = ['./results/DSAC/DSAC_easy-e','./results/DSAC_against_hard/DSAC_against_hard_hard-e','./results/SAC/SAC_easy-e','./results/SAC_against_hard/SAC_against_hard_hard-e',]
