@@ -6,7 +6,7 @@ import numpy as np
 class RemoteControllerInterface(ABC):
 
     def __init__(self,
-                 identifier="SAC_great_Descent",
+                 identifier='DSAC_learned_against_itself',
                 ) -> None:
 
         """

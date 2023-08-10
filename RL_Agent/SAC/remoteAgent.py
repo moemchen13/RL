@@ -30,7 +30,7 @@ class RemoteDSACAgent(DSAC_Agent, RemoteControllerInterface):
 
 
 if __name__ == '__main__':
-    file = './results/DSAC_Easy_easy-e10000-t32-s42-player.pth'
+    file = './results/DSAC_against_itself_self_play-e24000-t32-s42-player2.pth'
     use_DSAC = True
     if use_DSAC:
         controller = RemoteDSACAgent(file=file,cuda=True)
@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     # Play n (None for an infinite amount) games and quit
     client = Client(username='great descent',
-                    password='',
+                    password='lo2beisaeK',
                     controller=controller,
                     output_path='logs/stud3', # rollout buffer with finished games will be saved in here
                     interactive=False,

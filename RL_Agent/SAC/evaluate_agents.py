@@ -61,23 +61,29 @@ def play(agent,opponent):
 
 
 def main():
-    all_SAC = ['./results/SAC_against_hard_hard-e12500-t32-s42-player.pth']
-    all_DSAC = ['./results/DSAC_after_episode10000_easy-e10500-t32-s42-player.pth',
-                './results/DSAC_after_episode10000_hard-e11000-t32-s42-player.pth',
-                './results/DSAC_Easy_easy-e10000-t32-s42-player.pth',
-                './results/DSAC_multiple_opponents_alternating_self_play-e17000-t32-s42-player2.pth']
-    results_file = "results.csv"
+    #all_SAC = ['./results/SAC_against_hard_hard-e500-t32-s42-player.pth']
+    #all_DSAC = ['./results/DSAC_after_episode10000_easy-e10500-t32-s42-player.pth',
+    #            './results/DSAC_after_episode10000_hard-e11000-t32-s42-player.pth',
+    #            './results/DSAC_Easy_easy-e10000-t32-s42-player.pth',
+    #            './results/DSAC_multiple_opponents_alternating_self_play-e17000-t32-s42-player2.pth']
+    all_SAC = ['SAC_easy-e23000-t32-s42-player.pth',
+               'SAC_against_hard_hard-e21000-t32-s42-player.pth',
+               'SAC_against_itself_self_play-e27000-t32-s42-player2.pth']
+    all_DSAC = ['DSAC_easy-e21000-t32-s42-player.pth',
+                'DSAC_against_hard_hard-e19500-t32-s42-player.pth',
+                'DSAC_against_itself_self_play-e24000-t32-s42-player2.pth']
+    results_file = "./results/results.csv"
     columns=['filename','weak_win','weak_loss','weak_tie','strong_win','strong_loss','strong_tie']
     df = pd.DataFrame(columns=columns)
     for file_name in all_SAC:
-        stats = evaluate(file_name,False)
+        stats = evaluate('./results/' + file_name,False)
         stats.insert(0,file_name)
         new_row_df = pd.DataFrame([stats], columns=columns)
         df = pd.concat([df,new_row_df],ignore_index=True)
         
 
     for file_name in all_DSAC:
-        stats = evaluate(file_name,True)
+        stats = evaluate('./results/' + file_name,True)
         stats.insert(0,file_name)
         new_row_df = pd.DataFrame([stats], columns=columns)
         df = pd.concat([df,new_row_df],ignore_index=True)
