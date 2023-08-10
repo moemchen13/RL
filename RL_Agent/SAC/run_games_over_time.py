@@ -82,16 +82,16 @@ def main():
 
     parser = argparse.ArgumentParser(prog='run_hockey')
     parser.add_argument('-f', '--file', dest='file',default="result.txt", help='file to save to')
-    parser.add_argument('-p', '--prefix',default='',help='prefix of the file')
-    parser.add_argument('-s', '--suffix',default='-t32-s42-player.pth',help='file suffix (default %(default)s)')
-    parser.add_argument('-d', '--dsac',default=True,help='is DSAC or not (default %(default)s)')
-    parser.add_argument('-e', '--episodesteps',default=500,help='stepsize (default %(default)s)')
-    parser.add_argument('-o', '--opponent',default=True,help='opponent weak (default %(default)s)')
-    parser.add_argument('-i', '--points',default=40,help='points time length the thing runs (default %(default)s)')
-    parser.add_argument('-r', '--rounds',default=1000,help='rounds to evaluate performance on (default %(default)s)')
+    parser.add_argument('-p', '--prefix',dest='prefix',default='',help='prefix of the file')
+    parser.add_argument('-s', '--suffix',dest='suffix',default='-t32-s42-player.pth',help='file suffix (default %(default)s)')
+    parser.add_argument('-d', '--dsac',dest='dsac',action='store_true',help='is DSAC or not (default %(default)s)')
+    parser.add_argument('-e', '--episodesteps',dest='episodesteps',default=500,help='stepsize (default %(default)s)')
+    parser.add_argument('-o', '--opponent_hard',dest='opponent',action='store_true',help='opponent hard (default %(default)s)')
+    parser.add_argument('-i', '--points',dest='points',default=40,help='points time length the thing runs (default %(default)s)')
+    parser.add_argument('-r', '--rounds',dest='rounds',default=1000,help='rounds to evaluate performance on (default %(default)s)')
     opts = parser.parse_args()
     ############## Hyperparameters ##############
-    weak = bool(opts.opponent)
+    weak = not bool(opts.opponent)
     prefix = opts.prefix
     suffix = opts.suffix
     is_DSAC = bool(opts.dsac)
