@@ -217,3 +217,23 @@ Configuration:
 
 Log:
  
+Configuration:
+  seed: 1
+  num-ep: 5
+  ep-len: 500
+  mode: weak
+  evaluate: True
+  loaded network: 205.pth
+
+Log:
+ 
+Configuration:
+  seed: 1
+  num-ep: 5
+  ep-len: 500
+  mode: weak
+  evaluate: True
+  loaded network: 42.pth
+
+Log:
+ 

@@ -18,16 +18,32 @@ class Feedforward(torch.nn.Module):
         self.input_size = input_size
         self.hidden_sizes  = hidden_sizes
         self.output_size  = output_size
-        layer_sizes = [self.input_size] + self.hidden_sizes
-        self.layers = torch.nn.ModuleList([ torch.nn.Linear(i, o) for i,o in zip(layer_sizes[:-1], layer_sizes[1:])])
-        self.activations = [ torch.nn.Tanh() for l in  self.layers ]
-        self.readout = torch.nn.Linear(self.hidden_sizes[-1], self.output_size)
+
+        print(self.input_size, self.hidden_sizes[0], self.hidden_sizes[1], self.output_size)
+
+        self.input_connector = torch.nn.Sequential(
+            torch.nn.Linear(self.input_size, self.hidden_sizes[0])
+        )
+
+        self.value_layer = torch.nn.Sequential(
+            torch.nn.Linear(self.hidden_sizes[0], self.hidden_sizes[1]),
+            torch.nn.Tanh(),
+            torch.nn.Linear(self.hidden_sizes[1],1)
+        )
+
+        self.advantage_layer = torch.nn.Sequential(
+            torch.nn.Linear(self.hidden_sizes[0], self.hidden_sizes[1]),
+            torch.nn.Tanh(),
+            torch.nn.Linear(self.hidden_sizes[1], self.output_size)
+        )
 
     def forward(self, x):
-        for layer,activation_fun in zip(self.layers, self.activations):
-            x = activation_fun(layer(x))
-        return self.readout(x)
-
+        x = self.input_connector(x)
+        values = self.value_layer(x)
+        advantages = self.advantage_layer(x)
+        q_values = values + (advantages - advantages.mean())
+        return q_values
+    
     def predict(self, x):
         with torch.no_grad():
             return self.forward(torch.from_numpy(x.astype(np.float32))).numpy()
@@ -118,7 +134,7 @@ class DQNAgent(object):
         self._config = {
             "eps": 0.05,            # Epsilon in epsilon greedy policies                        
             "discount": 0.95,
-            "buffer_size": int(1e6),
+            "buffer_size": int(5e5),
             "batch_size": 128,
             "learning_rate": 0.0002,
             "update_target_every": 20,
