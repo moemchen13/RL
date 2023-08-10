@@ -127,7 +127,7 @@ def main():
     are_DSAC = [True,True,False,False]
     steps = [500,500,500,500]
 
-    points_in_plot = 2
+    points_in_plot = 40
     winrates = create_winrates(file_prefixes,files_suffixes,are_DSAC,opponent,steps,points=points_in_plot)
 
     plot_winrates(file,title,legendes,winrates,points_in_plot)
