@@ -50,6 +50,7 @@ def play_hockey_game(agent,opponent,rounds = 1000,time_one_round=400):
     env.close()
     return win,loss,tie
 
+
 def create_opponent(hard=False):
     opponent = h_env.BasicOpponent(weak=True)
     if hard:
