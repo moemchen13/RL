@@ -1,0 +1,1210 @@
+Configuration:
+  seed: 42
+  num-ep: 20000
+  ep-len: 500
+  mode: weak
+  evaluate: False
+  loaded network: None
+
+Log:
+ 
+Learning Log:
+ 
+1: Done after 189 steps. Reward: -13.651001153318042 epsilon: 0.399965 
+51: Done after 251 steps. Reward: -43.58335750047121 epsilon: 0.39908999999999983 
+     mean reward over last 20 eisodes: -34.241773514744985
+ 
+101: Done after 251 steps. Reward: -41.99923987526862 epsilon: 0.39821499999999965 
+     mean reward over last 20 eisodes: -36.0128038955148
+ 
+151: Done after 251 steps. Reward: -36.72742027329415 epsilon: 0.39733999999999947 
+     mean reward over last 20 eisodes: -30.798058757901835
+ 
+201: Done after 251 steps. Reward: -13.862200932719414 epsilon: 0.3964649999999993 
+     mean reward over last 20 eisodes: -27.564347522419812
+ 
+251: Done after 251 steps. Reward: -8.054490214365465 epsilon: 0.3955899999999991 
+     mean reward over last 20 eisodes: -20.814217997260272
+ 
+301: Done after 156 steps. Reward: -21.38786382952287 epsilon: 0.39471499999999893 
+     mean reward over last 20 eisodes: -21.205484252746196
+ 
+351: Done after 251 steps. Reward: -17.482092919075157 epsilon: 0.39383999999999875 
+     mean reward over last 20 eisodes: -17.42068403465198
+ 
+401: Done after 105 steps. Reward: -13.793836545136159 epsilon: 0.39296499999999857 
+     mean reward over last 20 eisodes: -15.881402676899961
+ 
+451: Done after 251 steps. Reward: -31.111238548490434 epsilon: 0.3920899999999984 
+     mean reward over last 20 eisodes: -15.734817180070788
+ 
+501: Done after 141 steps. Reward: 5.953152550436284 epsilon: 0.3912149999999982 
+     mean reward over last 20 eisodes: -13.408758146755758
+ 
+551: Done after 251 steps. Reward: -23.541122048630555 epsilon: 0.390339999999998 
+     mean reward over last 20 eisodes: -12.837329313580623
+ 
+601: Done after 63 steps. Reward: -12.696833225800395 epsilon: 0.38946499999999784 
+     mean reward over last 20 eisodes: -12.458244350859617
+ 
+651: Done after 226 steps. Reward: -18.316044924330033 epsilon: 0.38858999999999766 
+     mean reward over last 20 eisodes: -12.7445798348722
+ 
+701: Done after 251 steps. Reward: -28.88003109303113 epsilon: 0.3877149999999975 
+     mean reward over last 20 eisodes: -12.633924828410231
+ 
+751: Done after 54 steps. Reward: -12.278416311443772 epsilon: 0.3868399999999973 
+     mean reward over last 20 eisodes: -15.004120888356999
+ 
+801: Done after 45 steps. Reward: -11.730578376235066 epsilon: 0.3859649999999971 
+     mean reward over last 20 eisodes: -15.664871396702722
+ 
+851: Done after 72 steps. Reward: -13.544891834014539 epsilon: 0.38508999999999693 
+     mean reward over last 20 eisodes: -12.90587544341195
+ 
+901: Done after 251 steps. Reward: -22.686543503516525 epsilon: 0.38421499999999675 
+     mean reward over last 20 eisodes: -12.145278265304993
+ 
+951: Done after 251 steps. Reward: -13.609875699182014 epsilon: 0.3833399999999966 
+     mean reward over last 20 eisodes: -12.586741916097166
+ 
+1001: Done after 50 steps. Reward: -12.831018257558302 epsilon: 0.3824649999999964 
+     mean reward over last 20 eisodes: -12.63372249670884
+ 
+1051: Done after 251 steps. Reward: -6.633380945584056 epsilon: 0.3815899999999962 
+     mean reward over last 20 eisodes: -9.559374562142485
+ 
+1101: Done after 109 steps. Reward: -14.382282796109763 epsilon: 0.38071499999999603 
+     mean reward over last 20 eisodes: -10.10237557682074
+ 
+1151: Done after 57 steps. Reward: 8.485749928052252 epsilon: 0.37983999999999585 
+     mean reward over last 20 eisodes: -10.472180075669062
+ 
+1201: Done after 47 steps. Reward: 9.139212157093636 epsilon: 0.37896499999999567 
+     mean reward over last 20 eisodes: -7.162923299002062
+ 
+1251: Done after 251 steps. Reward: -16.476291645584027 epsilon: 0.3780899999999955 
+     mean reward over last 20 eisodes: -14.212894974922287
+ 
+1301: Done after 60 steps. Reward: -12.762925980829745 epsilon: 0.3772149999999953 
+     mean reward over last 20 eisodes: -11.129772303067787
+ 
+1351: Done after 251 steps. Reward: -7.8364192490411275 epsilon: 0.3763399999999951 
+     mean reward over last 20 eisodes: -10.307571663038852
+ 
+1401: Done after 251 steps. Reward: -40.34335468204112 epsilon: 0.37546499999999494 
+     mean reward over last 20 eisodes: -12.870810927721964
+ 
+1451: Done after 199 steps. Reward: 6.0062695262298345 epsilon: 0.37458999999999476 
+     mean reward over last 20 eisodes: -15.799704543236176
+ 
+1501: Done after 251 steps. Reward: -16.668690093680443 epsilon: 0.3737149999999946 
+     mean reward over last 20 eisodes: -13.71135300849799
+ 
+1551: Done after 198 steps. Reward: -15.225162076630573 epsilon: 0.3728399999999944 
+     mean reward over last 20 eisodes: -17.996877403271682
+ 
+1601: Done after 190 steps. Reward: -22.788559523063036 epsilon: 0.3719649999999942 
+     mean reward over last 20 eisodes: -16.52419305858966
+ 
+1651: Done after 169 steps. Reward: -16.01390193217504 epsilon: 0.37108999999999404 
+     mean reward over last 20 eisodes: -12.195114715007499
+ 
+1701: Done after 251 steps. Reward: -0.527052441543769 epsilon: 0.37021499999999385 
+     mean reward over last 20 eisodes: -11.182685076670849
+ 
+1751: Done after 97 steps. Reward: -13.284706964998858 epsilon: 0.3693399999999937 
+     mean reward over last 20 eisodes: -7.594976002715933
+ 
+1801: Done after 215 steps. Reward: -18.092350111033017 epsilon: 0.3684649999999935 
+     mean reward over last 20 eisodes: -11.194841037731653
+ 
+1851: Done after 86 steps. Reward: 7.425149962869731 epsilon: 0.3675899999999933 
+     mean reward over last 20 eisodes: -9.495214516276256
+ 
+1901: Done after 53 steps. Reward: -12.621885403442766 epsilon: 0.36671499999999313 
+     mean reward over last 20 eisodes: -8.991407126126408
+ 
+1951: Done after 251 steps. Reward: -19.531853010233363 epsilon: 0.36583999999999295 
+     mean reward over last 20 eisodes: -8.045987706223649
+ 
+2001: Done after 95 steps. Reward: -14.562235328964853 epsilon: 0.36496499999999277 
+     mean reward over last 20 eisodes: -9.769280645944487
+ 
+2051: Done after 251 steps. Reward: -4.638471188847609 epsilon: 0.3640899999999926 
+     mean reward over last 20 eisodes: -11.85469088874811
+ 
+2101: Done after 72 steps. Reward: -12.084233762251602 epsilon: 0.3632149999999924 
+     mean reward over last 20 eisodes: -10.081130883583779
+ 
+2151: Done after 50 steps. Reward: 8.993547837391622 epsilon: 0.3623399999999922 
+     mean reward over last 20 eisodes: -10.111842433369537
+ 
+2201: Done after 91 steps. Reward: -14.70545480928452 epsilon: 0.36146499999999204 
+     mean reward over last 20 eisodes: -12.481488961461245
+ 
+2251: Done after 89 steps. Reward: -14.065031568222757 epsilon: 0.36058999999999186 
+     mean reward over last 20 eisodes: -9.789383541660403
+ 
+2301: Done after 50 steps. Reward: -12.198331070295218 epsilon: 0.3597149999999917 
+     mean reward over last 20 eisodes: -9.089480026659311
+ 
+2351: Done after 47 steps. Reward: -12.162461979978035 epsilon: 0.3588399999999915 
+     mean reward over last 20 eisodes: -8.183095188458964
+ 
+2401: Done after 251 steps. Reward: -12.933817372424006 epsilon: 0.3579649999999913 
+     mean reward over last 20 eisodes: -10.98492709358809
+ 
+2451: Done after 116 steps. Reward: -14.15775804995708 epsilon: 0.35708999999999114 
+     mean reward over last 20 eisodes: -10.541021782710061
+ 
+2501: Done after 49 steps. Reward: -12.330657918853966 epsilon: 0.35621499999999096 
+     mean reward over last 20 eisodes: -11.941464769338625
+ 
+2551: Done after 118 steps. Reward: -14.703401596360631 epsilon: 0.3553399999999908 
+     mean reward over last 20 eisodes: -8.845993359945748
+ 
+2601: Done after 251 steps. Reward: -15.403895081135172 epsilon: 0.3544649999999906 
+     mean reward over last 20 eisodes: -8.949537066166622
+ 
+2651: Done after 54 steps. Reward: -12.246142692034152 epsilon: 0.3535899999999904 
+     mean reward over last 20 eisodes: -10.704158658369058
+ 
+2701: Done after 251 steps. Reward: -3.9047811514806456 epsilon: 0.35271499999999023 
+     mean reward over last 20 eisodes: -9.840929449746348
+ 
+2751: Done after 251 steps. Reward: -11.812970309182411 epsilon: 0.35183999999999005 
+     mean reward over last 20 eisodes: -9.83798185428661
+ 
+2801: Done after 162 steps. Reward: 2.8416687668804164 epsilon: 0.35096499999998987 
+     mean reward over last 20 eisodes: -9.292956264932569
+ 
+2851: Done after 97 steps. Reward: 8.91021792017678 epsilon: 0.3500899999999897 
+     mean reward over last 20 eisodes: -9.00797548226797
+ 
+2901: Done after 49 steps. Reward: -12.467777248103058 epsilon: 0.3492149999999895 
+     mean reward over last 20 eisodes: -6.8157748876748405
+ 
+2951: Done after 129 steps. Reward: -17.972028338320683 epsilon: 0.3483399999999893 
+     mean reward over last 20 eisodes: -6.4370790487579095
+ 
+3001: Done after 78 steps. Reward: 6.770683004530481 epsilon: 0.34746499999998914 
+     mean reward over last 20 eisodes: -10.390100292828222
+ 
+3051: Done after 43 steps. Reward: 9.28686971245686 epsilon: 0.34658999999998896 
+     mean reward over last 20 eisodes: -10.556638462215346
+ 
+3101: Done after 209 steps. Reward: -17.140983759807966 epsilon: 0.3457149999999888 
+     mean reward over last 20 eisodes: -6.433937214481705
+ 
+3151: Done after 93 steps. Reward: -14.303268333148996 epsilon: 0.3448399999999886 
+     mean reward over last 20 eisodes: -8.193350523772907
+ 
+3201: Done after 180 steps. Reward: 3.7899131929436463 epsilon: 0.3439649999999884 
+     mean reward over last 20 eisodes: -8.930880510643405
+ 
+3251: Done after 216 steps. Reward: -15.2326688294469 epsilon: 0.34308999999998824 
+     mean reward over last 20 eisodes: -7.595379275691078
+ 
+3301: Done after 72 steps. Reward: 8.699769464990652 epsilon: 0.34221499999998806 
+     mean reward over last 20 eisodes: -8.809142426102879
+ 
+3351: Done after 103 steps. Reward: -19.54663378366613 epsilon: 0.3413399999999879 
+     mean reward over last 20 eisodes: -5.974280732399475
+ 
+3401: Done after 102 steps. Reward: -14.560204249793621 epsilon: 0.3404649999999877 
+     mean reward over last 20 eisodes: -7.174324945743499
+ 
+3451: Done after 251 steps. Reward: -4.571814853341663 epsilon: 0.3395899999999875 
+     mean reward over last 20 eisodes: -6.959036367861573
+ 
+3501: Done after 50 steps. Reward: 8.763141887165839 epsilon: 0.33871499999998733 
+     mean reward over last 20 eisodes: -9.302031555430466
+ 
+3551: Done after 209 steps. Reward: 4.815059790089982 epsilon: 0.33783999999998715 
+     mean reward over last 20 eisodes: -9.086764980767676
+ 
+3601: Done after 190 steps. Reward: -14.724595054876028 epsilon: 0.33696499999998697 
+     mean reward over last 20 eisodes: -5.580995769902092
+ 
+3651: Done after 251 steps. Reward: -12.38546271494697 epsilon: 0.3360899999999868 
+     mean reward over last 20 eisodes: -6.917851503621083
+ 
+3701: Done after 108 steps. Reward: -16.54438626597399 epsilon: 0.3352149999999866 
+     mean reward over last 20 eisodes: -6.173598058069569
+ 
+3751: Done after 194 steps. Reward: -22.748137486567877 epsilon: 0.3343399999999864 
+     mean reward over last 20 eisodes: -7.039006999974235
+ 
+3801: Done after 44 steps. Reward: 9.102013856132388 epsilon: 0.33346499999998624 
+     mean reward over last 20 eisodes: -8.760820371219909
+ 
+3851: Done after 157 steps. Reward: -14.075481815984883 epsilon: 0.33258999999998606 
+     mean reward over last 20 eisodes: -6.788317830980507
+ 
+3901: Done after 251 steps. Reward: -6.4818232965370495 epsilon: 0.3317149999999859 
+     mean reward over last 20 eisodes: -5.010709754831574
+ 
+3951: Done after 98 steps. Reward: -15.21702621815357 epsilon: 0.3308399999999857 
+     mean reward over last 20 eisodes: -5.614202473661908
+ 
+4001: Done after 96 steps. Reward: -13.710243828335143 epsilon: 0.3299649999999855 
+     mean reward over last 20 eisodes: -7.920552197294803
+ 
+4051: Done after 71 steps. Reward: 8.244329902077588 epsilon: 0.32908999999998534 
+     mean reward over last 20 eisodes: -6.142947833917176
+ 
+4101: Done after 204 steps. Reward: -24.079688527153777 epsilon: 0.32821499999998516 
+     mean reward over last 20 eisodes: -8.22711797184941
+ 
+4151: Done after 251 steps. Reward: -8.10283580052493 epsilon: 0.327339999999985 
+     mean reward over last 20 eisodes: -5.402332503680649
+ 
+4201: Done after 46 steps. Reward: 9.551961215453534 epsilon: 0.3264649999999848 
+     mean reward over last 20 eisodes: -7.5956902407496
+ 
+4251: Done after 187 steps. Reward: -17.87396710687394 epsilon: 0.3255899999999846 
+     mean reward over last 20 eisodes: -6.516005468428914
+ 
+4301: Done after 70 steps. Reward: -13.065079334134467 epsilon: 0.32471499999998443 
+     mean reward over last 20 eisodes: -7.29428473297703
+ 
+4351: Done after 251 steps. Reward: -8.565662215147043 epsilon: 0.32383999999998425 
+     mean reward over last 20 eisodes: -8.612217888057447
+ 
+4401: Done after 102 steps. Reward: -15.55410047681843 epsilon: 0.32296499999998407 
+     mean reward over last 20 eisodes: -7.037147282915812
+ 
+4451: Done after 251 steps. Reward: -6.388120767645731 epsilon: 0.3220899999999839 
+     mean reward over last 20 eisodes: -8.146461570502709
+ 
+4501: Done after 245 steps. Reward: -19.313104987950616 epsilon: 0.3212149999999837 
+     mean reward over last 20 eisodes: -10.028030824088773
+ 
+4551: Done after 117 steps. Reward: -15.378090935147807 epsilon: 0.3203399999999835 
+     mean reward over last 20 eisodes: -7.84017718371801
+ 
+4601: Done after 85 steps. Reward: -14.42663605829809 epsilon: 0.31946499999998335 
+     mean reward over last 20 eisodes: -8.315071079700108
+ 
+4651: Done after 94 steps. Reward: -15.002825902517195 epsilon: 0.31858999999998316 
+     mean reward over last 20 eisodes: -7.9147341017779596
+ 
+4701: Done after 22 steps. Reward: -10.865059614976337 epsilon: 0.317714999999983 
+     mean reward over last 20 eisodes: -5.841868882259571
+ 
+4751: Done after 251 steps. Reward: -30.652033553788637 epsilon: 0.3168399999999828 
+     mean reward over last 20 eisodes: -6.324904964736911
+ 
+4801: Done after 92 steps. Reward: -12.377462880205425 epsilon: 0.3159649999999826 
+     mean reward over last 20 eisodes: -8.062355108005669
+ 
+4851: Done after 107 steps. Reward: -13.339082567025292 epsilon: 0.31508999999998244 
+     mean reward over last 20 eisodes: -7.712056205468684
+ 
+4901: Done after 251 steps. Reward: -5.609911957671014 epsilon: 0.31421499999998226 
+     mean reward over last 20 eisodes: -9.482149001305675
+ 
+4951: Done after 154 steps. Reward: 7.050748403427274 epsilon: 0.3133399999999821 
+     mean reward over last 20 eisodes: -7.042387763179482
+ 
+5001: Done after 251 steps. Reward: -4.935631843107419 epsilon: 0.3124649999999819 
+     mean reward over last 20 eisodes: -6.171484117785793
+ 
+5051: Done after 60 steps. Reward: -11.958304760808101 epsilon: 0.3115899999999817 
+     mean reward over last 20 eisodes: -10.079650174990222
+ 
+5101: Done after 97 steps. Reward: -13.978231687087877 epsilon: 0.31071499999998153 
+     mean reward over last 20 eisodes: -8.49756004269859
+ 
+5151: Done after 59 steps. Reward: -12.614546837788478 epsilon: 0.30983999999998135 
+     mean reward over last 20 eisodes: -7.166945590111745
+ 
+5201: Done after 116 steps. Reward: -14.245413763997352 epsilon: 0.30896499999998117 
+     mean reward over last 20 eisodes: -6.296342806309846
+ 
+5251: Done after 103 steps. Reward: -14.621665511037833 epsilon: 0.308089999999981 
+     mean reward over last 20 eisodes: -9.09665745194308
+ 
+5301: Done after 83 steps. Reward: -12.88372831198559 epsilon: 0.3072149999999808 
+     mean reward over last 20 eisodes: -6.43294082918306
+ 
+5351: Done after 37 steps. Reward: 8.798283368179312 epsilon: 0.30633999999998063 
+     mean reward over last 20 eisodes: -6.131117382908991
+ 
+5401: Done after 44 steps. Reward: 9.503088083964924 epsilon: 0.30546499999998045 
+     mean reward over last 20 eisodes: -5.374939587746987
+ 
+5451: Done after 56 steps. Reward: -12.993412512086488 epsilon: 0.30458999999998027 
+     mean reward over last 20 eisodes: -8.273485644353942
+ 
+5501: Done after 51 steps. Reward: -12.017790705516276 epsilon: 0.3037149999999801 
+     mean reward over last 20 eisodes: -6.605253840904125
+ 
+5551: Done after 121 steps. Reward: -16.372102874323485 epsilon: 0.3028399999999799 
+     mean reward over last 20 eisodes: -6.810929226887388
+ 
+5601: Done after 101 steps. Reward: -14.661122563699314 epsilon: 0.3019649999999797 
+     mean reward over last 20 eisodes: -9.289887108845779
+ 
+5651: Done after 22 steps. Reward: -10.734214101693853 epsilon: 0.30108999999997954 
+     mean reward over last 20 eisodes: -5.515770712646864
+ 
+5701: Done after 137 steps. Reward: 9.073944648116598 epsilon: 0.30021499999997936 
+     mean reward over last 20 eisodes: -8.495282305291777
+ 
+5751: Done after 50 steps. Reward: 8.326761674941597 epsilon: 0.2993399999999792 
+     mean reward over last 20 eisodes: -5.629619595556858
+ 
+5801: Done after 31 steps. Reward: 9.567682591907056 epsilon: 0.298464999999979 
+     mean reward over last 20 eisodes: -5.182777516174185
+ 
+5851: Done after 159 steps. Reward: -14.595572531244635 epsilon: 0.2975899999999788 
+     mean reward over last 20 eisodes: -7.193239132919444
+ 
+5901: Done after 55 steps. Reward: -12.006231024741696 epsilon: 0.29671499999997863 
+     mean reward over last 20 eisodes: -7.105289503919773
+ 
+5951: Done after 251 steps. Reward: -2.5023810969047826 epsilon: 0.29583999999997845 
+     mean reward over last 20 eisodes: -7.330069490228482
+ 
+6001: Done after 67 steps. Reward: 9.50973791952813 epsilon: 0.2949649999999783 
+     mean reward over last 20 eisodes: -8.699490778156008
+ 
+6051: Done after 251 steps. Reward: -30.83569667431934 epsilon: 0.2940899999999781 
+     mean reward over last 20 eisodes: -6.1925631595819315
+ 
+6101: Done after 50 steps. Reward: 8.21983509133505 epsilon: 0.2932149999999779 
+     mean reward over last 20 eisodes: -8.245874767000782
+ 
+6151: Done after 44 steps. Reward: -11.936764411776338 epsilon: 0.29233999999997773 
+     mean reward over last 20 eisodes: -6.62260711283042
+ 
+6201: Done after 47 steps. Reward: -11.735826038411574 epsilon: 0.29146499999997755 
+     mean reward over last 20 eisodes: -7.6092479345940385
+ 
+6251: Done after 90 steps. Reward: -13.653677176241839 epsilon: 0.29058999999997737 
+     mean reward over last 20 eisodes: -4.718116907745209
+ 
+6301: Done after 251 steps. Reward: -2.2149280346034774 epsilon: 0.2897149999999772 
+     mean reward over last 20 eisodes: -6.586773603678974
+ 
+6351: Done after 57 steps. Reward: -12.162474101364715 epsilon: 0.288839999999977 
+     mean reward over last 20 eisodes: -7.789927245746493
+ 
+6401: Done after 16 steps. Reward: -11.109452437209669 epsilon: 0.2879649999999768 
+     mean reward over last 20 eisodes: -7.882000752988375
+ 
+6451: Done after 77 steps. Reward: -12.566670873319758 epsilon: 0.28708999999997664 
+     mean reward over last 20 eisodes: -6.864008068970037
+ 
+6501: Done after 89 steps. Reward: 7.369364943690883 epsilon: 0.28621499999997646 
+     mean reward over last 20 eisodes: -6.37804679166659
+ 
+6551: Done after 46 steps. Reward: -12.047402863822512 epsilon: 0.2853399999999763 
+     mean reward over last 20 eisodes: -3.4782087628606178
+ 
+6601: Done after 95 steps. Reward: 7.883291574336991 epsilon: 0.2844649999999761 
+     mean reward over last 20 eisodes: -5.022785590098135
+ 
+6651: Done after 29 steps. Reward: 9.630936175812867 epsilon: 0.2835899999999759 
+     mean reward over last 20 eisodes: -7.272102633950919
+ 
+6701: Done after 182 steps. Reward: 8.275537485400255 epsilon: 0.28271499999997574 
+     mean reward over last 20 eisodes: -4.8536576543180985
+ 
+6751: Done after 56 steps. Reward: 8.2037439694299 epsilon: 0.28183999999997555 
+     mean reward over last 20 eisodes: -7.778549253556161
+ 
+6801: Done after 92 steps. Reward: -13.683542825906208 epsilon: 0.2809649999999754 
+     mean reward over last 20 eisodes: -7.997778502108869
+ 
+6851: Done after 251 steps. Reward: -1.7244237249383954 epsilon: 0.2800899999999752 
+     mean reward over last 20 eisodes: -9.039630318521219
+ 
+6901: Done after 133 steps. Reward: -17.46048575606173 epsilon: 0.279214999999975 
+     mean reward over last 20 eisodes: -7.580515476139729
+ 
+6951: Done after 95 steps. Reward: -14.277846507894385 epsilon: 0.27833999999997483 
+     mean reward over last 20 eisodes: -7.063986596366536
+ 
+7001: Done after 47 steps. Reward: -12.128727270167603 epsilon: 0.27746499999997465 
+     mean reward over last 20 eisodes: -5.512831394668157
+ 
+7051: Done after 54 steps. Reward: -12.621574919997819 epsilon: 0.27658999999997447 
+     mean reward over last 20 eisodes: -8.71948024810008
+ 
+7101: Done after 251 steps. Reward: -6.970640880274401 epsilon: 0.2757149999999743 
+     mean reward over last 20 eisodes: -6.6963559172377565
+ 
+7151: Done after 45 steps. Reward: 9.271115544985886 epsilon: 0.2748399999999741 
+     mean reward over last 20 eisodes: -6.102264636327733
+ 
+7201: Done after 251 steps. Reward: -2.8764350681854336 epsilon: 0.2739649999999739 
+     mean reward over last 20 eisodes: -6.5195819643251545
+ 
+7251: Done after 58 steps. Reward: -12.4049228419425 epsilon: 0.27308999999997374 
+     mean reward over last 20 eisodes: -6.247125151946543
+ 
+7301: Done after 55 steps. Reward: -12.565979945230731 epsilon: 0.27221499999997356 
+     mean reward over last 20 eisodes: -6.847171587983756
+ 
+7351: Done after 103 steps. Reward: -12.282584568258912 epsilon: 0.2713399999999734 
+     mean reward over last 20 eisodes: -5.825302393600149
+ 
+7401: Done after 114 steps. Reward: -13.40345553236465 epsilon: 0.2704649999999732 
+     mean reward over last 20 eisodes: -4.838590455877745
+ 
+7451: Done after 80 steps. Reward: 8.37217440870958 epsilon: 0.269589999999973 
+     mean reward over last 20 eisodes: -5.207044979806442
+ 
+7501: Done after 152 steps. Reward: 7.271356179746103 epsilon: 0.26871499999997284 
+     mean reward over last 20 eisodes: -5.278585001386262
+ 
+7551: Done after 60 steps. Reward: -12.411631373837421 epsilon: 0.26783999999997266 
+     mean reward over last 20 eisodes: -9.634014914628066
+ 
+7601: Done after 146 steps. Reward: -14.482519933493608 epsilon: 0.2669649999999725 
+     mean reward over last 20 eisodes: -8.33024911406283
+ 
+7651: Done after 79 steps. Reward: -12.437463088722026 epsilon: 0.2660899999999723 
+     mean reward over last 20 eisodes: -7.054976072756869
+ 
+7701: Done after 93 steps. Reward: -13.26049456961351 epsilon: 0.2652149999999721 
+     mean reward over last 20 eisodes: -7.262391551998965
+ 
+7751: Done after 182 steps. Reward: 4.210822931665507 epsilon: 0.26433999999997193 
+     mean reward over last 20 eisodes: -8.027254111790551
+ 
+7801: Done after 251 steps. Reward: -19.612394058597726 epsilon: 0.26346499999997175 
+     mean reward over last 20 eisodes: -4.199771113346728
+ 
+7851: Done after 251 steps. Reward: -1.0008753616178658 epsilon: 0.26258999999997157 
+     mean reward over last 20 eisodes: -5.812024813808519
+ 
+7901: Done after 212 steps. Reward: -20.608942615272525 epsilon: 0.2617149999999714 
+     mean reward over last 20 eisodes: -7.050565145831176
+ 
+7951: Done after 91 steps. Reward: -13.18140019212559 epsilon: 0.2608399999999712 
+     mean reward over last 20 eisodes: -8.053666892851572
+ 
+8001: Done after 102 steps. Reward: -13.051750523651958 epsilon: 0.259964999999971 
+     mean reward over last 20 eisodes: -6.79400038632937
+ 
+8051: Done after 222 steps. Reward: -16.24651931481496 epsilon: 0.25908999999997084 
+     mean reward over last 20 eisodes: -8.478562475194511
+ 
+8101: Done after 129 steps. Reward: -12.068683796182473 epsilon: 0.25821499999997066 
+     mean reward over last 20 eisodes: -7.81031832782092
+ 
+8151: Done after 165 steps. Reward: -15.38909936582749 epsilon: 0.2573399999999705 
+     mean reward over last 20 eisodes: -8.554438580157083
+ 
+8201: Done after 36 steps. Reward: 9.552768875987532 epsilon: 0.2564649999999703 
+     mean reward over last 20 eisodes: -6.024463456006434
+ 
+8251: Done after 63 steps. Reward: 7.615722179583537 epsilon: 0.2555899999999701 
+     mean reward over last 20 eisodes: -4.045958774224178
+ 
+8301: Done after 131 steps. Reward: -12.343446091362772 epsilon: 0.25471499999996994 
+     mean reward over last 20 eisodes: -8.277502581341876
+ 
+8351: Done after 48 steps. Reward: 8.346666356682986 epsilon: 0.25383999999996976 
+     mean reward over last 20 eisodes: -5.458604468119221
+ 
+8401: Done after 61 steps. Reward: -12.323981570659729 epsilon: 0.2529649999999696 
+     mean reward over last 20 eisodes: -5.258793584666526
+ 
+8451: Done after 88 steps. Reward: -11.736939271835318 epsilon: 0.2520899999999694 
+     mean reward over last 20 eisodes: -6.906321031387352
+ 
+8501: Done after 155 steps. Reward: -13.925233113870416 epsilon: 0.2512149999999692 
+     mean reward over last 20 eisodes: -8.062124008730683
+ 
+8551: Done after 80 steps. Reward: 7.2625299028972226 epsilon: 0.25033999999996903 
+     mean reward over last 20 eisodes: -7.877667147697331
+ 
+8601: Done after 40 steps. Reward: 9.444419202201608 epsilon: 0.24946499999996885 
+     mean reward over last 20 eisodes: -4.742959232724374
+ 
+8651: Done after 251 steps. Reward: -6.872208717452882 epsilon: 0.24858999999996867 
+     mean reward over last 20 eisodes: -6.664544126127223
+ 
+8701: Done after 83 steps. Reward: 8.901455658760268 epsilon: 0.2477149999999685 
+     mean reward over last 20 eisodes: -6.513380815705537
+ 
+8751: Done after 100 steps. Reward: -13.012144493545513 epsilon: 0.2468399999999683 
+     mean reward over last 20 eisodes: -8.063886166447839
+ 
+8801: Done after 174 steps. Reward: -17.199455884072908 epsilon: 0.24596499999996813 
+     mean reward over last 20 eisodes: -5.109525102825533
+ 
+8851: Done after 79 steps. Reward: -14.205494696462676 epsilon: 0.24508999999996794 
+     mean reward over last 20 eisodes: -6.216540401207933
+ 
+8901: Done after 46 steps. Reward: -11.771957838360855 epsilon: 0.24421499999996776 
+     mean reward over last 20 eisodes: -6.3280441893946975
+ 
+8951: Done after 48 steps. Reward: -11.889786291278956 epsilon: 0.24333999999996758 
+     mean reward over last 20 eisodes: -8.391852887626882
+ 
+9001: Done after 251 steps. Reward: -4.8111726911026285 epsilon: 0.2424649999999674 
+     mean reward over last 20 eisodes: -5.524713374140264
+ 
+9051: Done after 126 steps. Reward: -13.711902091689586 epsilon: 0.24158999999996722 
+     mean reward over last 20 eisodes: -4.933588160388055
+ 
+9101: Done after 251 steps. Reward: -1.3135725879412028 epsilon: 0.24071499999996704 
+     mean reward over last 20 eisodes: -5.332805492744703
+ 
+9151: Done after 57 steps. Reward: -12.53311404953039 epsilon: 0.23983999999996686 
+     mean reward over last 20 eisodes: -8.667817921893011
+ 
+9201: Done after 173 steps. Reward: -15.097915204299888 epsilon: 0.23896499999996668 
+     mean reward over last 20 eisodes: -7.025894263713855
+ 
+9251: Done after 152 steps. Reward: -14.43235446056524 epsilon: 0.2380899999999665 
+     mean reward over last 20 eisodes: -3.7609762710547523
+ 
+9301: Done after 44 steps. Reward: 8.917733804052615 epsilon: 0.23721499999996631 
+     mean reward over last 20 eisodes: -6.042115087355225
+ 
+9351: Done after 85 steps. Reward: -13.663372033544459 epsilon: 0.23633999999996613 
+     mean reward over last 20 eisodes: -4.054805053427449
+ 
+9401: Done after 251 steps. Reward: -1.0526666580862216 epsilon: 0.23546499999996595 
+     mean reward over last 20 eisodes: -5.533002704275325
+ 
+9451: Done after 185 steps. Reward: -13.868020602903778 epsilon: 0.23458999999996577 
+     mean reward over last 20 eisodes: -4.499339552814512
+ 
+9501: Done after 251 steps. Reward: -8.244570109417491 epsilon: 0.2337149999999656 
+     mean reward over last 20 eisodes: -6.526784632558205
+ 
+9551: Done after 251 steps. Reward: -0.5440915087299457 epsilon: 0.2328399999999654 
+     mean reward over last 20 eisodes: -5.300577852030583
+ 
+9601: Done after 38 steps. Reward: 9.088980990740925 epsilon: 0.23196499999996523 
+     mean reward over last 20 eisodes: -8.811656818115889
+ 
+9651: Done after 83 steps. Reward: -11.84001853837264 epsilon: 0.23108999999996505 
+     mean reward over last 20 eisodes: -5.745621394543261
+ 
+9701: Done after 109 steps. Reward: -12.371128402486367 epsilon: 0.23021499999996486 
+     mean reward over last 20 eisodes: -7.429956677117755
+ 
+9751: Done after 251 steps. Reward: -3.310542584467824 epsilon: 0.22933999999996468 
+     mean reward over last 20 eisodes: -7.020668018013236
+ 
+9801: Done after 30 steps. Reward: 9.551674277184887 epsilon: 0.2284649999999645 
+     mean reward over last 20 eisodes: -5.1854815948907955
+ 
+9851: Done after 69 steps. Reward: -12.720192520835736 epsilon: 0.22758999999996432 
+     mean reward over last 20 eisodes: -3.910943601181271
+ 
+9901: Done after 251 steps. Reward: -2.1401254744174474 epsilon: 0.22671499999996414 
+     mean reward over last 20 eisodes: -7.1444537725201425
+ 
+9951: Done after 251 steps. Reward: -6.268362545075704 epsilon: 0.22583999999996396 
+     mean reward over last 20 eisodes: -2.902720609049887
+ 
+10001: Done after 135 steps. Reward: 9.179906514104236 epsilon: 0.22496499999996378 
+     mean reward over last 20 eisodes: -5.58641168424785
+ 
+10051: Done after 122 steps. Reward: -13.136101815114813 epsilon: 0.2240899999999636 
+     mean reward over last 20 eisodes: -6.748910100297755
+ 
+10101: Done after 88 steps. Reward: -12.300871690858706 epsilon: 0.22321499999996341 
+     mean reward over last 20 eisodes: -4.260086279698723
+ 
+10151: Done after 176 steps. Reward: -14.08661482782831 epsilon: 0.22233999999996323 
+     mean reward over last 20 eisodes: -6.8355839115716295
+ 
+10201: Done after 36 steps. Reward: 9.67923108540239 epsilon: 0.22146499999996305 
+     mean reward over last 20 eisodes: -5.756082736629031
+ 
+10251: Done after 78 steps. Reward: -12.86124475359765 epsilon: 0.22058999999996287 
+     mean reward over last 20 eisodes: -7.381631947363283
+ 
+10301: Done after 251 steps. Reward: -12.389617420836096 epsilon: 0.2197149999999627 
+     mean reward over last 20 eisodes: -6.869851581504636
+ 
+10351: Done after 251 steps. Reward: -1.2521277953554857 epsilon: 0.2188399999999625 
+     mean reward over last 20 eisodes: -4.373585796558091
+ 
+10401: Done after 251 steps. Reward: -6.344556964705797 epsilon: 0.21796499999996233 
+     mean reward over last 20 eisodes: -4.600070275379677
+ 
+10451: Done after 62 steps. Reward: -13.302084861261015 epsilon: 0.21708999999996215 
+     mean reward over last 20 eisodes: -6.103886283361136
+ 
+10501: Done after 70 steps. Reward: -12.37175804527759 epsilon: 0.21621499999996197 
+     mean reward over last 20 eisodes: -6.855591015253463
+ 
+10551: Done after 37 steps. Reward: 9.375968389327442 epsilon: 0.21533999999996178 
+     mean reward over last 20 eisodes: -7.263081471373808
+ 
+10601: Done after 64 steps. Reward: -13.97276698912135 epsilon: 0.2144649999999616 
+     mean reward over last 20 eisodes: -4.326899214046323
+ 
+10651: Done after 150 steps. Reward: -14.825787127086533 epsilon: 0.21358999999996142 
+     mean reward over last 20 eisodes: -9.217975493210103
+ 
+10701: Done after 251 steps. Reward: -5.55053871633398 epsilon: 0.21271499999996124 
+     mean reward over last 20 eisodes: -5.861725498688633
+ 
+10751: Done after 46 steps. Reward: 8.607203068259079 epsilon: 0.21183999999996106 
+     mean reward over last 20 eisodes: -7.17510815292802
+ 
+10801: Done after 37 steps. Reward: 9.450178005781154 epsilon: 0.21096499999996088 
+     mean reward over last 20 eisodes: -6.297272581051949
+ 
+10851: Done after 73 steps. Reward: -13.296002301327249 epsilon: 0.2100899999999607 
+     mean reward over last 20 eisodes: -3.2658630327877716
+ 
+10901: Done after 41 steps. Reward: 9.064783636654417 epsilon: 0.20921499999996052 
+     mean reward over last 20 eisodes: -6.227031544189291
+ 
+10951: Done after 251 steps. Reward: -6.560451161658586 epsilon: 0.20833999999996033 
+     mean reward over last 20 eisodes: -7.816818002098829
+ 
+11001: Done after 187 steps. Reward: -13.194216560673858 epsilon: 0.20746499999996015 
+     mean reward over last 20 eisodes: -4.873984947539842
+ 
+11051: Done after 110 steps. Reward: -12.3136148305135 epsilon: 0.20658999999995997 
+     mean reward over last 20 eisodes: -8.176745229527512
+ 
+11101: Done after 62 steps. Reward: -13.00806295070879 epsilon: 0.2057149999999598 
+     mean reward over last 20 eisodes: -3.58811606606673
+ 
+11151: Done after 108 steps. Reward: -12.868162995734803 epsilon: 0.2048399999999596 
+     mean reward over last 20 eisodes: -6.018363671475376
+ 
+11201: Done after 147 steps. Reward: -13.449856957803968 epsilon: 0.20396499999995943 
+     mean reward over last 20 eisodes: -7.111529126260287
+ 
+11251: Done after 153 steps. Reward: -12.673135029278974 epsilon: 0.20308999999995925 
+     mean reward over last 20 eisodes: -9.55589919363602
+ 
+11301: Done after 251 steps. Reward: -0.729853140152106 epsilon: 0.20221499999995907 
+     mean reward over last 20 eisodes: -7.809210641067071
+ 
+11351: Done after 193 steps. Reward: -15.029787829609846 epsilon: 0.20133999999995889 
+     mean reward over last 20 eisodes: -6.434010391712842
+ 
+11401: Done after 72 steps. Reward: -13.271423647083822 epsilon: 0.2004649999999587 
+     mean reward over last 20 eisodes: -7.070818886669217
+ 
+11451: Done after 141 steps. Reward: -12.049177093686374 epsilon: 0.19958999999995852 
+     mean reward over last 20 eisodes: -5.401081534171956
+ 
+11501: Done after 251 steps. Reward: -12.488809526886687 epsilon: 0.19871499999995834 
+     mean reward over last 20 eisodes: -7.213583098014482
+ 
+11551: Done after 33 steps. Reward: 9.695715373025742 epsilon: 0.19783999999995816 
+     mean reward over last 20 eisodes: -7.020639327071052
+ 
+11601: Done after 191 steps. Reward: -20.20441324605103 epsilon: 0.19696499999995798 
+     mean reward over last 20 eisodes: -5.916157181140754
+ 
+11651: Done after 200 steps. Reward: -13.595693294441634 epsilon: 0.1960899999999578 
+     mean reward over last 20 eisodes: -6.959132691943961
+ 
+11701: Done after 56 steps. Reward: -12.404662383977001 epsilon: 0.19521499999995762 
+     mean reward over last 20 eisodes: -6.929977263638371
+ 
+11751: Done after 75 steps. Reward: -13.2584789945755 epsilon: 0.19433999999995744 
+     mean reward over last 20 eisodes: -7.04859407257607
+ 
+11801: Done after 251 steps. Reward: -4.7681370247243215 epsilon: 0.19346499999995725 
+     mean reward over last 20 eisodes: -3.8423631635616187
+ 
+11851: Done after 57 steps. Reward: -11.933884858739797 epsilon: 0.19258999999995707 
+     mean reward over last 20 eisodes: -6.582466653879377
+ 
+11901: Done after 77 steps. Reward: -11.918955640764848 epsilon: 0.1917149999999569 
+     mean reward over last 20 eisodes: -7.894470421750915
+ 
+11951: Done after 169 steps. Reward: -13.998231384499775 epsilon: 0.1908399999999567 
+     mean reward over last 20 eisodes: -7.08379980128657
+ 
+12001: Done after 143 steps. Reward: -12.642857615873647 epsilon: 0.18996499999995653 
+     mean reward over last 20 eisodes: -7.191659880405431
+ 
+12051: Done after 251 steps. Reward: -6.29068870429206 epsilon: 0.18908999999995635 
+     mean reward over last 20 eisodes: -5.9774202936117105
+ 
+12101: Done after 209 steps. Reward: 3.696069285885404 epsilon: 0.18821499999995617 
+     mean reward over last 20 eisodes: -5.404544783678545
+ 
+12151: Done after 58 steps. Reward: -12.137154815680114 epsilon: 0.187339999999956 
+     mean reward over last 20 eisodes: -6.400676837643078
+ 
+12201: Done after 251 steps. Reward: -3.6437003824691745 epsilon: 0.1864649999999558 
+     mean reward over last 20 eisodes: -4.070274448991241
+ 
+12251: Done after 89 steps. Reward: -11.82162149300907 epsilon: 0.18558999999995562 
+     mean reward over last 20 eisodes: -5.027468432911069
+ 
+12301: Done after 134 steps. Reward: -14.26794084051793 epsilon: 0.18471499999995544 
+     mean reward over last 20 eisodes: -7.32632715899946
+ 
+12351: Done after 91 steps. Reward: -11.94350488151865 epsilon: 0.18383999999995526 
+     mean reward over last 20 eisodes: -6.740944557344538
+ 
+12401: Done after 168 steps. Reward: 7.025544517787752 epsilon: 0.18296499999995508 
+     mean reward over last 20 eisodes: -4.311572917929253
+ 
+12451: Done after 56 steps. Reward: -11.806147860776301 epsilon: 0.1820899999999549 
+     mean reward over last 20 eisodes: -6.592638580802879
+ 
+12501: Done after 59 steps. Reward: -11.757906481945797 epsilon: 0.18121499999995472 
+     mean reward over last 20 eisodes: -6.264895063334802
+ 
+12551: Done after 90 steps. Reward: -14.16053877270041 epsilon: 0.18033999999995454 
+     mean reward over last 20 eisodes: -7.941119210092194
+ 
+12601: Done after 54 steps. Reward: -11.724130179107023 epsilon: 0.17946499999995436 
+     mean reward over last 20 eisodes: -5.692001159069915
+ 
+12651: Done after 47 steps. Reward: 8.778961118919408 epsilon: 0.17858999999995417 
+     mean reward over last 20 eisodes: -5.110682756830244
+ 
+12701: Done after 251 steps. Reward: -0.6407697770283036 epsilon: 0.177714999999954 
+     mean reward over last 20 eisodes: -6.801738466055831
+ 
+12751: Done after 111 steps. Reward: -11.927653322608261 epsilon: 0.1768399999999538 
+     mean reward over last 20 eisodes: -6.243517627337574
+ 
+12801: Done after 169 steps. Reward: -12.193984216562534 epsilon: 0.17596499999995363 
+     mean reward over last 20 eisodes: -7.390383589485303
+ 
+12851: Done after 109 steps. Reward: -12.226128596331774 epsilon: 0.17508999999995345 
+     mean reward over last 20 eisodes: -4.096333126862736
+ 
+12901: Done after 44 steps. Reward: 9.077211586569137 epsilon: 0.17421499999995327 
+     mean reward over last 20 eisodes: -6.585550041174149
+ 
+12951: Done after 251 steps. Reward: -4.371147437350927 epsilon: 0.1733399999999531 
+     mean reward over last 20 eisodes: -4.958201587392243
+ 
+13001: Done after 105 steps. Reward: -12.798181514362835 epsilon: 0.1724649999999529 
+     mean reward over last 20 eisodes: -7.093634093729314
+ 
+13051: Done after 78 steps. Reward: -13.659103600532891 epsilon: 0.17158999999995272 
+     mean reward over last 20 eisodes: -3.0922821985730025
+ 
+13101: Done after 94 steps. Reward: -12.161116219444173 epsilon: 0.17071499999995254 
+     mean reward over last 20 eisodes: -5.258073349421422
+ 
+13151: Done after 56 steps. Reward: -11.988071053602274 epsilon: 0.16983999999995236 
+     mean reward over last 20 eisodes: -4.736929401119614
+ 
+13201: Done after 89 steps. Reward: -12.476781113427359 epsilon: 0.16896499999995218 
+     mean reward over last 20 eisodes: -6.0485560992504865
+ 
+13251: Done after 121 steps. Reward: -13.655968951707843 epsilon: 0.168089999999952 
+     mean reward over last 20 eisodes: -6.481722405812783
+ 
+13301: Done after 251 steps. Reward: -1.4577286215355583 epsilon: 0.16721499999995182 
+     mean reward over last 20 eisodes: -7.491764998825095
+ 
+13351: Done after 251 steps. Reward: -6.223917313378929 epsilon: 0.16633999999995164 
+     mean reward over last 20 eisodes: -6.720454047107287
+ 
+13401: Done after 89 steps. Reward: -12.146450615942559 epsilon: 0.16546499999995146 
+     mean reward over last 20 eisodes: -7.770307270591704
+ 
+13451: Done after 122 steps. Reward: -13.176225293020345 epsilon: 0.16458999999995128 
+     mean reward over last 20 eisodes: -6.94778756517787
+ 
+13501: Done after 110 steps. Reward: -13.295910324120083 epsilon: 0.1637149999999511 
+     mean reward over last 20 eisodes: -5.8000165573557965
+ 
+13551: Done after 41 steps. Reward: 9.311079383835166 epsilon: 0.1628399999999509 
+     mean reward over last 20 eisodes: -7.929187094524731
+ 
+13601: Done after 41 steps. Reward: 9.179886702139063 epsilon: 0.16196499999995073 
+     mean reward over last 20 eisodes: -6.036403720083897
+ 
+13651: Done after 251 steps. Reward: -1.3873377373460547 epsilon: 0.16108999999995055 
+     mean reward over last 20 eisodes: -5.41254507811733
+ 
+13701: Done after 74 steps. Reward: -11.538980195439368 epsilon: 0.16021499999995037 
+     mean reward over last 20 eisodes: -4.72453344706378
+ 
+13751: Done after 251 steps. Reward: -5.087118442239483 epsilon: 0.1593399999999502 
+     mean reward over last 20 eisodes: -4.884548420545063
+ 
+13801: Done after 131 steps. Reward: 7.871663592579483 epsilon: 0.15846499999995 
+     mean reward over last 20 eisodes: -6.448741013832815
+ 
+13851: Done after 167 steps. Reward: -13.16052967014814 epsilon: 0.15758999999994983 
+     mean reward over last 20 eisodes: -4.383026521348499
+ 
+13901: Done after 76 steps. Reward: -13.353693840826857 epsilon: 0.15671499999994964 
+     mean reward over last 20 eisodes: -6.978201558954433
+ 
+13951: Done after 251 steps. Reward: -4.084872223696118 epsilon: 0.15583999999994946 
+     mean reward over last 20 eisodes: -7.550700499455563
+ 
+14001: Done after 89 steps. Reward: -11.700747106557357 epsilon: 0.15496499999994928 
+     mean reward over last 20 eisodes: -5.327070830113027
+ 
+14051: Done after 136 steps. Reward: -12.908295935531989 epsilon: 0.1540899999999491 
+     mean reward over last 20 eisodes: -8.194109272018984
+ 
+14101: Done after 251 steps. Reward: -1.4349856762345268 epsilon: 0.15321499999994892 
+     mean reward over last 20 eisodes: -5.7799508523213765
+ 
+14151: Done after 90 steps. Reward: -15.209318269847223 epsilon: 0.15233999999994874 
+     mean reward over last 20 eisodes: -7.145534568798639
+ 
+14201: Done after 89 steps. Reward: -11.718336825681844 epsilon: 0.15146499999994856 
+     mean reward over last 20 eisodes: -8.29616166469851
+ 
+14251: Done after 251 steps. Reward: -3.693617228553234 epsilon: 0.15058999999994838 
+     mean reward over last 20 eisodes: -7.429321157652569
+ 
+14301: Done after 90 steps. Reward: -12.472127439642444 epsilon: 0.1497149999999482 
+     mean reward over last 20 eisodes: -7.386247631540689
+ 
+14351: Done after 73 steps. Reward: -11.520554681023382 epsilon: 0.14883999999994801 
+     mean reward over last 20 eisodes: -4.934871802285002
+ 
+14401: Done after 197 steps. Reward: -13.492560603200815 epsilon: 0.14796499999994783 
+     mean reward over last 20 eisodes: -4.853117810011404
+ 
+14451: Done after 198 steps. Reward: -13.586575339136944 epsilon: 0.14708999999994765 
+     mean reward over last 20 eisodes: -3.886429573565474
+ 
+14501: Done after 105 steps. Reward: -13.228198706499471 epsilon: 0.14621499999994747 
+     mean reward over last 20 eisodes: -6.42474183659538
+ 
+14551: Done after 38 steps. Reward: 9.410071048234226 epsilon: 0.1453399999999473 
+     mean reward over last 20 eisodes: -7.421561207272064
+ 
+14601: Done after 251 steps. Reward: -3.8959568112084204 epsilon: 0.1444649999999471 
+     mean reward over last 20 eisodes: -7.073820778128348
+ 
+14651: Done after 189 steps. Reward: 4.668099592428251 epsilon: 0.14358999999994693 
+     mean reward over last 20 eisodes: -7.793788178149018
+ 
+14701: Done after 156 steps. Reward: -14.043047369082128 epsilon: 0.14271499999994675 
+     mean reward over last 20 eisodes: -5.587260165663983
+ 
+14751: Done after 162 steps. Reward: -13.041337628435265 epsilon: 0.14183999999994656 
+     mean reward over last 20 eisodes: -8.155929788786793
+ 
+14801: Done after 251 steps. Reward: -1.2694954021398042 epsilon: 0.14096499999994638 
+     mean reward over last 20 eisodes: -8.177695507427778
+ 
+14851: Done after 92 steps. Reward: -13.308626755030344 epsilon: 0.1400899999999462 
+     mean reward over last 20 eisodes: -6.687575049665091
+ 
+14901: Done after 251 steps. Reward: -10.084124043525007 epsilon: 0.13921499999994602 
+     mean reward over last 20 eisodes: -8.666611961033093
+ 
+14951: Done after 186 steps. Reward: -14.401171907797208 epsilon: 0.13833999999994584 
+     mean reward over last 20 eisodes: -6.284466568375559
+ 
+15001: Done after 251 steps. Reward: -2.077923020623812 epsilon: 0.13746499999994566 
+     mean reward over last 20 eisodes: -5.84156686326974
+ 
+15051: Done after 142 steps. Reward: -12.784759281283309 epsilon: 0.13658999999994548 
+     mean reward over last 20 eisodes: -4.910739953164421
+ 
+15101: Done after 251 steps. Reward: -1.2027933588096258 epsilon: 0.1357149999999453 
+     mean reward over last 20 eisodes: -3.8708804276905187
+ 
+15151: Done after 70 steps. Reward: -11.793720336697671 epsilon: 0.13483999999994511 
+     mean reward over last 20 eisodes: -5.171938195579449
+ 
+15201: Done after 90 steps. Reward: -14.21430753404854 epsilon: 0.13396499999994493 
+     mean reward over last 20 eisodes: -5.735132678802421
+ 
+15251: Done after 140 steps. Reward: -13.04595066236852 epsilon: 0.13308999999994475 
+     mean reward over last 20 eisodes: -6.881263617860847
+ 
+15301: Done after 73 steps. Reward: -11.636361569069017 epsilon: 0.13221499999994457 
+     mean reward over last 20 eisodes: -5.950786157741135
+ 
+15351: Done after 119 steps. Reward: -13.036481064883054 epsilon: 0.1313399999999444 
+     mean reward over last 20 eisodes: -6.41156110913341
+ 
+15401: Done after 116 steps. Reward: -12.97695531769695 epsilon: 0.1304649999999442 
+     mean reward over last 20 eisodes: -6.612508741120177
+ 
+15451: Done after 48 steps. Reward: -11.605668245837059 epsilon: 0.12958999999994403 
+     mean reward over last 20 eisodes: -5.741976910893175
+ 
+15501: Done after 147 steps. Reward: -13.152468012047242 epsilon: 0.12871499999994385 
+     mean reward over last 20 eisodes: -7.90695646140883
+ 
+15551: Done after 61 steps. Reward: -12.205968485081339 epsilon: 0.12783999999994367 
+     mean reward over last 20 eisodes: -5.0659743476386865
+ 
+15601: Done after 162 steps. Reward: -15.397700611064083 epsilon: 0.12696499999994348 
+     mean reward over last 20 eisodes: -5.658209488759394
+ 
+15651: Done after 73 steps. Reward: -12.884016939906166 epsilon: 0.1260899999999433 
+     mean reward over last 20 eisodes: -5.559348021124081
+ 
+15701: Done after 251 steps. Reward: -0.4200443432190707 epsilon: 0.12521499999994312 
+     mean reward over last 20 eisodes: -6.887250885637583
+ 
+15751: Done after 57 steps. Reward: -12.21424206549398 epsilon: 0.12433999999994294 
+     mean reward over last 20 eisodes: -6.654745621173064
+ 
+15801: Done after 142 steps. Reward: -13.088203241337716 epsilon: 0.12346499999994276 
+     mean reward over last 20 eisodes: -7.06070943694171
+ 
+15851: Done after 40 steps. Reward: -11.414199777512689 epsilon: 0.12258999999994258 
+     mean reward over last 20 eisodes: -6.546368623561107
+ 
+15901: Done after 37 steps. Reward: 9.280835420935569 epsilon: 0.1217149999999424 
+     mean reward over last 20 eisodes: -7.695877051768872
+ 
+15951: Done after 251 steps. Reward: -2.599177436791801 epsilon: 0.12083999999994222 
+     mean reward over last 20 eisodes: -6.197834690218457
+ 
+16001: Done after 103 steps. Reward: -12.953323412731283 epsilon: 0.11996499999994203 
+     mean reward over last 20 eisodes: -6.530783396987792
+ 
+16051: Done after 251 steps. Reward: -0.9232191677544261 epsilon: 0.11908999999994185 
+     mean reward over last 20 eisodes: -8.550016072048374
+ 
+16101: Done after 251 steps. Reward: -4.968774809897692 epsilon: 0.11821499999994167 
+     mean reward over last 20 eisodes: -5.906896990741253
+ 
+16151: Done after 64 steps. Reward: -12.784055459681458 epsilon: 0.11733999999994149 
+     mean reward over last 20 eisodes: -5.547673276307718
+ 
+16201: Done after 38 steps. Reward: 9.240667143315742 epsilon: 0.11646499999994131 
+     mean reward over last 20 eisodes: -3.7499263640876954
+ 
+16251: Done after 57 steps. Reward: -12.08855208990991 epsilon: 0.11558999999994113 
+     mean reward over last 20 eisodes: -4.203942115054762
+ 
+16301: Done after 251 steps. Reward: -6.828887204412124 epsilon: 0.11471499999994095 
+     mean reward over last 20 eisodes: -6.421847890831177
+ 
+16351: Done after 63 steps. Reward: -12.32206239493889 epsilon: 0.11383999999994077 
+     mean reward over last 20 eisodes: -6.862246858833561
+ 
+16401: Done after 251 steps. Reward: -2.695461717462219 epsilon: 0.11296499999994059 
+     mean reward over last 20 eisodes: -6.8735573546901865
+ 
+16451: Done after 251 steps. Reward: -6.375892727728437 epsilon: 0.1120899999999404 
+     mean reward over last 20 eisodes: -3.3862297020868426
+ 
+16501: Done after 59 steps. Reward: -11.84011006681929 epsilon: 0.11121499999994022 
+     mean reward over last 20 eisodes: -6.175104906570116
+ 
+16551: Done after 251 steps. Reward: -4.3045332121359525 epsilon: 0.11033999999994004 
+     mean reward over last 20 eisodes: -6.073023725001707
+ 
+16601: Done after 251 steps. Reward: -4.590772486442076 epsilon: 0.10946499999993986 
+     mean reward over last 20 eisodes: -5.90778950256124
+ 
+16651: Done after 78 steps. Reward: -12.852627361021167 epsilon: 0.10858999999993968 
+     mean reward over last 20 eisodes: -6.053597137082063
+ 
+16701: Done after 85 steps. Reward: 8.925623737193472 epsilon: 0.1077149999999395 
+     mean reward over last 20 eisodes: -5.4682685829071405
+ 
+16751: Done after 106 steps. Reward: -12.091587886836486 epsilon: 0.10683999999993932 
+     mean reward over last 20 eisodes: -7.1661590159697575
+ 
+16801: Done after 42 steps. Reward: 9.198029745971125 epsilon: 0.10596499999993914 
+     mean reward over last 20 eisodes: -6.633274006850212
+ 
+16851: Done after 251 steps. Reward: -1.987835535051967 epsilon: 0.10508999999993895 
+     mean reward over last 20 eisodes: -6.518374602308763
+ 
+16901: Done after 77 steps. Reward: -13.13028395648907 epsilon: 0.10421499999993877 
+     mean reward over last 20 eisodes: -5.21569322430393
+ 
+16951: Done after 208 steps. Reward: -13.24868635727223 epsilon: 0.10333999999993859 
+     mean reward over last 20 eisodes: -6.333289832800675
+ 
+17001: Done after 42 steps. Reward: 9.093543755497533 epsilon: 0.10246499999993841 
+     mean reward over last 20 eisodes: -7.347077702798981
+ 
+17051: Done after 251 steps. Reward: -1.599590969672941 epsilon: 0.10158999999993823 
+     mean reward over last 20 eisodes: -3.6167141718451417
+ 
+17101: Done after 181 steps. Reward: 7.7020645844830415 epsilon: 0.10071499999993805 
+     mean reward over last 20 eisodes: -4.1893512165689994
+ 
+17151: Done after 181 steps. Reward: 7.746821310345317 epsilon: 0.09983999999993787 
+     mean reward over last 20 eisodes: -4.673781374744156
+ 
+17201: Done after 59 steps. Reward: -12.043381179565827 epsilon: 0.09896499999993769 
+     mean reward over last 20 eisodes: -4.271351312028155
+ 
+17251: Done after 156 steps. Reward: -12.394262568803953 epsilon: 0.0980899999999375 
+     mean reward over last 20 eisodes: -7.717113958728592
+ 
+17301: Done after 58 steps. Reward: -12.255200251254903 epsilon: 0.09721499999993732 
+     mean reward over last 20 eisodes: -5.962066013106198
+ 
+17351: Done after 251 steps. Reward: -4.071790062670143 epsilon: 0.09633999999993714 
+     mean reward over last 20 eisodes: -5.764856364574493
+ 
+17401: Done after 220 steps. Reward: -14.566417089925324 epsilon: 0.09546499999993696 
+     mean reward over last 20 eisodes: -5.569039352325001
+ 
+17451: Done after 62 steps. Reward: -12.074655733001922 epsilon: 0.09458999999993678 
+     mean reward over last 20 eisodes: -7.175842770116402
+ 
+17501: Done after 88 steps. Reward: -11.878188548575595 epsilon: 0.0937149999999366 
+     mean reward over last 20 eisodes: -4.71444141765012
+ 
+17551: Done after 55 steps. Reward: -11.935884811636551 epsilon: 0.09283999999993642 
+     mean reward over last 20 eisodes: -5.424769280519015
+ 
+17601: Done after 251 steps. Reward: -1.0297441056791432 epsilon: 0.09196499999993624 
+     mean reward over last 20 eisodes: -5.860234855947343
+ 
+17651: Done after 224 steps. Reward: 7.244256729441359 epsilon: 0.09108999999993606 
+     mean reward over last 20 eisodes: -5.4374111976433275
+ 
+17701: Done after 251 steps. Reward: -2.132189327579686 epsilon: 0.09021499999993587 
+     mean reward over last 20 eisodes: -5.115373074309308
+ 
+17751: Done after 251 steps. Reward: -5.51909518245022 epsilon: 0.0893399999999357 
+     mean reward over last 20 eisodes: -6.013873449948128
+ 
+17801: Done after 251 steps. Reward: -2.438745632867835 epsilon: 0.08846499999993551 
+     mean reward over last 20 eisodes: -5.198358575069952
+ 
+17851: Done after 131 steps. Reward: -14.064936779544722 epsilon: 0.08758999999993533 
+     mean reward over last 20 eisodes: -4.779492384657866
+ 
+17901: Done after 235 steps. Reward: -13.834907717563295 epsilon: 0.08671499999993515 
+     mean reward over last 20 eisodes: -5.062160148706286
+ 
+17951: Done after 41 steps. Reward: 9.818405569253917 epsilon: 0.08583999999993497 
+     mean reward over last 20 eisodes: -7.97769500379316
+ 
+18001: Done after 251 steps. Reward: -6.234700911818086 epsilon: 0.08496499999993479 
+     mean reward over last 20 eisodes: -5.3266912663196955
+ 
+18051: Done after 53 steps. Reward: -11.339417120405978 epsilon: 0.0840899999999346 
+     mean reward over last 20 eisodes: -2.9074145774411693
+ 
+18101: Done after 56 steps. Reward: -11.488286356365311 epsilon: 0.08321499999993442 
+     mean reward over last 20 eisodes: -6.644071098460928
+ 
+18151: Done after 180 steps. Reward: -14.55836848703288 epsilon: 0.08233999999993424 
+     mean reward over last 20 eisodes: -7.032866720554632
+ 
+18201: Done after 251 steps. Reward: -4.368307791957776 epsilon: 0.08146499999993406 
+     mean reward over last 20 eisodes: -4.180362782016787
+ 
+18251: Done after 251 steps. Reward: -2.0005392867984235 epsilon: 0.08058999999993388 
+     mean reward over last 20 eisodes: -5.899237421260388
+ 
+18301: Done after 213 steps. Reward: -3.411085342384011 epsilon: 0.0797149999999337 
+     mean reward over last 20 eisodes: -7.0305355651173
+ 
+18351: Done after 193 steps. Reward: 7.50763805282377 epsilon: 0.07883999999993352 
+     mean reward over last 20 eisodes: -4.3746540468129105
+ 
+18401: Done after 195 steps. Reward: -13.556923857413924 epsilon: 0.07796499999993334 
+     mean reward over last 20 eisodes: -4.539233718173236
+ 
+18451: Done after 251 steps. Reward: -3.8224920185906224 epsilon: 0.07708999999993316 
+     mean reward over last 20 eisodes: -5.130974627123327
+ 
+18501: Done after 251 steps. Reward: -3.846629732892103 epsilon: 0.07621499999993298 
+     mean reward over last 20 eisodes: -5.794696282109205
+ 
+18551: Done after 73 steps. Reward: -11.851289492116248 epsilon: 0.0753399999999328 
+     mean reward over last 20 eisodes: -3.5261608123196457
+ 
+18601: Done after 64 steps. Reward: -11.821561897234098 epsilon: 0.07446499999993261 
+     mean reward over last 20 eisodes: -4.166942967743333
+ 
+18651: Done after 251 steps. Reward: -4.065035124053791 epsilon: 0.07358999999993243 
+     mean reward over last 20 eisodes: -3.0146488647812517
+ 
+18701: Done after 132 steps. Reward: -13.234663785107502 epsilon: 0.07271499999993225 
+     mean reward over last 20 eisodes: -5.699873057443192
+ 
+18751: Done after 251 steps. Reward: -0.3457871315255266 epsilon: 0.07183999999993207 
+     mean reward over last 20 eisodes: -6.347670291619701
+ 
+18801: Done after 122 steps. Reward: -14.263622382915575 epsilon: 0.07096499999993189 
+     mean reward over last 20 eisodes: -4.894944926667338
+ 
+18851: Done after 72 steps. Reward: -12.551098826393861 epsilon: 0.0700899999999317 
+     mean reward over last 20 eisodes: -3.906611842492611
+ 
+18901: Done after 251 steps. Reward: -2.3240975408892517 epsilon: 0.06921499999993153 
+     mean reward over last 20 eisodes: -7.2338342868137575
+ 
+18951: Done after 251 steps. Reward: -3.5201424696016153 epsilon: 0.06833999999993134 
+     mean reward over last 20 eisodes: -6.010464895590482
+ 
+19001: Done after 190 steps. Reward: -14.86546424572477 epsilon: 0.06746499999993116 
+     mean reward over last 20 eisodes: -5.7999060402493035
+ 
+19051: Done after 251 steps. Reward: -2.2992442335284062 epsilon: 0.06658999999993098 
+     mean reward over last 20 eisodes: -6.149538973076988
+ 
+19101: Done after 116 steps. Reward: -12.333271319551514 epsilon: 0.0657149999999308 
+     mean reward over last 20 eisodes: -3.11401263423256
+ 
+19151: Done after 251 steps. Reward: -3.415590114273391 epsilon: 0.06483999999993062 
+     mean reward over last 20 eisodes: -4.018679055490686
+ 
+19201: Done after 251 steps. Reward: -2.6538719421543706 epsilon: 0.06396499999993044 
+     mean reward over last 20 eisodes: -3.9967510402003024
+ 
+19251: Done after 251 steps. Reward: -2.4132576035807976 epsilon: 0.06308999999993026 
+     mean reward over last 20 eisodes: -3.918982608656178
+ 
+19301: Done after 251 steps. Reward: -5.520485639880186 epsilon: 0.062214999999930194 
+     mean reward over last 20 eisodes: -4.0394895928751415
+ 
+19351: Done after 126 steps. Reward: 7.783489396228853 epsilon: 0.06133999999993036 
+     mean reward over last 20 eisodes: -5.036804960886831
+ 
+19401: Done after 57 steps. Reward: -11.596402116207393 epsilon: 0.060464999999930526 
+     mean reward over last 20 eisodes: -3.1858962878804293
+ 
+19451: Done after 172 steps. Reward: 7.655526845422498 epsilon: 0.05958999999993069 
+     mean reward over last 20 eisodes: -5.500604707782609
+ 
+19501: Done after 251 steps. Reward: -3.118637768123462 epsilon: 0.05871499999993086 
+     mean reward over last 20 eisodes: -6.147494624317726
+ 
+19551: Done after 235 steps. Reward: -16.038995830476967 epsilon: 0.05783999999993102 
+     mean reward over last 20 eisodes: -5.740292056352803
+ 
+19601: Done after 221 steps. Reward: -14.473628790777799 epsilon: 0.05696499999993119 
+     mean reward over last 20 eisodes: -6.4997388196099575
+ 
+19651: Done after 64 steps. Reward: 9.293733835422119 epsilon: 0.056089999999931354 
+     mean reward over last 20 eisodes: -5.106961153277823
+ 
+19701: Done after 143 steps. Reward: -13.179998762975783 epsilon: 0.05521499999993152 
+     mean reward over last 20 eisodes: -3.1960812928481492
+ 
+19751: Done after 251 steps. Reward: -4.801916548137974 epsilon: 0.054339999999931686 
+     mean reward over last 20 eisodes: -5.678532734665099
+ 
+19801: Done after 75 steps. Reward: -12.916003110789433 epsilon: 0.05346499999993185 
+     mean reward over last 20 eisodes: -5.112624984188343
+ 
+19851: Done after 127 steps. Reward: -13.454453918796014 epsilon: 0.05258999999993202 
+     mean reward over last 20 eisodes: -3.973583763354617
+ 
+19901: Done after 38 steps. Reward: 9.599714457503248 epsilon: 0.05171499999993218 
+     mean reward over last 20 eisodes: -5.193900771152402
+ 
+19951: Done after 251 steps. Reward: -0.16334978778453457 epsilon: 0.05083999999993235 
+     mean reward over last 20 eisodes: -5.543145475255107
+ 
