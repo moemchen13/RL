@@ -91,7 +91,6 @@ def main():
     parser.add_argument('-r', '--rounds',dest='rounds',default=1000,help='rounds to evaluate performance on (default %(default)s)')
     opts = parser.parse_args()
     ############## Hyperparameters ##############
-    alternating = opts.alternating
     weak = not bool(opts.opponent)
     prefix = opts.prefix
     suffix = opts.suffix
