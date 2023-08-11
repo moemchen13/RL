@@ -77,6 +77,10 @@ def run_games(agent,opponent,step,points_in_plot,prefix,suffix,max_episode):
 
     return stats
 
+def test_loading(agent,prefix,suffix):
+    load_Agent(agent,prefix+'1000'+suffix)
+    print('found files')
+
 
 def main():
 
@@ -89,6 +93,7 @@ def main():
     parser.add_argument('-o', '--opponent_hard',dest='opponent',action='store_true',help='opponent hard')
     parser.add_argument('-i', '--points',dest='points',default=40,help='points time length the thing runs (default %(default)s)')
     parser.add_argument('-r', '--rounds',dest='rounds',default=1000,help='rounds to evaluate performance on (default %(default)s)')
+    parser.add_argument('-t','--test',dest='test',action="store_true",help='checks if files is valid')
     opts = parser.parse_args()
     ############## Hyperparameters ##############
     weak = not bool(opts.opponent)
@@ -100,12 +105,15 @@ def main():
     points_in_plot = int(opts.points)
     file_name = opts.file
     max_episode = int(opts.rounds)
-
+    test = opts.test
     opponent = create_opponent(weak)
     agent = create_Agent(is_DSAC)
-    print('start running games')
-    stats = run_games(agent,opponent,steps,points_in_plot,prefix,suffix,max_episode=max_episode)
-    np.save(file_name,stats,allow_pickle=True)
+    if test:
+        test_loading(agent,prefix,suffix)
+    else:
+        print('start running games')
+        stats = run_games(agent,opponent,steps,points_in_plot,prefix,suffix,max_episode=max_episode)
+        np.save(file_name,stats,allow_pickle=True)
 
 if __name__ == '__main__':
     main()
