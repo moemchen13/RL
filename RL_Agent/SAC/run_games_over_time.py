@@ -80,6 +80,7 @@ def run_games(agent,opponent,step,points_in_plot,prefix,suffix,max_episode):
 def test_loading(agent,prefix,suffix):
     load_Agent(agent,prefix+'1000'+suffix)
     print('found files')
+    print(agent,prefix+'1000'+suffix)
 
 
 def main():
