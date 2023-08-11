@@ -52,8 +52,8 @@ If simple changes are done nothing works describe the changes.
   Dont forget to check the box.\
   commit: \
   f5ba072
-- [ ] Implement DDQN :eyes:
-  - [x] Build independent value and advantage streams into network :eyes:
+- [x] Implement DDQN
+  - [x] Build independent value and advantage streams into network
   - [x] Integrate into Target network too
   - [x] Test implementation on simple Games
   - [x] Compare efficacy of ddqn vs. dqn and compare parameter choices
