@@ -289,7 +289,9 @@ def train_agent(seed, mode, episodes, episode_len, max_eps, log_interval, load_p
 
 
 
-def evaluate_agent(seed, mode, episodes, episode_len, load_path, render):
+def evaluate_agent(seed, mode, episodes, episode_len, load_path, render, log_interval = 20):
+
+    evaluate_wins = {'wins':0, 'ties': 0, 'losses':0}
 
     np.set_printoptions(suppress=True)
     reload(h_env)
@@ -344,9 +346,19 @@ def evaluate_agent(seed, mode, episodes, episode_len, load_path, render):
             obs_agent2 = env.obs_agent_two()
             if done: break    
         test_stats.append([i,total_reward,t+1]) 
+        #print(_info)
+        if _info['winner'] == -1:
+            evaluate_wins['losses'] += 1
+        elif _info['winner'] == 1:
+            evaluate_wins['wins'] += 1
+        else: evaluate_wins['ties'] += 1
+
+        if ((i-1)%log_interval==0):
+            print("{}'%' done".format(((i-1)/episodes)*100))
         
     test_stats_np = np.array(test_stats)
     print(np.mean(test_stats_np[:,1]), "+-", np.std(test_stats_np[:,1]))
+    print(evaluate_wins)
 
 
 def log(seed, log_str):
@@ -367,10 +379,10 @@ def main():
     parser.add_argument('-n', '--num-ep', type=int, default = 1000, dest='num_ep')
     parser.add_argument('-l', '--len-ep', type=int, default = 300, dest='len_ep')
     parser.add_argument('-m', '--mode', choices=('defense', 'weak', 'strong'), default='weak', dest='mode')
-    parser.add_argument('-e', '--evaluate', type=bool, default=False, dest='eval')
+    parser.add_argument('-e', '--evaluate', type=str, default='False', dest='eval')
     parser.add_argument('--load-path', type=str, required=False, dest='load_path')
     parser.add_argument('--log-interval', type = int, default=50, dest='log_interval')
-    parser.add_argument('--render', type=bool, default=False, dest='render')
+    parser.add_argument('--render', type=str, default='False', dest='render')
     args = parser.parse_args()
 
     
@@ -378,10 +390,15 @@ def main():
     num_ep = args.num_ep
     len_ep = args.len_ep
     mode = args.mode
-    eval = args.eval
+
+    if args.eval == "True": eval = True
+    else: eval = False
+
     load_path = args.load_path
     log_interval = args.log_interval
-    render = args.render
+
+    if args.render == "True": render = True
+    else: render = False
 
     log(main_seed,
         f'Configuration:\n  seed: {main_seed}\n  num-ep: {num_ep}\n  ep-len: {len_ep}\n  mode: {mode}\n  evaluate: {eval}\n  loaded network: {load_path}\n\nLog:\n')
@@ -389,7 +406,7 @@ def main():
     if eval == False:
         train_agent(main_seed, mode, num_ep, len_ep, 0.4, log_interval, load_path)
     elif eval == True:
-        evaluate_agent(main_seed, mode, num_ep, len_ep,load_path, render=True)
+        evaluate_agent(main_seed, mode, num_ep, len_ep,load_path, render)
     else:
         log(main_seed, "ERROR: evaluation arg")
         
