@@ -70,7 +70,7 @@ def run_games(agent,opponent,step,points_in_plot,prefix,suffix,max_episode):
 
     for episode in range(step,points_in_plot*step+step,step):
         print(f'loaded agent for episode {episode}')
-        loading_file = prefix + str(episode) + '-' + suffix
+        loading_file = prefix + str(episode)+ suffix
         load_Agent(agent,loading_file)
         win,loss,tie = play_hockey_game(agent,opponent,max_episode=max_episode)
         stats = np.vstack([stats,[win,loss,tie]])

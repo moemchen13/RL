@@ -48,7 +48,7 @@ class SAC_Agent(agent):
             "update_target_every":1,
             "autotuned_temperature":True,
             "temperature":0.1,
-            "numbers_critics":2,
+            "numbers_critics":5,
             "use_smooth_L1":False,
             "play_hockey":True
             }
