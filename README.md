@@ -52,14 +52,13 @@ If simple changes are done nothing works describe the changes.
   Dont forget to check the box.\
   commit: \
   f5ba072
-- [ ] Implement DDQN :eyes:
-  - [ ] Build independent value and advantage streams into network :eyes:
-  - [ ] Integrate into Target network too
-  - [ ] Test implementation on simple Games
-  - [ ] Compare efficacy of ddqn vs. dqn and compare parameter choices
-  - [ ] Run both on the airhockey env
-  - [ ] compile test statistics on performance
-  - [ ] Run training on the cluster and check performance
+- [x] Implement DDQN
+  - [x] Build independent value and advantage streams into network
+  - [x] Integrate into Target network too
+  - [x] Test implementation on simple Games
+  - [x] Compare efficacy of ddqn vs. dqn and compare parameter choices
+  - [x] Run both on the airhockey env
+  - [x] compile test statistics on performance
 - [ ] Implement DDPG
 - [x] Implement SAC
 - [ ] DQN Extension
