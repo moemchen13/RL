@@ -42,7 +42,3 @@ Implemented regularization in the Q value function to mitigate effect of growing
 
 All agents in this repository were tested on the hockey environment of Prof. Martius [hockey_env](https://github.com/martius-lab/hockey-env).
 Our results can be found in the finalized report.
-
-
-### Comments
-Write Extension generic and modular if possible so other people can also use them (e.g. Prioritized ReplayBuffer)
