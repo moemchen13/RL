@@ -31,56 +31,18 @@ These files should only comprise files necessary to run the agent.\
 Not yet correctly implemented but soon coming, is the folder **Playground**, comprising the environment of the *Laser-hockey*.\
 And the files to let agents train in the laserhockey environment or play the game against the given bot or an implemented agent.\
 
-***
-### Commit Messages Workflow
-This is a hierarchical guide.
-If the baseline of an Agent is up and works correctly please commit with the message: "DONE: Baseline {agent name} implemented".\
-If extended a common structure of the agent and working, please write "EXTENSION: {Extension_name}".\
-Furthermore update the section **TODO** in the ReadMe file and link the paper of extension and also note the commit code (look at the example in the TODO section).\
-If something new is started please start the commit with "STARTED: {Extension_name}".\
-If simple changes are done nothing works describe the changes.
 
-***
-### TODO
-- [x] Write Example TODO\
-  [Example](https://doi.org/10.1016/j.jml.2015.09.001)\
-  Description:\
-    This is an example on how we should note TODOs.
-  - [ ] means the task is still open
-  - [x] means the task has already finished \
-  :eyes: This emoji behind a task notes that it was already started\
-  Dont forget to check the box.\
-  commit: \
-  f5ba072
-- [x] Implement DDQN
-  - [x] Build independent value and advantage streams into network
-  - [x] Integrate into Target network too
-  - [x] Test implementation on simple Games
-  - [x] Compare efficacy of ddqn vs. dqn and compare parameter choices
-  - [x] Run both on the airhockey env
-  - [x] compile test statistics on performance
-- [ ] Implement DDPG
-- [x] Implement SAC
-- [ ] DQN Extension
-- [ ] DDPG Extension
-- [X] SAC Extension
-  [SAC](https://doi.org/10.48550/arXiv.1801.01290)
-  Implementation with 4 Critic Networks Entropy autotuning and 1 Actor with exploration based on the entropy
-  [DSAC](https://arxiv.org/abs/2001.02811)
-  Implementation of an distributional representation of SAC Q_value function to mitigate the overestimation bias
-  [HER](https://arxiv.org/abs/1707.01495)
-  Implementation for more sample efficiency in a sparse reward environment (might extend with reward shaping)
-  [DR3 regularization](https://arxiv.org/abs/2112.04716)
-  Implemented regularization in the Q value function to mitigate effect of growing dot product for consecutive state action pairs
-- [ ] Testing DQN with Extensions
-- [ ] Testing DDPG with Extensions
-- [ ] Testing SAC with Extensions :eyes
-- [ ] Report August
-- [ ] Report Moritz
-- [ ] Report Torsten
-- [ ] Submitted Agent evaluation
-- [ ] Clean Repository
-- [ ] Create detailed ReadME
+### Implemented Algorithms
+[SAC](https://doi.org/10.48550/arXiv.1801.01290)
+Implementation with 4 Critic Networks Entropy autotuning and 1 Actor with exploration based on the entropy
+[DSAC](https://arxiv.org/abs/2001.02811)
+Implementation of an distributional representation of SAC Q_value function to mitigate the overestimation bias
+[DR3 regularization](https://arxiv.org/abs/2112.04716)
+Implemented regularization in the Q value function to mitigate effect of growing dot product for consecutive state action pairs
+
+All agents in this repository were tested on the hockey environment of Prof. Martius [hockey_env](https://github.com/martius-lab/hockey-env).
+Our results can be found in the finalized report.
+
 
 ### Comments
 Write Extension generic and modular if possible so other people can also use them (e.g. Prioritized ReplayBuffer)
